@@ -1,0 +1,1572 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>音ゲー プロトタイプ</title>
+<style>
+:root{--dm:#e22;box-sizing:border-box}
+html,body{height:100%;margin:0;background:#000;color:#fff;font-family:system-ui,-apple-system,"Hiragino Sans",sans-serif;touch-action:none;overscroll-behavior:none;user-select:none;-webkit-user-select:none}
+canvas{display:block;width:100%;height:100%}
+button{font:inherit;cursor:pointer}
+#ov{position:fixed;inset:0;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;text-align:center;padding:calc(26px + env(safe-area-inset-top)) 26px calc(26px + env(safe-area-inset-bottom));overflow:auto;touch-action:pan-y;color:#14166e}
+#ov p{margin:0;line-height:1.6}
+#ov.title{background:linear-gradient(to top right,#2a55ff,#6a6cf5 40%,#b69cf0 75%,#e0cdf7)}
+#ov.result{background:linear-gradient(135deg,#62ffe0,#8cff7a 50%,#62ffe0)}
+#ov.set{background:#ffbff2;justify-content:flex-start}
+.frame{position:fixed;inset:4%;border:5px solid #fff;pointer-events:none}
+#ov.result .frame{border-color:#5a5aff}#ov.set .frame{border-color:#66ff00;inset:2.5%}
+.row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center}
+.px{font:900 30px "Courier New",monospace;letter-spacing:4px;color:#fff;padding:8px 44px;border:3px solid #1ad0ff;border-radius:0;background:linear-gradient(#0000d8,#00003c);box-shadow:0 0 0 2px #000,5px -5px 0 -1px #0a3a99;text-shadow:2px 2px 0 #000}
+.sm{padding:6px 14px;border-radius:99px;border:2px solid #fff;background:rgba(255,255,255,.45);color:#14166e;font-size:14px}
+.sm.on{background:#10c8ff;color:#fff}
+.logo{position:relative;width:min(100%,640px);height:min(38vw,250px);margin:0 0 6px}
+.bw{position:absolute;inset:0;filter:drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff)}
+.blade{position:absolute;inset:0;background:linear-gradient(160deg,#6ab7ff,#7fd0e8 45%,#ff7dff);clip-path:polygon(0 94%,17% 36%,27% 22%,24% 56%,100% 0,24% 100%)}
+.logo b{position:absolute;left:12%;top:46%;font-size:min(12.2vw,76px);line-height:1;transform:rotate(-18deg);background:linear-gradient(#e8ff70,#6aff9a);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.logo i{position:absolute;left:44%;top:30%;font:italic 700 min(5vw,32px) system-ui;transform:rotate(-18deg);color:#b8ff90}
+.sub{font-weight:700;font-size:19px;color:#000;display:flex;align-items:center;gap:8px}
+.sub::before,.sub::after{content:'';width:46px;height:2px;background:linear-gradient(90deg,transparent,#000)}.sub::after{transform:scaleX(-1)}
+.dn{position:fixed;width:84px;height:26px;border-radius:15px;background:#10c8ff;pointer-events:none}
+.dn::after{content:'';position:absolute;inset:8px 12px;border-radius:10px;background:#fff}
+.dn.p{background:#ff66cc}.dn.r{background:#a040ff;box-shadow:0 0 0 2px #f11}
+.ver{position:fixed;right:7%;bottom:5.5%;color:#fff;font-size:22px;padding:10px;z-index:2}
+.pb{position:fixed;top:calc(6px + env(safe-area-inset-top));display:none;z-index:5;padding:2px 12px;border-radius:99px;border:0;font-size:13px}
+#rt{left:6px;background:#ff55ff;color:#3322ff}#hm{right:6px;background:#66ffcc;color:#2255ff}
+/* 設定 */
+.lab{margin:6px 0 2px}.lab span{display:inline-block;padding:2px 16px;border-radius:99px;background:#8ffcff;font-size:17px;font-weight:700}
+.ctl{display:flex;gap:5px;align-items:center;justify-content:center;flex-wrap:wrap}
+.ctl button{min-width:42px;padding:6px 4px;border:2px solid #000;border-radius:6px;background:#fff;color:#18d8e8;font-size:14px}
+.ctl .val{min-width:62px;padding:8px 6px;border-radius:6px;background:#ff8c1a;color:#fff;font-size:20px}
+.tg{display:inline-flex;align-items:center;gap:4px;background:none;border:0;color:#18d8e8;font-size:16px}
+.bk{position:absolute;left:5%;top:calc(5% + env(safe-area-inset-top));width:44px;height:44px;border-radius:50%;border:2px solid #fff;background:radial-gradient(#6ae8ff,#18b0e8);color:#fff;font-size:22px;padding:0}
+/* 結果: 幅520pxで組み、青枠の内側いっぱいに収まるよう全体を拡大縮小する(fitResult) */
+#rfit{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%)}
+#rin{position:absolute;left:0;top:0;width:520px;transform-origin:0 0}
+.res{--bh:56px;width:520px;display:grid;grid-template-columns:1fr 1fr;gap:14px;text-align:left}
+.pn{margin-top:calc(var(--bh) + 14px);background:#c9c9c9;border-radius:26px;padding:14px 22px;font-family:Georgia,serif;font-size:28px;line-height:1.4}
+.pn div{display:flex;justify-content:space-between}
+.wh{background:#fff;border-radius:26px;padding:8px 18px;font-size:24px}
+.hd{grid-column:1/-1;background:#e8e8e8;border-radius:28px;padding:16px 22px;display:flex;gap:14px;align-items:center}
+.hd b{font-size:26px}
+.hd .tag{display:inline-block;margin:4px 6px 0 0;padding:0 14px;border-radius:99px;background:#c97cff;color:#fff;font-size:15px}
+.sc{grid-column:1/-1;background:#b0ffff;border-radius:30px;padding:8px 26px;display:flex;justify-content:space-between;align-items:center;color:#00a8ff}
+.sc .l{font-size:30px}.sc .n{font-family:Georgia,serif;font-size:52px;letter-spacing:.14em}
+.sc.hs{background:#eaffb0;color:#2a8a00}.sc.hs .l{font-size:22px}.sc.hs .n{font-size:34px;letter-spacing:.1em}
+.rb{position:relative;flex:1;height:18px;border-radius:12px;background:#000050;margin:26px 0 6px}
+.rb s{position:absolute;left:0;top:0;bottom:0;border-radius:12px;background:#b6ff6a}
+.rb u{position:absolute;top:-12px;width:2px;height:calc(100% + 24px);background:#ffff99;text-decoration:none}.rb u em{position:absolute;top:-20px;left:-6px;font:700 16px system-ui;color:#08f}
+.md{width:72px;height:72px;border-radius:50%;background:#18e818;border:4px solid #f8b8ff;color:#fff;font:italic 700 42px Georgia,serif;display:flex;align-items:center;justify-content:center;flex:none}
+.fl{height:14px;border-radius:9px;background:#66c8ff;overflow:hidden;margin:6px 0}.fl s{display:block;height:100%;background:#ff88ee}
+.bnr{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:var(--bh);text-align:center;line-height:1.1} /* 右列の先頭: COMBOの上に FULL COMBO / ALL PERFECT を出す空欄(常に確保) */
+.bnr .bt{font:italic 900 26px Georgia,serif;letter-spacing:.04em;white-space:nowrap}
+.bnr .bt.ap{background:linear-gradient(#4aa8ff,#a060f0);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 3px #fff)}
+.bnr .bt.fc{background:linear-gradient(#ff3aa8,#ff8a2a);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 3px #fff)}
+.bnr small{display:block;font:700 14px system-ui;letter-spacing:.04em;color:#2255ff;margin-top:2px}
+.rbtn{background:#b8ffcc;border-color:#fff58a;color:#e0e;font-size:20px;padding:8px 20px;white-space:nowrap}
+#rin .row{flex-wrap:nowrap;gap:10px} /* 結果のボタンは折り返さない(折り返すと高さが変わって枠をはみ出す) */
+.rc{display:flex;flex-direction:column;gap:14px}.fls{flex:1;align-content:space-evenly} /* 右列: FAST/LATEの枠の下端を精度(左)の枠の下端に揃える */
+/* 設定: ピル型ラベル + on/off ラジオ */
+#ov.set .lab span{background:#a6f6fd;padding:3px 18px;font-size:19px;white-space:nowrap}
+#ov.set .lab span b{background:linear-gradient(90deg,#b9d23c,#4cc8a0);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px 18px;width:min(100%,540px);margin-top:64px}
+.tgi{display:flex;flex-direction:column;align-items:center;gap:2px}
+.rdg{display:flex;gap:26px;justify-content:center;align-items:center}
+.rdb{display:inline-flex;align-items:center;gap:8px;background:none;border:0;color:#000;font-size:19px;padding:5px 2px}
+.rdb i{width:24px;height:24px;border-radius:50%;background:#fff;box-sizing:border-box}
+.rdb.sel i{background:#7ee8ff;border:5px solid #fff;box-shadow:0 0 0 1px #8adfee}
+/* ダウンロードデータ */
+.upd{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;font-size:15px;font-weight:700;color:#fff;text-shadow:0 1px 3px #0008}
+.upd:empty{display:none}.upd .ue{width:100%;font-size:12px;color:#ffd6d6}
+#ov.set input[type=text]{user-select:text;-webkit-user-select:text}
+/* 判定幅 */
+#ov.set>*{flex:none}
+.wr{display:flex;gap:6px;align-items:center;justify-content:center;margin:3px 0}.wr b{min-width:68px;text-align:right;font-size:14px}
+.wr input{width:62px;padding:6px 4px;border:2px solid #000;border-radius:6px;background:#fff;color:#14166e;font-size:16px;text-align:center}
+.wb{position:relative;width:min(88vw,420px);height:16px;border-radius:8px;background:#fff;overflow:hidden;margin:4px auto 0}.wb i{position:absolute;top:0;bottom:0}
+.wb u{position:absolute;left:50%;top:0;bottom:0;width:2px;margin-left:-1px;background:#fff;text-decoration:none}
+.wc{display:flex;justify-content:space-between;width:min(88vw,420px);margin:0 auto 4px;font-size:11px}
+#tp{position:fixed;top:0;right:0;bottom:0;width:min(48vw,340px);overflow:auto;background:rgba(255,255,255,.93);color:#14166e;padding:8px 10px calc(14px + env(safe-area-inset-bottom));z-index:9;display:none;touch-action:pan-y;font-size:13px}
+#tp h4{margin:10px 0 2px;font-size:13px;border-bottom:2px solid #8ffcff}
+#tp label{display:grid;grid-template-columns:1fr 1.2fr 38px;gap:6px;align-items:center;margin:3px 0}
+#tp label input[type=color]{width:100%;height:26px;padding:0;border:1px solid #888;background:none;grid-column:2/4}
+#tp input[type=range]{width:100%}#tp em{font-style:normal;font-size:11px;text-align:right}
+.trow{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0}.trow button{padding:5px 10px;border:2px solid #14166e;border-radius:8px;background:#fff;color:#14166e;font-size:13px}
+#tp textarea{width:100%;box-sizing:border-box;font-size:11px}
+#tshow{position:fixed;top:calc(6px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);display:none;z-index:9;padding:3px 12px;border-radius:99px;border:0;background:#fff;color:#14166e;font-size:13px}
+/* ノーツSE設定 */
+.rg{width:min(56vw,230px);accent-color:#18b0e8}
+.ctl select{max-width:min(60vw,250px);padding:7px 6px;border:2px solid #000;border-radius:6px;background:#fff;color:#14166e;font-size:15px}
+.sec{width:min(92vw,440px);background:rgba(255,255,255,.38);border-radius:18px;padding:4px 10px 10px;margin:6px 0}
+.sec .ctl{margin-top:6px}.ctl .val.sv{min-width:44px;font-size:16px;padding:5px 4px}
+/* 選曲画面: 920x690 の固定ステージを画面に合わせて拡縮 */
+#ov.sel{display:block;padding:0;overflow:hidden;touch-action:none;color:#111;background:linear-gradient(160deg,#35b4ff,#8fdfff 42%,#d8f6ff)}
+#zs{position:absolute;left:50%;top:50%;width:920px;height:690px;transform-origin:50% 50%;text-align:left;font-family:system-ui,-apple-system,"Hiragino Sans",sans-serif}
+#zs *{box-sizing:border-box}
+#zs .a{position:absolute}
+#zs button{border:0;padding:0;font-family:inherit}
+.tb{position:absolute;top:14px;height:44px;border-radius:99px;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;z-index:3}
+.tb.on{outline:3px solid #fff58a}
+#zq{position:absolute;z-index:3;border:0;border-radius:99px;padding:0 14px;font-size:16px;background:#fff;color:#14166e;user-select:text;-webkit-user-select:text}
+.zck{position:absolute;z-index:3;display:flex;align-items:center;gap:3px;font-size:14px;color:#14166e}
+.zck input{width:26px;height:26px;margin:0}
+.rw{position:absolute;border-radius:44px;text-align:center;display:flex;flex-direction:column;justify-content:center;overflow:hidden;white-space:nowrap;line-height:1.15;background:linear-gradient(#b9f7c4,#a6e6ff);border:2px solid rgba(255,255,255,.7);cursor:pointer}
+.rw.c{background:linear-gradient(#e2ffb4,#a8ecff)}
+.rw small{font-size:21px;color:#222}
+.lc{position:absolute;border-radius:50%;background:radial-gradient(circle at 40% 30%,#6ffcff,#17c9e8);border:2px solid #fff;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.lc small{font-size:14px;opacity:.9}.lc b{font-weight:500}
+.ld{position:absolute;width:48px;height:20px;border-radius:99px;background:#fff;font-size:14px;color:#223;text-align:center;line-height:20px;border:1px solid #9ad}
+.tri{position:absolute;width:66px;height:52px;background:#33e6c6;filter:drop-shadow(0 0 2px #0a9);cursor:pointer}
+.dt{position:absolute;left:410px;width:190px;height:24px;border-radius:14px;background:rgba(255,255,255,.8);font-size:15px;display:flex;justify-content:space-between;align-items:center;padding:0 10px;color:#14166e}
+.dt b{font-size:19px;font-weight:600;color:#000}
+.trk{position:absolute;left:16px;top:10px;width:8px;height:590px;border-radius:4px;background:rgba(120,130,170,.55)}
+.knb{position:absolute;left:11px;width:18px;height:40px;border-radius:9px;border:4px solid #e82a2a;background:#fff;box-shadow:0 0 0 1px #fff}
+.pnl{left:640px;top:62px;width:275px;height:566px;border-radius:30px;background:linear-gradient(#ffc2f5 0 316px,#f1f2c4 316px);border:2px solid #fff}
+.jk{border:0;box-shadow:6px -6px 0 var(--dc);transition:box-shadow .4s;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.35);overflow:hidden;text-align:center}
+.jk i{font-style:normal;font-size:110px;line-height:1}.jk span{font-size:20px;font-weight:700;padding:0 10px}
+.jimg{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;-webkit-user-drag:none}
+.ring{left:681px;top:414px;width:188px;height:188px;border-radius:50%;border:8px solid var(--dc);transition:border-color .4s}
+#zr{--dc:#c49cff}
+#zdr{transform-origin:775px 508px;transition:transform .5s cubic-bezier(.25,.8,.25,1)}
+#zar{transition:background .4s}
+#zr.ni *{transition:none!important}
+.dc{position:absolute;width:56px;height:56px;border-radius:50%;border:2px solid #666;color:#222;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .5s cubic-bezier(.25,.8,.25,1),opacity .3s}
+#zr .dc{pointer-events:auto}
+.dc.on{border:4px solid #fff;box-shadow:0 0 0 3px #f2d200,0 0 12px #fff;z-index:2}.dc.na{opacity:.3;cursor:default}.dc.na.alt{cursor:pointer}
+.lvc{left:728px;top:461px;width:94px;height:94px;border-radius:50%;background:radial-gradient(circle at 40% 30%,#6ffcff,#10c4ea);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;border:3px solid #fff}
+.lvc small{font-size:20px}.lvc b{font-size:46px;font-weight:500}
+.stb{left:678px;top:634px;width:197px;height:50px;clip-path:polygon(8% 0,92% 0,100% 50%,92% 100%,8% 100%,0 50%);background:linear-gradient(#8fffcf,#14c870);color:#fff;font:italic 900 34px system-ui;-webkit-text-stroke:1px #0a8;cursor:pointer}
+.rnd{left:497px;top:634px;width:100px;height:38px;clip-path:polygon(12% 0,88% 0,100% 50%,88% 100%,12% 100%,0 50%);background:#ffc4d8;color:#8a2a5a;font-size:14px;font-weight:700;letter-spacing:2px;cursor:pointer}
+#zm,#zf{display:none;z-index:4;top:62px;padding:8px;border-radius:14px;background:rgba(255,255,255,.95);box-shadow:0 4px 14px rgba(0,0,0,.3)}
+#zm{left:440px;width:290px}#zf{left:560px;width:340px}
+#zm button,#zf button{margin:3px;padding:8px 12px;border-radius:99px;background:#d8fff0;border:2px solid #4fd6a8;color:#14166e;font-size:16px;cursor:pointer}
+#zf button{background:#ffe6fa;border-color:#ff9fe8}
+#zm button.on,#zf button.on{background:#10c8ff;color:#fff;border-color:#fff}
+#zf button.on{background:#ff6fdc}
+#zm hr{border:0;border-top:2px dashed #b9e8d8;margin:6px 4px}
+#zm .mh,#zf .mh{font-size:12px;color:#667;margin:0 4px 2px}
+.tb{white-space:nowrap;overflow:hidden;padding:0 4px!important}
+#zt{z-index:6;left:230px;top:300px;width:460px;padding:14px;border-radius:14px;background:rgba(20,22,110,.9);color:#fff;font-size:24px;text-align:center;display:none}
+/* 譜面テスト(開発用) */
+#ov.tst{background:linear-gradient(160deg,#cfeeff,#e6dcff);justify-content:flex-start}
+#ov.tst>*{flex:none}
+#ov.tst .frame{border-color:#8f8cff;inset:2.5%}
+.tbox{width:min(92vw,440px);box-sizing:border-box;background:rgba(255,255,255,.62);border-radius:16px;padding:10px 14px;text-align:left;font-size:14px;line-height:1.5}
+.tbox .sd{font-size:12.5px;color:#3a3f9a}
+.tbox .ok{color:#0a8a4a}.tbox .ng{color:#d00}.tbox .wn{color:#c05a00;font-size:12.5px}
+.drop{width:min(92vw,440px);box-sizing:border-box;border:3px dashed #5a63ff;border-radius:18px;background:rgba(255,255,255,.5);padding:20px 12px;cursor:pointer;line-height:1.6}
+.drop:hover,.drop:active{background:#fff}
+.drop{position:relative;display:block}
+.tbox label.sm{display:inline-block;position:relative;overflow:hidden;cursor:pointer}
+.fin{position:absolute;left:0;top:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0;padding:0;margin:0;border:0}
+.tr2{display:flex;gap:6px 8px;align-items:center;justify-content:center;flex-wrap:wrap;margin:6px 0}
+.tr2 b{font-size:13px}
+.tr2 input{width:76px;padding:6px 4px;border:2px solid #000;border-radius:6px;background:#fff;color:#14166e;font-size:16px;text-align:center;user-select:text;-webkit-user-select:text}
+.px:disabled{opacity:.4;filter:grayscale(1);cursor:default}
+</style></head><body>
+<canvas id="c"></canvas>
+<div id="ov"></div><button id="rt" class="pb">リトライ</button><button id="hm" class="pb">選曲へ</button>
+<script>
+// ===== 開発者モード: URLに ?dev=1 を付ける / タイトルの「ver.proto」を素早く7回タップで切替 =====
+let DEV=false;try{DEV=/[?&]dev(=1|&|$)/.test(location.search)||localStorage.getItem('amatDev')==='1'}catch(e){}
+// ===== 判定幅の既定値(ms) [前,後] 前=ノーツより早い側 / 後=遅い側 =====
+// タップ系: 内側から perfect→great→good→bad→miss。missの前=ノーツがタッチを吸い始める位置、後=自動missになる位置
+// 反応範囲系(hit): 前=この時間前から反応 / 後=この時間を過ぎたらmiss(ダメージは当たり判定の時間)
+const T5=()=>({perfect:[50,50],great:[85,85],good:[120,120],bad:[160,160],miss:[160,160]});
+const WD={"tap":{"perfect":[50,50],"great":[80,80],"good":[105,105],"bad":[125,125],"miss":[150,150]},"flick":{"perfect":[50,50],"great":[60,80],"good":[0,105],"bad":[0,125],"miss":[0,150]},"head":{"perfect":[50,50],"great":[80,80],"good":[105,105],"bad":[125,125],"miss":[150,150]},"trace":{"hit":[120,120]},"tick":{"hit":[0,0]},"damage":{"hit":[0,10]}};
+// ===== 設定（あとで調整する値）=====
+const CFG={
+  scroll:1.1,            // ノーツが画面上端から判定線まで落ちる秒数
+  judgeY:.82,            // 判定線の高さ(画面比)
+  offset:0,              // 音ズレ補正(秒)。ズレるなら調整
+  wins:null,             // 判定幅(ms)。設定画面→判定幅の設定 で変更(WD参照)
+  score:{perfect:1000,great:700,good:400,bad:100,miss:0},
+  se:true,simul:true,showScore:true,keys:false, // 設定画面で切替
+  mirror:false,auto:false,constSpeed:false,comboFx:true,flDisp:true, // ミラー譜面 / オート / 等速(ソフランなし) / AP・FC継続中のコンボ演出
+  scoreCfg:null,         // スコア配分(開発者のみ反映。SCD参照)
+  seVol:80,seCfg:null // ノーツSE: 全体音量(0-100) / 種別ごとの {tone,vol,name}
+};
+// ===== ノーツSE設定(種別・音色の定義と保存値の補正)=====
+const SEK=[['tap','タップ'],['flick','フリック'],['trace','トレース・中継点'],['crit','クリティカル(タップ・ロング始点)'],['critflick','クリティカル・フリック'],['crittrace','クリティカル・トレース/中継点'],['dmghit','ダメージ(押した時)'],['dmgsafe','ダメージ(押さなかった時)']];
+const DEFT={dmghit:'drum',dmgsafe:'chime'}; // 新しい種別の既定の音色(未設定のとき)
+const CRITK=['critflick','crittrace']; // 未設定ならクリティカル(crit)の設定を引き継ぐ(従来どおりの音になる)
+const SETONE=[['beep','ピッ(標準)'],['click','コッ(木魚)'],['tick','チッ(ハイハット)'],['drum','ドッ(太鼓)'],['chime','チリン(鈴)'],['pop','ポッ'],['clap','パッ(拍手)'],['off','無音']];
+// ★埋め込みSE: 開発者モードで読み込んだ音声を「埋め込み用に書き出し」→ ここへ貼り付けると、全員が使える内蔵音色になる
+// 形式: {tap:{name:'xxx.wav',data:'base64...'},flick:{...},trace:{...},crit:{...},critflick:{...},crittrace:{...}}  (置いた種別は既定の音色になる)
+const SE_EMBED={};
+function normSE(){ // 壊れた値・未知の音色は既定(埋め込みがあればそれ/無ければピッ、音量100)に戻す
+  const o={},src=CFG.seCfg||{};
+  for(const [k] of SEK){
+    const inh=CRITK.includes(k),v=src[k]||(inh?src.crit:null)||{},em=SE_EMBED[k]||(inh&&SE_EMBED.crit);
+    o[k]={tone:v.tone==='custom'||SETONE.some(t=>t[0]===v.tone)||(v.tone==='embed'&&em)?v.tone:(em?'embed':(DEFT[k]||'beep')),
+      vol:Number.isFinite(v.vol)?Math.min(100,Math.max(0,Math.round(v.vol))):100,
+      name:typeof v.name==='string'?v.name:''};
+  }
+  CFG.seCfg=o;
+  CFG.seVol=Number.isFinite(CFG.seVol)?Math.min(100,Math.max(0,Math.round(CFG.seVol))):80;
+}
+const PK='amatPrefs';
+function savePrefs(){try{localStorage.setItem(PK,JSON.stringify({scroll:CFG.scroll,offset:CFG.offset,se:CFG.se,simul:CFG.simul,showScore:CFG.showScore,keys:CFG.keys,wins:CFG.wins,seVol:CFG.seVol,seCfg:CFG.seCfg,mirror:CFG.mirror,auto:CFG.auto,constSpeed:CFG.constSpeed,comboFx:CFG.comboFx,flDisp:CFG.flDisp,scoreCfg:CFG.scoreCfg}))}catch(e){}}
+try{Object.assign(CFG,JSON.parse(localStorage.getItem(PK)||'{}'))}catch(e){}
+normSE();
+function normWins(){ // 保存値と既定値をマージ(壊れた値は既定に戻す)。一般ユーザー(DEV=false)は保存値を無視して常に既定値
+  const o={};
+  for(const k in WD){o[k]={};for(const j in WD[k]){const v=DEV&&CFG.wins&&CFG.wins[k]&&CFG.wins[k][j];o[k][j]=Array.isArray(v)&&v.length===2&&v.every(x=>isFinite(x)&&x>=0)?[+v[0],+v[1]]:WD[k][j].slice()}}
+  CFG.wins=o;
+}
+normWins();
+// ===== スコア配分 =====
+// 各判定の重み w(カテゴリ別・通常/クリティカル) の合計で 1,000,000点 を按分し、精度 acc を掛けて加点。
+// フルコンボ(コンボ切れ0)で fc、さらにオールパーフェクトで ap を加算 → 満点 1,010,000
+const SCD={w:{tap:1,flick:1.5,trace:1,head:1,edge:1,relay:1,tick:.5,ctap:2,cflick:3,ctrace:2,chead:2,cedge:2,crelay:2,ctick:1},acc:{perfect:1,great:.7,good:.4,bad:.1,miss:0},fc:5000,ap:5000};
+function normScore(){ // 保存値は開発者のみ反映(一般ユーザーは常に既定値)
+  const sv=(DEV&&CFG.scoreCfg)||{},o=JSON.parse(JSON.stringify(SCD));
+  for(const k in o.w){const v=sv.w&&sv.w[k];if(Number.isFinite(v)&&v>=0)o.w[k]=v}
+  for(const k in o.acc){const v=sv.acc&&sv.acc[k];if(Number.isFinite(v)&&v>=0&&v<=1)o.acc[k]=v}
+  for(const k of ['fc','ap']){const v=sv[k];if(Number.isFinite(v)&&v>=0)o[k]=Math.round(v)}
+  CFG.scoreCfg=o;
+}
+normScore();
+const NAMES=['perfect','great','good','bad','miss'];
+let WC={},ut=-9; // ut=前フレームの時刻
+function effWin(k){ // 外側の判定は内側より狭くならないよう累積maxで補正(ms)
+  const w=CFG.wins[k],o={};let pe=0,pl=0;
+  for(const j in w){if(j==='hit'){o.hit=w.hit.slice();continue}pe=Math.max(pe,w[j][0]);pl=Math.max(pl,w[j][1]);o[j]=[pe,pl]}
+  return o;
+}
+function buildWC(){WC={};for(const k in WD){const e=effWin(k);WC[k]={};for(const j in e)WC[k][j]=[e[j][0]/1000,e[j][1]/1000]}}
+buildWC();
+let L=4,notes=[],song0=0,ctx=null,run=false,end=0,custom=null,msg='',audioBuf=null,audioName='',src=null,off=0;
+let TM=[],SC=new Map(),bars=[],barSet=new Set();
+let autoRun=false,brk=0,nonP=0,lastFL=null,SM={W:0,unit:0}; // オート中か / コンボ切れ回数 / perfect以外の回数 / スコア配分(重み合計・1重みあたりの点)
+let cnt={},late=0,fast=0,fin0=0,combo=0,maxCombo=0,score=0,last='',lastT=-9,held=[],ptr=new Map(),pp=new Map();
+const cv=document.getElementById('c'),g=cv.getContext('2d'),ov=document.getElementById('ov');
+function fit(){const d=devicePixelRatio||1;cv.width=cv.clientWidth*d;cv.height=cv.clientHeight*d;g.setTransform(d,0,0,d,0,0)}
+addEventListener('resize',fit);fit();
+
+// ===== 譜面フォーマット =====
+// {title,bpm,lanes,notes:[{type,beat,lane,width?,crit?,len?}]}  type: tap/flick/trace/damage/long
+// lane=左端のレーン(0始まり)、width=またがるレーン数(省略で1)、len=ロングの長さ(拍)
+function demoChart(n,bpm=140){
+  const out=[];let k=0;
+  for(let b=2;b<66;b++){
+    const bar=b>>3,pos=b%8,last=n-1;
+    if(bar%4===1&&pos===4)out.push({type:'slide',points:[{beat:b,lane:last},{beat:b+3,lane:last}],head:'flick'});
+    else if(bar%4===3&&pos===4)out.push({type:'slide',curve:'smooth',points:[{beat:b,lane:0},{beat:b+1.5,lane:n-2,width:2},{beat:b+3,lane:1}],tail:'flick',relays:[b+.75,b+2.25]});
+    else if(bar===0&&pos===4)out.push({type:'guide',curve:'out',points:[{beat:b,lane:0},{beat:b+3,lane:n-2,width:2}]});
+    else if(bar%2===1&&pos>4)continue;
+    else if(bar%2===0&&bar%4!==0&&pos===6)out.push({type:'damage',beat:b,lane:last});
+    else if(pos===3)out.push({type:'trace',beat:b,lane:k++%(n-1)});
+    else if(pos===5&&bar%2===0)out.push({type:'flick',beat:b,lane:k++%(n-1),layer:'fast'});
+    else if(pos===0)out.push({type:'tap',beat:b,lane:0,width:2,crit:true});
+    else if(pos===1&&bar%2===0)out.push({type:'tap',beat:b,lane:n-2,from:0,moveAt:2});
+    else out.push({type:'tap',beat:b,lane:k++%(n-1)});
+  }
+  return {title:'デモ',lanes:n,
+    tempo:[{beat:0,bpm},{beat:32,bpm:bpm+30}],
+    meter:[{beat:0,num:4,den:4},{beat:48,num:3,den:4}],
+    scroll:[{beat:40,speed:0},{beat:41,speed:2,ramp:true},{beat:44,speed:1},{beat:52,speed:-1},{beat:53,speed:1}],
+    layers:{fast:[{beat:0,speed:1.8}]},
+    notes:out};
+}
+function validate(c){
+  const err=m=>{throw Error(m)};
+  if(!(c.lanes>=1)||!Array.isArray(c.notes))err('lanes・notes が必要です');
+  if(c.offset!==undefined&&typeof c.offset!=='number')err('offset は数値(秒)です');
+  const asc=(a,nm,f)=>{
+    if(!Array.isArray(a))err(nm+' は配列です');
+    a.forEach((q,i)=>{
+      if(!(q.beat>=0)||(i&&q.beat<=a[i-1].beat))err(nm+'['+i+'] の beat が不正です(0以上・昇順)');
+      f(q,i);
+    });
+  };
+  if(c.tempo===undefined&&!(c.bpm>0))err('bpm か tempo が必要です');
+  const tp=c.tempo||[{beat:0,bpm:c.bpm}];
+  asc(tp,'tempo',q=>{if(!(q.bpm>0))err('tempo の bpm は正の数です')});
+  if(!tp.length||tp[0].beat!==0)err('tempo は beat 0 から始めてください');
+  if(c.meter){
+    asc(c.meter,'meter',q=>{if(!Number.isInteger(q.num)||q.num<1||![1,2,4,8,16].includes(q.den))err('meter の num/den が不正です')});
+    if(!c.meter.length||c.meter[0].beat!==0)err('meter は beat 0 から始めてください');
+  }
+  const sp=q=>{if(typeof q.speed!=='number')err('speed は数値です')};
+  if(c.scroll)asc(c.scroll,'scroll',sp);
+  for(const k in c.layers||{})asc(c.layers[k],'layers.'+k,sp);
+  const T=['tap','flick','trace','damage','long','slide','guide'];
+  const bad=(i,m)=>{throw Error('notes['+i+'] '+m)};
+  const inR=(l,w)=>l>=0&&w>0&&l+w<=c.lanes;
+  c.notes.forEach((d,i)=>{
+    if(!T.includes(d.type))bad(i,'の type が不正です');
+    if(d.layer!==undefined&&!(String(d.layer) in (c.layers||{})))bad(i,'の layer が layers に未定義です');
+    if(d.type==='slide'||d.type==='guide'){
+      const p=d.points;
+      if(!Array.isArray(p)||p.length<2)bad(i,'の points は2点以上必要です');
+      p.forEach((q,j)=>{
+        if(!(q.beat>=0)||(j&&q.beat<=p[j-1].beat))bad(i,'の points['+j+'] の beat が不正です(昇順に)');
+        if(!inR(q.lane,q.width||1))bad(i,'の points['+j+'] が範囲外です');
+      });
+    }else{
+      if(!(d.beat>=0))bad(i,'の beat が不正です');
+      if(!inR(d.lane,d.width||1))bad(i,'の lane/width が範囲外です');
+    }
+    if(d.type==='long'&&!(d.len>0))bad(i,'の len が必要です');
+    if(d.relays!==undefined&&!(Array.isArray(d.relays)&&d.relays.every(v=>typeof v==='number')))bad(i,'の relays は拍の数値配列です');
+    if(d.head!==undefined&&!['tap','flick','trace','damage','none'].includes(d.head))bad(i,'の head は tap/flick/trace/damage/none');
+    if(d.tail!==undefined&&!['none','tap','flick','trace','damage','hold'].includes(d.tail))bad(i,'の tail は none/tap/flick/trace/damage');
+    if(d.from!==undefined){const ml=d.moveLen??1,ma=d.moveAt??2;if(!inR(d.from,d.width||1)||!(ml>0)||ma<ml)bad(i,'の from/moveAt/moveLen が不正です')}
+  });
+}
+
+// ===== テンポ・ソフラン =====
+// 拍→秒: テンポ変化に対応。落下は「秒」基準なのでBPMが変わっても速さは変わらない
+function B2S(b){let i=TM.length-1;while(i>0&&TM[i].beat>b)i--;return TM[i].sec+(b-TM[i].beat)*60/TM[i].bpm}
+// スクロール位置 S(t)=∫速度dt。全体ソフラン×レイヤーを区間ごとに2次式で厳密に積分(ramp対応)
+function mkScroll(g,l){
+  const ts=[...new Set([0,...g.map(f=>f.t),...l.map(f=>f.t)])].sort((a,b)=>a-b);
+  const segs=[];let S=0;
+  const ev=(tl,a,m)=>{
+    let k=-1;for(let i=0;i<tl.length;i++)if(tl[i].t<=m)k=i;
+    if(k<0)return [1,0];
+    const f=tl[k],nx=tl[k+1];
+    if(f.ramp&&nx&&nx.t>f.t){const sl=(nx.v-f.v)/(nx.t-f.t);return [f.v+sl*(a-f.t),sl]} // 同時刻のマーカーでは0除算しない
+    return [f.v,0];
+  };
+  ts.forEach((a,i)=>{
+    const b=ts[i+1],m=b===undefined?a+1:(a+b)/2;
+    const [gv,gs]=ev(g,a,m),[lv,ls]=ev(l,a,m);
+    const sg={a,S0:S,c0:gv*lv,c1:gv*ls+gs*lv,c2:gs*ls};
+    segs.push(sg);
+    if(b!==undefined){const x=b-a;S+=sg.c0*x+sg.c1*x*x/2+sg.c2*x*x*x/3}
+  });
+  return segs;
+}
+function spos(k,t){
+  const segs=SC.get(k);
+  if(t<0)return t; // 0秒より前(助走)は常に×1
+  let lo=0,hi=segs.length-1;
+  while(lo<hi){const m=(lo+hi+1)>>1;if(segs[m].a<=t)lo=m;else hi=m-1}
+  const q=segs[lo],x=t-q.a;
+  return q.S0+q.c0*x+q.c1*x*x/2+q.c2*x*x*x/3;
+}
+
+function mirrorChart(c){ // ミラー譜面: レーンを左右反転(レーン数は同じ)
+  const N=c.lanes,f=(l,w)=>N-l-(w||1);
+  return {...c,notes:c.notes.map(d=>{
+    const o={...d};
+    if(d.points)o.points=d.points.map(p=>({...p,lane:f(p.lane,p.width)}));
+    else{o.lane=f(d.lane,d.width);if(d.from!==undefined)o.from=f(d.from,d.width)}
+    return o;
+  })};
+}
+function compile(c){
+  const tp=c.tempo||[{beat:0,bpm:c.bpm}];
+  TM=[];let sec=0;
+  tp.forEach((q,i)=>{if(i){const p=tp[i-1];sec+=(q.beat-p.beat)*60/p.bpm}TM.push({beat:q.beat,bpm:q.bpm,sec})});
+  const mk=fr=>(fr||[]).map(f=>({t:B2S(f.beat),v:f.speed,ramp:!!f.ramp})).sort((x,y)=>x.t-y.t);
+  const gt=CFG.constSpeed?[]:mk(c.scroll); // 等速: ソフラン(scroll/layers)を無視
+  SC=new Map([[0,mkScroll(gt,[])]]);
+  for(const k in c.layers||{})SC.set(k,mkScroll(gt,CFG.constSpeed?[]:mk(c.layers[k])));
+  const out=[];let lastBeat=0;
+  for(const d of c.notes){
+    const n={type:d.type,lane:d.lane,w:d.width||1,crit:!!d.crit,color:d.color,t:B2S(d.beat??0),bt:d.beat??0,done:false,sc:d.layer===undefined?0:String(d.layer)};
+    if(d.from!==undefined){const ma=d.moveAt??2,ml=d.moveLen??1;n.from=d.from;n.m0=n.t-B2S(d.beat-ma);n.m1=n.t-B2S(d.beat-(ma-ml))}
+    lastBeat=Math.max(lastBeat,(d.type==='slide'||d.type==='guide')?d.points[d.points.length-1].beat:d.beat+(d.len||0));
+    if(d.type==='long'||d.type==='slide'||d.type==='guide'){
+      const ps=d.type==='long'?[{beat:d.beat,lane:d.lane,width:d.width||1},{beat:d.beat+d.len,lane:d.lane,width:d.width||1}]:d.points;
+      n.pts=ps.map(p=>({t:B2S(p.beat),lane:p.lane,w:p.width||1,curve:p.curve||d.curve,col:p.color}));
+      n.t=n.pts[0].t;n.lane=n.pts[0].lane;n.w=n.pts[0].w;
+      n.len=n.pts[n.pts.length-1].t-n.t;n.ti=0;n.ticks=[];
+      const b0=ps[0].beat,b1=ps[ps.length-1].beat;
+      for(let k=1;b0+k*.5<b1-1e-9;k++)n.ticks.push(B2S(b0+k*.5)); // 8分音符ごと(始点・終点の位置には置かない)
+      n.tsfx=n.ticks.map(()=>false); // 各判定点でSEを鳴らすか(中継点だけtrue、8分判定は無音)
+      n.rl=[];
+      if(Array.isArray(d.relays)){ // 中継点: 指定した位置は判定点(ひし形)になる。その位置の8分判定は外し、中継点が無い場所の8分判定は残す
+        const rs=d.relays.filter(b=>b>b0+1e-9&&b<b1-1e-9).sort((x,y)=>x-y).filter((b,i,a)=>i===0||b-a[i-1]>1e-9); // 同じ拍の重複は1つに
+        n.rl=rs.map(B2S);
+        if(d.type!=='guide'&&rs.length){
+          const gb=[];for(let k=1;b0+k*.5<b1-1e-9;k++)gb.push(b0+k*.5);
+          const mg=[...gb.filter(g=>!rs.some(r=>Math.abs(r-g)<1e-6)).map(b=>[b,false]),...rs.map(b=>[b,true])].sort((x,y)=>x[0]-y[0]);
+          n.ticks=mg.map(x=>B2S(x[0]));n.tsfx=mg.map(x=>x[1]);
+        }
+      }
+      // 既定: slide=始点タップ/終点ホールド(見た目タップ・判定トレース)、guide=判定なし・始点終点なし
+      const isG=d.type==='guide',hk=d.head??(isG?'none':'tap'),tk=d.tail??(d.type==='slide'?'hold':'none'),pl=n.pts[n.pts.length-1];
+      n.hrect=!isG&&hk==='tap';n.hcol=d.headColor||d.color;
+      const ex=(k,lane,w,crit,color,t)=>out.push({type:k==='hold'?'trace':k,look:k==='hold'?'tap':undefined,lane,w,crit:!!crit,color,t,done:false,sc:n.sc,ct:d.type,par:n,kd:k});
+      if(isG||!n.hrect){n.head=true;if(hk!=='none')ex(hk,n.lane,n.w,d.headCrit??d.crit,d.headColor||d.color,n.t)}
+      if(tk!=='none')ex(tk,pl.lane,pl.w,d.tailCrit??d.crit,d.tailColor||d.color,pl.t);
+    }
+    out.push(n);
+  }
+  const ms=c.meter||[{beat:0,num:4,den:4}],bb=[];
+  ms.forEach((m,i)=>{const st=m.num*4/m.den,to=i+1<ms.length?ms[i+1].beat:lastBeat+8;for(let b=m.beat;b<to-1e-9;b+=st)bb.push(b)});
+  bars=bb.map(B2S);barSet=new Set(bb);
+  out.sort((x,y)=>x.t-y.t);
+  end=Math.max(...out.map(n=>n.t+(n.len||0)))+3;
+  return out;
+}
+
+// ===== 音 =====
+function beep(f,v,d,at){const o=ctx.createOscillator(),a=ctx.createGain();o.frequency.value=f;o.connect(a);a.connect(ctx.destination);
+  const s=at??ctx.currentTime;a.gain.setValueAtTime(v,s);a.gain.exponentialRampToValueAtTime(.001,s+d);o.start(s);o.stop(s+d)}
+// ----- ノーツSE: 種別(tap/flick/trace/crit)ごとに音色・音量を持つ。音色は内蔵合成 or 読み込んだ音声ファイル -----
+const getCtx=()=>ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();
+const SEBUF={},SEEMB={},SERAW={}; // 種別 → 読み込んだ音声(開発者) / 埋め込み音声 / 読み込み元データ(書き出し用)
+const seDef=k=>SEEMB[k]?'embed':(DEFT[k]||'beep');
+const SEF={tap:1,flick:1.3,trace:.75,crit:1.75,critflick:2.3,crittrace:1.3,dmghit:.5,dmgsafe:1}; // 内蔵音色の高さ倍率(種別で音程を変える)
+let NB=null,NBc=null;
+function noiseBuf(){if(NBc!==ctx){NBc=ctx;NB=ctx.createBuffer(1,ctx.sampleRate*.3|0,ctx.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1}return NB}
+function playSE(kind,v,at){ // v=0..1 の最終音量
+  const c=CFG.seCfg[kind],t=at??ctx.currentTime,out=ctx.createGain();
+  out.gain.value=v;out.connect(ctx.destination);
+  const ab=c.tone==='custom'?SEBUF[kind]:c.tone==='embed'?SEEMB[kind]:null;
+  if(ab){const s=ctx.createBufferSource();s.buffer=ab;s.connect(out);s.start(t);return}
+  const f=SEF[kind]||1,tone=c.tone==='custom'||c.tone==='embed'?'beep':c.tone;
+  const env=(g,pk,d)=>{g.gain.setValueAtTime(pk,t);g.gain.exponentialRampToValueAtTime(.001,t+d)};
+  const osc=(type,f0,f1,pk,d)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(f0,t);if(f1)o.frequency.exponentialRampToValueAtTime(f1,t+d);env(g,pk,d);o.connect(g);g.connect(out);o.start(t);o.stop(t+d+.02)};
+  const nz=(ft,fq,q,pk,d,o=0)=>{const s=ctx.createBufferSource(),b=ctx.createBiquadFilter(),g=ctx.createGain();s.buffer=noiseBuf();b.type=ft;b.frequency.value=fq;b.Q.value=q;g.gain.setValueAtTime(pk,t+o);g.gain.exponentialRampToValueAtTime(.001,t+o+d);s.connect(b);b.connect(g);g.connect(out);s.start(t+o);s.stop(t+o+d+.02)};
+  switch(tone){
+    case 'click':osc('triangle',900*f,450*f,.6,.04);break;
+    case 'tick':nz('highpass',7000,.7,.4,.05);break;
+    case 'drum':osc('sine',200*f,55,.9,.14);break;
+    case 'chime':osc('sine',1320*f,0,.3,.35);osc('sine',1980*f,0,.14,.25);break;
+    case 'pop':osc('sine',500*f,1100*f,.55,.07);break;
+    case 'clap':nz('bandpass',1800*f,1.2,.8,.05);nz('bandpass',1800*f,1.2,.8,.06,.012);break;
+    case 'off':break;
+    default:osc('sine',1100*f,0,.25,.07); // beep
+  }
+}
+function se(n,force){ // n=ノーツ。force=種別を強制(中継点の粒など)
+  if(!CFG.se||!ctx)return;
+  const b=force||(n.type==='flick'?'flick':n.type==='trace'?'trace':'tap');
+  const k=(force==='dmghit'||force==='dmgsafe')?force:n.crit?(b==='flick'?'critflick':b==='trace'?'crittrace':'crit'):b;
+  const c=CFG.seCfg[k],v=CFG.seVol/100*c.vol/100;
+  if(c.tone==='off'||v<=0)return;
+  playSE(k,v);
+}
+function seTest(k){getCtx();ctx.resume();playSE(k,CFG.seVol/100*CFG.seCfg[k].vol/100)} // 設定画面の試聴(SEのON/OFFに関係なく鳴らす)
+// 読み込んだ音声はブラウザ内(IndexedDB)に保存して次回も使う
+const idb=()=>new Promise((res,rej)=>{if(!window.indexedDB)return rej(Error('no idb'));const r=indexedDB.open('amatSE',1);r.onupgradeneeded=()=>r.result.createObjectStore('f');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+const idbTx=async(mode,fn)=>{const d=await idb();return new Promise((res,rej)=>{const t=d.transaction('f',mode),rq=fn(t.objectStore('f'));t.oncomplete=()=>res(rq&&rq.result);t.onerror=t.onabort=()=>rej(t.error)})};
+const idbPut=(k,v)=>idbTx('readwrite',s=>s.put(v,k)),idbGet=k=>idbTx('readonly',s=>s.get(k)),idbDel=k=>idbTx('readwrite',s=>s.delete(k));
+async function setSEFile(k,f){
+  getCtx();const ab=await f.arrayBuffer();let buf;
+  try{buf=await ctx.decodeAudioData(ab.slice(0))}catch(e){throw Error('音声を読み込めません(mp3/m4a/wav/ogg)')}
+  if(buf.duration>5)throw Error('長すぎます(5秒以内の短い効果音にしてください)');
+  SEBUF[k]=buf;SERAW[k]={name:f.name.slice(0,40),data:ab};const c=CFG.seCfg[k];c.tone='custom';c.name=f.name.slice(0,40);savePrefs();
+  try{await idbPut(k,{name:c.name,data:ab})}catch(e){}
+}
+function clearSEFile(k){delete SEBUF[k];delete SERAW[k];const c=CFG.seCfg[k];if(c.tone==='custom')c.tone=seDef(k);c.name='';savePrefs();idbDel(k).catch(()=>{})}
+const b64=ab=>{const u=new Uint8Array(ab);let t='';for(let i=0;i<u.length;i+=8192)t+=String.fromCharCode.apply(null,u.subarray(i,i+8192));return btoa(t)};
+const unb64=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0)).buffer;
+async function loadSE(){
+  for(const [k] of SEK){const e=SE_EMBED[k];if(!e||!e.data)continue;try{getCtx();SEEMB[k]=await ctx.decodeAudioData(unb64(e.data))}catch(x){}}
+  if(DEV)try{for(const [k] of SEK){const r=await idbGet(k);if(!r)continue;getCtx();try{SEBUF[k]=await ctx.decodeAudioData(r.data.slice(0));SERAW[k]={name:r.name||'',data:r.data};if(r.name)CFG.seCfg[k].name=r.name}catch(e){}}}catch(e){}
+  for(const k of CRITK){const c=CFG.seCfg[k]; // 専用の音声が無ければクリティカルの音声を共用
+    if(c.tone==='custom'&&!SEBUF[k]&&SEBUF.crit){SEBUF[k]=SEBUF.crit;SERAW[k]=SERAW.crit}
+    if(c.tone==='embed'&&!SEEMB[k]&&SEEMB.crit)SEEMB[k]=SEEMB.crit}
+  for(const [k] of SEK){const c=CFG.seCfg[k];if((c.tone==='custom'&&!SEBUF[k])||(c.tone==='embed'&&!SEEMB[k]))c.tone=seDef(k)}
+}
+
+let pv=false,pvT=0;
+const T=()=>pv?pvT:ctx.currentTime-song0-CFG.offset;
+
+// ===== 判定 =====
+// 判定のカテゴリ: tap/flick/trace/head(帯の始点)/edge(始点・終点に指定したノーツ)/relay(中継点)/tick(8分判定)。クリティカルは先頭にc
+const catN=n=>n.pts?'head':n.par?'edge':(n.type==='flick'?'flick':n.type==='trace'?'trace':'tap');
+function catCounts(ns){ // 判定カテゴリごとの個数
+  const r={},add=(cat,crit)=>{const k=(crit?'c':'')+cat;r[k]=(r[k]||0)+1};
+  for(const n of ns){
+    if(n.done||n.type==='damage'||n.type==='guide')continue;
+    if(n.pts){if(n.hrect)add('head',n.crit);n.ticks.forEach((_,i)=>add(n.tsfx[i]?'relay':'tick',n.crit))}
+    else add(catN(n),n.crit);
+  }
+  return r;
+}
+function calcSM(){ // この譜面の重み合計と、重み1あたりの点
+  const r=catCounts(notes);let W=0;for(const k in r)W+=r[k]*CFG.scoreCfg.w[k];
+  SM={W,unit:W>0?1e6/W:0};
+}
+function judge(j,crit,sd,cat){
+  last=j+(crit?' ★':'');lastT=T();cnt[j]=(cnt[j]||0)+1;
+  lastFL=null; // 直前の判定がfast/lateか(perfect以外でタイミングがあるときだけ)
+  if(sd!==undefined&&j!=='perfect'&&j!=='miss'){if(sd>0)late++;else fast++;lastFL=sd>0?'late':'fast'}
+  if(j!=='perfect')nonP++;
+  if(j==='bad'||j==='miss'){combo=0;brk++}else{combo++;maxCombo=Math.max(maxCombo,combo)}
+  if(cat)score+=SM.unit*CFG.scoreCfg.w[(crit?'c':'')+cat]*CFG.scoreCfg.acc[j];
+}
+const esc=t=>String(t).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
+function stopAudio(){try{src&&src.stop()}catch(e){}src=null}
+const ovl=(n,i)=>i+1>n.lane+.001&&i<n.lane+n.w-.001; // レーンiがノーツと重なっているか(小数位置のスライドはまたぐ両レーンが対象)
+const hd=n=>{for(let i=0;i<L;i++)if(held[i]>0&&ovl(n,i))return true;return false};
+const cover=(n,l)=>ovl(n,l);
+const nkind=n=>n.type==='tap'?'tap':n.type==='flick'?'flick':n.type==='trace'?'trace':n.type==='damage'?'damage':'head';
+function jname(k,sd){ // 時間差sd(秒,負=早い)→判定名。どれにも入らなければmiss(吸われたが範囲外=miss扱い)
+  const w=WC[k];
+  for(const j of NAMES){const a=w[j];if(sd<0?-sd<=a[0]:sd<=a[1])return j}
+  return 'miss';
+}
+function nearest(l,types,flag){ // そのレーンを覆うノーツのうち、missの範囲に入っていて時間が一番近いもの
+  let best=null,bd=9;const t=T();
+  for(const n of notes){
+    if(n.done||n.pd!==undefined||(flag&&n.head)||!types.includes(n.type)||!cover(n,l))continue;
+    const m=WC[nkind(n)].miss,sd=t-n.t;
+    if(sd<-m[0]||sd>m[1])continue;
+    const d=Math.abs(sd);
+    if(d<bd){best=n;bd=d}
+  }
+  return best&&{n:best,d:bd,sd:T()-best.t};
+}
+function press(l){ // タップ・ロング始点
+  const r=nearest(l,['tap','long','slide'],true);if(!r)return;
+  // この押下が、同じレーンのフリック/トレースのためのもの(時間的にそちらが近い)なら、タップを吸わない
+  const t=T();
+  for(const n of notes){
+    if(n.done||(n.type!=='flick'&&n.type!=='trace')||n.pd!==undefined||n.la||!cover(n,l))continue;
+    const w=n.type==='flick'?WC.flick.miss:WC.trace.hit,sd=t-n.t;
+    if(sd>=-w[0]&&sd<=w[1]&&Math.abs(sd)<r.d)return;
+  }
+  const j=jname(nkind(r.n),r.sd);
+  if(j==='miss'&&r.sd<0)return; // 判定範囲より早い入力は無視(ノーツを消費してミスにしない)
+  r.n.head=true;if(r.n.type==='tap')r.n.done=true;
+  judge(j,r.n.crit,r.sd,catN(r.n));if(j!=='miss')se(r.n);
+}
+function scrub(l,id){ // フリック（擦り）
+  const r=nearest(l,['flick'],false);if(!r)return;
+  if(r.sd<0){r.n.pd=id;return} // 判定タイミングより前の入力 → 丁度に入力したものとして待つ(update側で判定。待つ間に離したらrelPendで判定)
+  r.n.done=true;const j=jname('flick',r.sd);judge(j,r.n.crit,r.sd,catN(r.n));if(j!=='miss')se(r.n);
+}
+function relPend(id){ // 待機中に指を離した → 離した瞬間の時間差で判定
+  const t=T();
+  for(const n of notes){
+    if(n.done||n.pd!==id)continue;
+    const sd=t-n.t,j=jname('flick',sd);n.done=true;judge(j,n.crit,sd,catN(n));if(j!=='miss')se(n);
+  }
+}
+const ease=(c,u)=>c==='in'?u*u:c==='out'?1-(1-u)*(1-u):c==='smooth'?u*u*(3-2*u):u; // in=加速 out=減速
+function posAt(n,time){ // 帯ノーツの時刻ごとの左端レーン(小数)と幅
+  const p=n.pts;let i=0;
+  while(i<p.length-2&&time>p[i+1].t)i++;
+  const a=p[i],b=p[i+1];let u=Math.min(1,Math.max(0,(time-a.t)/(b.t-a.t)));
+  u=ease(a.curve,u);
+  return {lo:a.lane+(b.lane-a.lane)*u,w:a.w+(b.w-a.w)*u};
+}
+function holdsAt(n,time){
+  const q=posAt(n,time);
+  for(let i=0;i<L;i++)if(held[i]>0&&i+1>q.lo+.001&&i<q.lo+q.w-.001)return true;
+  return false;
+}
+function autoPlay(t){ // 譜面テストのオート再生: 時刻が来たノーツを全部perfectで処理
+  for(const n of notes){
+    if(n.done||n.t>t)continue;
+    if(n.type==='tap'||n.type==='flick'||n.type==='trace'){n.done=n.head=true;judge('perfect',n.crit,undefined,catN(n));se(n)}
+    else if(n.type==='damage'){n.done=true;se(n,'dmgsafe')}
+    else if(n.pts&&n.type!=='guide'){
+      if(!n.head){n.head=true;judge('perfect',n.crit,undefined,catN(n));se(n)}
+      while(n.ti<n.ticks.length&&n.ticks[n.ti]<=t){judge('perfect',n.crit,undefined,n.tsfx[n.ti]?'relay':'tick');if(n.tsfx[n.ti])se(n,'trace');n.ti++}
+    }
+  }
+}
+function update(){
+  const t=T(),pt=ut;ut=t;
+  if(autoRun)autoPlay(t);
+  for(const n of notes){
+    if(n.done)continue;
+    if(n.type==='tap'||n.type==='flick'){
+      if(n.pd!==undefined){if(t>=n.t){n.done=true;judge('perfect',n.crit,undefined,catN(n));se(n)}} // 早く擦った分は判定タイミング丁度で確定
+      else if(t>n.t+WC[n.type].miss[1]){n.done=n.head=true;judge('miss')}
+    }else if(n.type==='trace'){
+      const h=WC.trace.hit;
+      if(!n.la&&t>=n.t-h[0]&&hd(n))n.la=true; // 早く触れていたら「丁度に触れた」ことにして待つ
+      if(n.la){if(t>=n.t){n.done=true;judge('perfect',n.crit,undefined,catN(n));se(n)}}
+      else if(t>n.t+h[1]){n.done=true;judge('miss')}
+    }else if(n.type==='damage'){
+      const h=WC.damage.hit; // 前フレーム〜今フレームが範囲と重なればOK(短い範囲でもフレームの隙間で漏れない)
+      if(t>=n.t-h[0]&&pt<=n.t+h[1]&&hd(n)){n.done=true;combo=0;brk++;lastFL=null;last='damage';lastT=t;se(n,'dmghit')} // 押してしまった
+      else if(t>n.t+h[1]){n.done=true;se(n,'dmgsafe')} // 押さずに通した
+    }else if(n.type==='guide'){
+      if(t>n.t+n.len)n.done=true;
+    }else{
+      if(!n.head&&t>n.t+WC.head.miss[1]){n.head=true;judge('miss')}
+      const h=WC.tick.hit;
+      while(n.ti<n.ticks.length){
+        const tk=n.ticks[n.ti];
+        if(!n.tla&&t>=tk-h[0]&&(holdsAt(n,tk)||(t<=tk+h[1]&&holdsAt(n,t))))n.tla=true; // 判定時刻の位置だけでなく、今見えている帯の位置を押していてもOK
+        if(n.tla){if(t>=tk){judge('perfect',n.crit,undefined,n.tsfx[n.ti]?'relay':'tick');if(n.tsfx[n.ti])se(n,'trace');n.tla=false;n.ti++}else break}
+        else if(t>tk+h[1]){judge('miss');n.ti++}
+        else break;
+      }
+      if(n.head&&n.ti>=n.ticks.length&&t>=n.t+n.len)n.done=true; // 終点の時刻までは帯を残す
+    }
+  }
+}
+
+// ===== 入力（マルチタッチ。指を滑らせてレーン移動もOK）=====
+// レーン配置: レーンの太さは4〜6レーンで共通(細め)。4レーンは従来の間隔のまま隙間が広め、6レーンは間隔を詰めて内側に寄せる。7レーン以上は従来どおり全幅
+function geom(w){
+  const p6=w/6,li=ST.li;let lp,G;
+  if(L>=7){lp=w/L;G=2*li*lp}
+  else{
+    const T=Math.max(w*.02,p6*(1-2*li)*.84),pt6=T+2*li*p6*.8,pt4=p6*(1-2*li)+2*li*p6*1.5; // T=レーンの太さ / pt6,pt4=6・4レーンのレーン間隔
+    lp=pt6+(6-L)*(pt4-pt6)/2;G=lp-T;
+  }
+  const rp=L>=7?lp:p6; // ノーツの大きさの基準(従来の6レーン相当で固定)
+  return {lp,rp,ox:(w-L*lp)/2,IN:G/2,PX:Math.max(0,(lp-rp*(1-2*ST.ni))/2),BX:Math.max(0,(lp-rp*(1-2*ST.bi))/2)};
+}
+// 押した位置→レーン。隙間は左右どちらか近いレーンに入る(レーン+左右半分の隙間が1マス)
+const laneAt=e=>{const G=geom(cv.clientWidth);return Math.min(L-1,Math.max(0,Math.floor((e.clientX-cv.getBoundingClientRect().left-G.ox)/G.lp)))};
+function setP(id,l){
+  const o=ptr.get(id);if(o===l)return;
+  if(o!==undefined)held[o]--;
+  if(l===undefined){ptr.delete(id);return}
+  ptr.set(id,l);held[l]++;
+  if(o===undefined)press(l);
+}
+cv.addEventListener('pointerdown',e=>{if(!run)return;try{cv.setPointerCapture(e.pointerId)}catch(x){}pp.set(e.pointerId,[e.clientX,e.clientY]);setP(e.pointerId,laneAt(e))});
+cv.addEventListener('pointermove',e=>{
+  if(!run||!ptr.has(e.pointerId))return;
+  const l=laneAt(e);setP(e.pointerId,l);
+  const p=pp.get(e.pointerId);
+  if(p&&Math.hypot(e.clientX-p[0],e.clientY-p[1])>=3){pp.set(e.pointerId,[e.clientX,e.clientY]);scrub(l,e.pointerId)}
+});
+['pointerup','pointercancel'].forEach(k=>cv.addEventListener(k,e=>{if(run)relPend(e.pointerId);pp.delete(e.pointerId);setP(e.pointerId)}));
+
+// ===== 描画（元ゲーム風）=====
+const $=id=>document.getElementById(id);
+const KS={4:'DFJK',6:'SDFJKL',8:'ASDFJKL;'};
+// ===== 見た目パラメータ(見た目調整パネルで変更・保存される)=====
+const ST0={bg:'#000000',lane:'#4d4d4d',lc0:'#22ffff',lc1:'#ffa0ff',lc2:'#ffff99',lc3:'#33ee00',bw:4,li:.075,judge:'#ff1818',jw:3,key:'#66ff99',ks:.38,
+ nh:.13,ni:.165,inner:.5,tp:'#10c8ff',fl:'#ff66cc',sl:'#99ff44',cr:'#ffd21a',dm:'#a040ff',dmo:'#ff1010',tr:'#b4ff9a',rl:'#00e68a',
+ chs:1.05,cho:4,bi:.26,ba:.9,bt:'#a6ffcc',bb:'#99ffbb',gd:'#7cf0b0',ga:.4,sc:'#c8ffff',sw:4,cl:'#f4a09c',cn:'#ffffff',cs:.24,jt:80};
+let ST={...ST0};try{Object.assign(ST,JSON.parse(localStorage.getItem('amatStyle2')||'{}'))}catch(e){}
+function rr(x,y,w,h,r){r=Math.min(r,w/2,h/2);g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+function pill(x,y,ww,col,ph,crit){ // 色つきの丸いノーツ+白い芯
+  rr(x,y-ph/2,ww,ph,ph/2);g.fillStyle=col;g.fill();
+  const ih=ph*ST.inner;rr(x+ph*.45,y-ih/2,ww-ph*.9,ih,ih/2);g.fillStyle='#fff';g.fill();
+}
+function diamond(cx,y,s,col){
+  g.beginPath();g.moveTo(cx,y-s);g.lineTo(cx+s,y);g.lineTo(cx,y+s);g.lineTo(cx-s,y);g.closePath();g.fillStyle=col;g.fill();
+  g.beginPath();g.moveTo(cx,y-s*.4);g.lineTo(cx+s*.4,y);g.lineTo(cx,y+s*.4);g.lineTo(cx-s*.4,y);g.closePath();g.fillStyle='#fff';g.fill();
+}
+function chevron(cx,ty,s,col){ // フリックの山形(白縁)
+  const P=[[-62,-31],[0,-70],[62,-31],[62,-5],[0,-43],[-62,-5]];
+  g.beginPath();P.forEach((p,k)=>k?g.lineTo(cx+p[0]*s,ty+p[1]*s):g.moveTo(cx+p[0]*s,ty+p[1]*s));g.closePath();
+  g.fillStyle=col;g.fill();g.lineWidth=Math.max(1,ST.cho*s);g.lineJoin='miter';g.strokeStyle='#fff';g.stroke();
+}
+function ncol(n){ // 通常タップ=水色 / フリック=ピンク / ロング始終点=黄緑 / クリティカル=黄
+  if(n.color)return n.color;
+  if(n.type==='damage')return ST.dm;
+  if(n.crit)return ST.cr;
+  if(n.kd==='flick'||n.kd==='trace')return n.kd==='flick'?ST.fl:ST.tp; // 始点・終点にフリック/トレースを指定した場合は通常ノーツと同じ色(色指定があればそちら)
+  if(n.ct==='slide')return ST.sl;if(n.ct==='guide')return ST.gd;
+  return n.type==='flick'?ST.fl:ST.tp;
+}
+const comboGrad=(k,y0,y1)=>{const q=g.createLinearGradient(0,y0,0,y1),c=k==='ap'?['#8fd2ff','#9fa8ff','#b88cf2']:['#f070c0','#f08aa0','#f2a070'];q.addColorStop(0,c[0]);q.addColorStop(.5,c[1]);q.addColorStop(1,c[2]);return q};
+function draw(){
+  const w=cv.clientWidth,h=cv.clientHeight,jy=h*CFG.judgeY,GM=geom(w),lw=GM.lp,ox=GM.ox,rp=GM.rp,lw0=w/L,t=T(),IN=GM.IN,PX=GM.PX,BX=GM.BX,ph=Math.max(10,Math.min(rp*ST.nh,70)),LC=[ST.lc0,ST.lc1,ST.lc2,ST.lc3];
+  const sn=new Map(),Y=(n,x)=>{const k=n.sc;if(!sn.has(k))sn.set(k,spos(k,t));return jy-(spos(k,x)-sn.get(k))/CFG.scroll*jy};
+  g.fillStyle=ST.bg;g.fillRect(0,0,w,h);
+  for(let i=0;i<L;i++){
+    const x0=ox+i*lw+IN,bw=lw-2*IN;g.fillStyle=ST.lane;g.fillRect(x0,0,bw,h);
+    if(held[i]>0){g.fillStyle='rgba(255,255,255,.16)';g.fillRect(x0,0,bw,h)}
+    g.fillStyle=LC[i%4];g.fillRect(x0-ST.bw/2,0,ST.bw,h);g.fillRect(x0+bw-ST.bw/2,0,ST.bw,h);
+  }
+  g.strokeStyle='rgba(255,255,255,.14)';g.lineWidth=1;
+  const s0=spos(0,t);
+  for(const bt of bars){const yb=jy-(spos(0,bt)-s0)/CFG.scroll*jy;if(yb>0&&yb<h){g.beginPath();g.moveTo(0,yb);g.lineTo(w,yb);g.stroke()}}
+  g.fillStyle=ST.judge;g.fillRect(0,jy-ST.jw/2,w,ST.jw);
+  const ks=CFG.keys&&KS[L];if(ks){g.font=`${rp*ST.ks}px system-ui`;g.textAlign='center';g.fillStyle=ST.key;for(let i=0;i<L;i++)g.fillText(ks[i],ox+(i+.5)*lw,jy+(h-jy)*.5+rp*.13)}
+  if(CFG.simul){ // 同時押しライン
+    const gr=new Map();
+    for(const n of notes){
+      if(n.done)continue;
+      const tp=n.pts?(n.type!=='guide'&&n.hrect&&!n.head):n.type!=='damage'; // ダメージ・ガイド・中継点(粒)以外の全ノーツ(トレース含む)。帯ノーツは始点が四角のときだけ
+      if(!tp)continue;
+      const key=Math.round(n.t*1000)+'|'+n.sc;
+      if(!gr.has(key))gr.set(key,[]);gr.get(key).push(n);
+    }
+    g.strokeStyle=ST.sc;g.lineWidth=ST.sw;
+    for(const arr of gr.values()){
+      if(arr.length<2)continue;
+      arr.sort((p,q)=>p.lane-q.lane);
+      const yy=Y(arr[0],arr[0].t);if(yy<-10||yy>h+10)continue;
+      for(let i=0;i<arr.length-1;i++){const p=arr[i],q=arr[i+1];g.beginPath();g.moveTo(ox+(p.lane+p.w/2)*lw,yy);g.lineTo(ox+(q.lane+q.w/2)*lw,yy);g.stroke()}
+    }
+  }
+  const bg=g.createLinearGradient(0,0,0,jy);bg.addColorStop(0,ST.bt);bg.addColorStop(1,ST.bb);
+  for(const n of notes){
+    if(n.done)continue;
+    const y=Y(n,n.t),col=ncol(n);
+    let u=1;
+    if(n.from!==undefined)u=Math.min(1,Math.max(0,(n.m0-(n.t-t))/(n.m0-n.m1)));
+    const ww=n.w*lw-2*PX,x=ox+(n.from!==undefined?n.from+(n.lane-n.from)*u:n.lane)*lw+PX;
+    if(n.pts){
+      const t0=n.head?Math.max(n.t,t):n.t,isG=n.type==='guide';
+      g.globalAlpha=isG?ST.ga:ST.ba;
+      for(let i=0;i<n.pts.length-1;i++){
+        const a=n.pts[i],b=n.pts[i+1],s1=Math.max(a.t,t0);if(b.t<=s1)continue;
+        const Ls=[],Rs=[];
+        for(let k=0;k<=24;k++){const tm=s1+(b.t-s1)*k/24,q=posAt(n,tm),yy=Y(n,tm);Ls.push([ox+q.lo*lw+BX,yy]);Rs.push([ox+(q.lo+q.w)*lw-BX,yy])}
+        g.fillStyle=a.col||(isG?(n.color||ST.gd):(n.color||bg));g.beginPath();
+        Ls.forEach((p,k)=>k?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));
+        Rs.reverse().forEach(p=>g.lineTo(p[0],p[1]));
+        g.closePath();g.fill();
+      }
+      g.globalAlpha=1;
+      if(n.hrect){const q0=posAt(n,t0);pill(ox+q0.lo*lw+PX,Y(n,t0),q0.w*lw-2*PX,n.hcol||n.color||(n.crit?ST.cr:ST.sl),ph,n.crit)}
+      for(const tm of n.rl||[]){ // 中継点(トレース風のひし形)
+        if(tm<t)continue;const yy=Y(n,tm);if(yy<-10||yy>h+10)continue;
+        const q=posAt(n,tm);diamond(ox+(q.lo+q.w/2)*lw,yy,ph*.5,ST.rl);
+      }
+    }else if(y>-40&&y<h+40){
+      if(u<1){g.globalAlpha=.25;pill(ox+n.lane*lw+PX,y,ww,col,ph);g.globalAlpha=1}
+      if(n.type==='trace'&&!n.look){rr(x,y-ph*.28,ww,ph*.56,ph*.28);g.fillStyle=n.color||(n.crit?ST.cr:ST.tr);g.fill();diamond(x+ww/2,y,ph*.62,ST.rl)}
+      else if(n.type==='damage'){
+        const bw=3; // 赤い縁の太さ(棒の内側に収める)
+        rr(x,y-ph/2,ww,ph,ph/2);
+        g.fillStyle=ST.dmo;g.fill();            // 外側(赤い縁) 高さ=ph
+        rr(x+bw,y-ph/2+bw,ww-2*bw,ph-2*bw,(ph-2*bw)/2);
+        g.fillStyle=col;g.fill();               // 内側(紫の本体)
+        const cx=x+ww/2,s=ph*.5;g.lineCap='round';
+        for(const [c,l2] of [[ST.dmo,ph*.34],['#fff',ph*.18]]){
+          g.strokeStyle=c;g.lineWidth=l2;g.beginPath();
+          g.moveTo(cx-s,y-s);g.lineTo(cx+s,y+s);
+          g.moveTo(cx+s,y-s);g.lineTo(cx-s,y+s);g.stroke();
+        }
+        g.lineCap='butt';
+      }else{pill(x,y,ww,col,ph,n.crit);if(n.type==='flick')chevron(x+ww/2,y-ph/2,rp/245*ST.chs,col)}
+    }
+  }
+  g.textAlign='center';
+  const cy=h*.6,age=t-lastT;
+  if(age<.7&&last){const k=Math.max(0,1-age/.25),sz=ST.jt*.5+ST.jt*.5*k;g.font=`${sz}px system-ui`;g.fillStyle='#fff';g.fillText(last.replace(' ★',''),w/2,cy);
+    if(CFG.flDisp&&lastFL){ // perfect以外: 判定名の上に fast/late(リザルトと同じ色・書体。暗い背景でも読めるよう白フチ付き)
+      g.save();g.font=`${Math.max(16,sz*.42)}px Georgia,serif`;g.lineJoin='round';g.lineWidth=4;g.strokeStyle='#fff';g.fillStyle=lastFL==='late'?'red':'#2255ff';
+      g.strokeText(lastFL,w/2,cy-sz*.95);g.fillText(lastFL,w/2,cy-sz*.95);g.restore()}}
+  const ls=Math.max(14,lw0*.11),ns=Math.max(28,lw0*ST.cs);
+  g.font=`${ls}px Georgia,serif`;g.fillStyle=ST.cl;g.fillText('COMBO',w/2,cy+ls*1.8);
+  const fx=CFG.comboFx&&!pv&&brk===0?(nonP===0?'ap':'fc'):null,by=cy+ls*1.8+ns*.95; // AP継続=青紫 / フルコン継続=ピンク〜オレンジ
+  g.font=`${ns}px Georgia,serif`;g.fillStyle=fx?comboGrad(fx,by-ns*.75,by):ST.cn;g.fillText(combo,w/2,by);g.fillStyle=ST.cn;
+  if(CFG.showScore){g.font='14px system-ui';g.fillText('SCORE '+Math.floor(score),w/2,22)}
+  if(t>end-2){ // 終了演出: ALL PERFECT / FULL COMBO / Live Clear
+    const fc=brk===0,ap=fc&&nonP===0,yy=h*.45;g.globalAlpha=Math.min(1,(t-(end-2))/.5);
+    g.font=`${ap||fc?'italic 800 ':''}${Math.min(w*(ap||fc?.1:.14),ap||fc?64:90)}px system-ui`;
+    g.fillStyle=ap||fc?comboGrad(ap?'ap':'fc',yy-50,yy+6):'#fff';g.fillText(ap?'ALL PERFECT':fc?'FULL COMBO':'Live Clear',w/2,yy);g.globalAlpha=1}
+}
+const playUI=v=>{$('rt').style.display=$('hm').style.display=v?'block':'none';$('hm').textContent=testMode?'テストへ':'選曲へ'};
+function loop(){
+  if(!run)return;
+  update();draw();
+  if(T()>end){run=false;stopAudio();playUI(false);show(true);return}
+  requestAnimationFrame(loop);
+}
+$('rt').onclick=()=>{run=false;start()};
+$('hm').onclick=()=>{run=false;stopAudio();playUI(false);testMode?showTest():showSelect()};
+
+// ===== 画面(タイトル/結果/設定) =====
+const DECO='<i class="dn" style="top:17%;left:11%;transform:rotate(-18deg)"></i><i class="dn p" style="top:22%;right:12%;transform:rotate(12deg)"></i><i class="dn r" style="top:12%;left:46%;transform:rotate(-30deg)"></i>';
+function show(fin){
+  ov.style.display='flex';ov.className=fin?'result':'title';
+  if(fin)return showResult();
+  const sel=custom
+    ?`<p style="font-size:17px">譜面: ${esc(custom.title||'(無題)')} / ${custom.lanes}レーン / BPM ${custom.bpm||custom.tempo[0].bpm}</p><button class="sm" id="demo">デモ譜面に戻す</button>`
+    :'<div class="row">'+[4,6,7,8].map(n=>`<button class="sm ${n===L?'on':''}" data-n="${n}">${n}レーン</button>`).join('')+'</div>';
+  ov.innerHTML='<div class="frame"></div>'+DECO+'<div class="logo"><div class="bw"><div class="blade"></div></div><b>天照</b><i>amatYraSEN</i></div><div class="sub">簡単!?リズムゲーム</div><div id="upd" class="upd"></div><button class="px" id="go">PLAY</button><button class="sm on" id="tst" style="font-size:16px;padding:8px 22px">🛠 譜面テスト</button>'+sel
+    +'<div class="row"><button class="sm" id="load">譜面JSON</button><button class="sm" id="aud">曲を読み込む</button><button class="sm" id="set">設定</button><button class="sm fsb" id="fs">'+fsLabel()+'</button>'+(DEV?'<button class="sm" id="tune">見た目調整</button>':'')+'</div>'
+    +(audioName?`<p style="font-size:16px">曲: ${esc(audioName)}</p>`:'')+'<input id="f" type="file" accept=".json,application/json" hidden><input id="a" type="file" accept="audio/*" hidden>'
+    +(msg?`<p style="color:var(--dm);font-weight:700">${esc(msg)}</p>`:'')+'<div class="ver">ver.proto'+(DEV?' [DEV]':'')+'</div>';
+  renderUpd();
+  ov.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{L=+b.dataset.n;show(false)});
+  const d=$('demo');if(d)d.onclick=()=>{custom=null;msg='';show(false)};
+  const f=$('f');$('load').onclick=()=>f.click();
+  f.onchange=async()=>{try{const c=JSON.parse(await f.files[0].text());validate(c);custom=c;msg=''}catch(e){msg='読み込めません: '+e.message}show(false)};
+  const au=$('a');$('aud').onclick=()=>au.click();
+  au.onchange=async()=>{try{ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();audioBuf=await ctx.decodeAudioData(await au.files[0].arrayBuffer());audioName=au.files[0].name;msg=''}catch(e){msg='曲を読み込めません(mp3/m4a/wav/ogg)'}show(false)};
+  $('set').onclick=()=>{setBack=()=>show(false);showSet()};if(DEV)$('tune').onclick=startTune;$('go').onclick=showSelect;$('tst').onclick=showTest;$('fs').onclick=toggleFS;
+  {let c=0,t0=0;ov.querySelector('.ver').onclick=()=>{const n=Date.now();c=n-t0<1500?c+1:1;t0=n;if(c>=7){c=0;try{localStorage.setItem('amatDev',DEV?'':'1')}catch(e){}location.reload()}}}
+}
+const SETS=[
+  {n:'ノーツ速度',st:[1,.1,.01],get:()=>1.65/CFG.scroll,set:v=>CFG.scroll=1.65/v,min:.5,max:12,def:1.5},
+  {n:'タイミング調整(ms)',st:[10,1,.1],get:()=>CFG.offset*1000,set:v=>CFG.offset=v/1000,min:-500,max:500,def:0}
+];
+const TOGS=[['ミラー譜面','mirror'],['スコア表示','showScore'],['等速','constSpeed'],['オート','auto'],['コンボ演出','comboFx'],['FAST/LATE表示','flDisp'],['SE','se'],['同時押しライン','simul'],['キー表示','keys']];
+const rnd=v=>+(+v).toFixed(2);
+function showSet(){
+  const keep=ov.className==='set'?ov.scrollTop:0;
+  ov.style.display='flex';ov.className='set';
+  const tg=TOGS.map(([n,k])=>`<div class="tgi"><div class="lab"><span><b>${n}</b></span></div><div class="rdg"><button class="rdb ${CFG[k]?'sel':''}" data-k="${k}" data-v="1">on<i></i></button><button class="rdb ${CFG[k]?'':'sel'}" data-k="${k}" data-v="0"><i></i>off</button></div></div>`).join('');
+  const rows=SETS.map((s,i)=>`<div class="lab"><span><b>${s.n}</b></span></div><div class="ctl">`
+    +[...s.st].map(v=>`<button data-i="${i}" data-d="${-v}">-${v}</button>`).join('')
+    +`<span class="val">${rnd(s.get())}</span>`
+    +[...s.st].reverse().map(v=>`<button data-i="${i}" data-d="${v}">+${v}</button>`).join('')
+    +`<button data-i="${i}" data-r="1" style="color:#18d8e8">RESET</button></div>`).join('');
+  ov.innerHTML='<div class="frame"></div><button class="bk" id="bk">↩</button><div class="tgrid">'+tg+'</div>'+rows+'<div class="row" style="margin-top:16px"><button class="sm on" id="seb" style="font-size:16px;padding:8px 22px">ノーツSEの詳細設定 →</button></div>'+dsec()+(DEV?'<div class="row" style="margin-top:12px"><button class="sm on" id="wj" style="font-size:16px;padding:8px 22px">判定幅の設定(ms) →【開発者】</button></div><div class="row" style="margin-top:12px;margin-bottom:30px"><button class="sm on" id="scj" style="font-size:16px;padding:8px 22px">スコア配分の設定 →【開発者】</button></div>':'<div style="height:30px"></div>');
+  ov.scrollTop=keep;
+  $('bk').onclick=()=>setBack();$('seb').onclick=()=>showSE('set');if(DEV){$('wj').onclick=showWin;$('scj').onclick=showScoreCfg}
+  bindData();
+  ov.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{CFG[b.dataset.k]=b.dataset.v==='1';savePrefs();showSet()});
+  ov.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{
+    const s=SETS[+b.dataset.i];
+    s.set(b.dataset.r?s.def:Math.min(s.max,Math.max(s.min,rnd(s.get()+ +b.dataset.d))));
+    savePrefs();showSet();
+  });
+}
+const WK={tap:'タップ',flick:'フリック',head:'ロング・スライドの始点',trace:'トレース・終点ホールド',tick:'中継点(途中の粒)',damage:'ダメージ'};
+const WH={trace:'前: この時間より前から指が乗っていれば判定 / 後: この時間を過ぎても指が無いとmiss',tick:'前: 粒より何ms前から判定するか / 後: 粒を過ぎて何msまで待つか(0=ぴったり)',damage:'この範囲で指が乗っているとダメージ(前=何ms前から / 後=何ms後まで)'};
+const WCOL={perfect:'#8aa8ff',great:'#6a2cff',good:'#ff5a10',bad:'#1aa81a',miss:'#10105a',hit:'#e0a000'};
+function wbox(k){
+  const w=effWin(k),ks=Object.keys(w);let sc=50;
+  for(const j of ks)sc=Math.max(sc,w[j][0],w[j][1]);sc=Math.ceil(sc*1.05);
+  const seg=[...ks].reverse().map(j=>{const[a,b]=w[j];return `<i style="left:${50-a/sc*50}%;width:${(a+b)/sc*50}%;background:${WCOL[j]}"></i>`}).join('');
+  return `<div class="wb">${seg}<u></u></div><div class="wc"><span>← 早い -${sc}ms</span><span>遅い +${sc}ms →</span></div>`;
+}
+function showWin(){
+  ov.style.display='flex';ov.className='set';
+  let h='<div class="frame"></div><button class="bk" id="bk">↩</button><div style="height:46px"></div>'
+   +'<p style="font-size:12px;max-width:440px;text-align:left">各値はms。<b>前</b>=ノーツより早い側 / <b>後</b>=遅い側。タップ系は内側(perfect)から順に判定します。<br><b>miss</b>の前=ノーツがタッチを吸い始める位置(badより外でタップするとmiss扱いでノーツが消える)、後=この時間を過ぎると自動でmiss。missをbadと同じにすると、badの範囲=受付範囲になります(初期値)。</p>';
+  for(const k in WD){
+    h+=`<div class="lab"><span>${WK[k]}</span></div>`;
+    if(WH[k])h+=`<p style="font-size:11px;max-width:420px">${WH[k]}</p>`;
+    h+=`<div id="wbox_${k}">${wbox(k)}</div><div class="wr"><b></b><span style="width:62px;font-size:12px">前</span><span style="width:62px;font-size:12px">後</span></div>`;
+    for(const j in WD[k])h+=`<div class="wr"><b style="color:${WCOL[j]}">${j==='hit'?'反応範囲':j}</b><input type="number" inputmode="numeric" min="0" max="1000" data-k="${k}" data-j="${j}" data-s="0" value="${CFG.wins[k][j][0]}"><input type="number" inputmode="numeric" min="0" max="1000" data-k="${k}" data-j="${j}" data-s="1" value="${CFG.wins[k][j][1]}"></div>`;
+    h+=`<div class="row" style="margin-top:4px"><button class="sm" data-rk="${k}">リセット</button>${k==='flick'||k==='head'?`<button class="sm" data-ck="${k}">タップと同じ値にする</button>`:''}</div>`;
+  }
+  h+='<div class="row" style="margin:14px 0 6px"><button class="sm" id="wall">全部リセット</button><button class="sm on" id="wex">既定値用に書き出し</button></div><textarea id="wtx" rows="5" readonly style="width:min(88vw,420px);font-size:11px;margin-bottom:30px" placeholder="押すとここに出力されます"></textarea>';
+  ov.innerHTML=h;
+  $('bk').onclick=showSet;
+  ov.querySelectorAll('input[data-k]').forEach(el=>el.oninput=()=>{
+    let v=Math.round(+el.value);if(!isFinite(v)||el.value==='')return;v=Math.max(0,Math.min(1000,v));
+    CFG.wins[el.dataset.k][el.dataset.j][+el.dataset.s]=v;savePrefs();buildWC();$('wbox_'+el.dataset.k).innerHTML=wbox(el.dataset.k);
+  });
+  ov.querySelectorAll('[data-rk]').forEach(b=>b.onclick=()=>{CFG.wins[b.dataset.rk]=JSON.parse(JSON.stringify(WD[b.dataset.rk]));savePrefs();buildWC();showWin()});
+  ov.querySelectorAll('[data-ck]').forEach(b=>b.onclick=()=>{CFG.wins[b.dataset.ck]=JSON.parse(JSON.stringify(CFG.wins.tap));savePrefs();buildWC();showWin()});
+  $('wex').onclick=async()=>{const t='const WD='+JSON.stringify(CFG.wins)+';';$('wtx').value=t;$('wtx').select();try{await navigator.clipboard.writeText(t)}catch(e){}};
+  $('wall').onclick=()=>{CFG.wins=null;normWins();savePrefs();buildWC();showWin()};
+}
+const SCN={tap:'タップ',flick:'フリック',trace:'トレース',head:'ロング・スライド始点',edge:'始点・終点ノーツ',relay:'中継点',tick:'8分判定'};
+function showScoreCfg(){
+  ov.style.display='flex';ov.className='set';
+  const sc=CFG.scoreCfg;let cn={};
+  try{const c=custom||demoChart(L);cn=catCounts(compile(c))}catch(e){}
+  const calc=()=>{let W=0;for(const k in cn)W+=cn[k]*sc.w[k];return W>0?1e6/W:0};
+  const info=k=>{const u=calc(),n=cn[k]||0;return n?`${n}個 → 1個あたり最大 ${(u*sc.w[k]).toFixed(1)}点`:'この譜面には無し'};
+  let h='<div class="frame"></div><button class="bk" id="bk">↩</button><div style="height:46px"></div>'
+   +'<p style="font-size:12px;max-width:440px;text-align:left">各判定に<b>重み</b>を設定し、<b>重みの合計で100万点を按分</b>します。1回の得点＝(100万÷重みの合計)×重み×精度。<br>フルコンボ(コンボ切れ無し)でFCボーナス、さらにオールパーフェクトでAPボーナスを加算します。個数は現在の譜面(カスタム/デモ)で計算。</p>';
+  for(const base in SCN){
+    h+=`<div class="lab"><span>${SCN[base]}</span></div><div class="wr"><b></b><span style="width:62px;font-size:12px">通常</span><span style="width:62px;font-size:11px">クリティカル</span></div>`
+     +`<div class="wr"><b>重み</b><input type="number" inputmode="decimal" min="0" step="0.1" data-w="${base}" value="${sc.w[base]}"><input type="number" inputmode="decimal" min="0" step="0.1" data-w="c${base}" value="${sc.w['c'+base]}"></div>`
+     +`<div class="wc" style="width:min(88vw,420px)"><span id="si_${base}">${info(base)}</span><span id="si_c${base}">${info('c'+base)}</span></div>`;
+  }
+  h+='<div class="lab"><span>精度(重みに掛ける倍率 0〜1)</span></div>'
+   +NAMES.map(j=>`<div class="wr"><b style="color:${WCOL[j]}">${j}</b><input type="number" inputmode="decimal" min="0" max="1" step="0.05" data-a="${j}" value="${sc.acc[j]}"></div>`).join('')
+   +'<div class="lab"><span>ボーナス</span></div>'
+   +`<div class="wr"><b>FC</b><input type="number" inputmode="numeric" min="0" step="100" data-b="fc" value="${sc.fc}"></div><div class="wr"><b>AP(追加)</b><input type="number" inputmode="numeric" min="0" step="100" data-b="ap" value="${sc.ap}"></div>`
+   +'<p id="sfull" style="font-size:13px;margin:6px 0"></p>'
+   +'<div class="row" style="margin:10px 0 6px"><button class="sm" id="sall">全部リセット</button><button class="sm on" id="sex">既定値用に書き出し</button></div><textarea id="stx" rows="5" readonly style="width:min(88vw,420px);font-size:11px;margin-bottom:30px" placeholder="押すとここに出力されます"></textarea>';
+  ov.innerHTML=h;ov.scrollTop=0;
+  const refresh=()=>{for(const base in SCN)for(const k of [base,'c'+base])$('si_'+k).textContent=info(k);$('sfull').textContent=`満点 = 1,000,000 + FC ${sc.fc} + AP ${sc.ap} = ${(1e6+sc.fc+sc.ap).toLocaleString()}`};
+  refresh();
+  $('bk').onclick=showSet;
+  ov.querySelectorAll('input').forEach(el=>el.oninput=()=>{
+    const v=parseFloat(el.value);if(!isFinite(v)||v<0)return;
+    if(el.dataset.w)sc.w[el.dataset.w]=v;else if(el.dataset.a)sc.acc[el.dataset.a]=Math.min(1,v);else if(el.dataset.b)sc[el.dataset.b]=Math.round(v);
+    savePrefs();refresh();
+  });
+  $('sall').onclick=()=>{CFG.scoreCfg=null;normScore();savePrefs();showScoreCfg()};
+  $('sex').onclick=async()=>{const t='const SCD='+JSON.stringify(CFG.scoreCfg)+';';$('stx').value=t;$('stx').select();try{await navigator.clipboard.writeText(t)}catch(e){}};
+}
+function fitResult(){ // リザルト全体を、青枠(.frame)の内側に収まる大きさへ拡大縮小(画面の縦横どちらでもはみ出さない)
+  const f=$('rfit'),n=$('rin'),fr=ov.querySelector('.frame');if(!f||!n||!fr)return;
+  n.style.transform='none';
+  const W0=520,H0=n.offsetHeight,r=fr.getBoundingClientRect(),m=40; // m=枠の太さ+内側の余白
+  const k=Math.min((r.width-m)/W0,(r.height-m)/H0,1.8);
+  f.style.width=W0*k+'px';f.style.height=H0*k+'px';n.style.transform=`scale(${k})`;
+}
+addEventListener('resize',()=>{if(ov.className==='result')fitResult()});
+function showResult(){
+  const fc=brk===0,ap=fc&&nonP===0,bonus=(fc?CFG.scoreCfg.fc:0)+(ap?CFG.scoreCfg.ap:0);
+  const total=Math.round(score+bonus),ratio=SM.unit?Math.min(1,score/1e6):0;
+  let best=null,nr=false; // ハイスコアの更新(選曲から遊んだ時のみ。オート時は記録しない)
+  if(cur&&!autoRun){const k=hsKey(cur.song,cur.diff);best=HS[k]||0;if(total>best){best=total;nr=true;HS[k]=total;try{localStorage.setItem('amatHS',JSON.stringify(HS))}catch(e){}}}
+  const rk=ratio>=.95?'S':ratio>=.85?'A':ratio>=.7?'B':ratio>=.5?'C':'E';
+  const col={perfect:'#8aa8ff',great:'#6a2cff',good:'#ff5a10',bad:'#1aa81a',miss:'#10105a'};
+  const lt=late+fast,lp=lt?late/lt*100:50;
+  const tags=[`${L}レーン`+(cur?' / '+DNAME[cur.diff]:''),CFG.mirror?'MIRROR':'',CFG.constSpeed?'等速':'',autoRun?'AUTO':''].filter(Boolean).map(t=>`<span class="tag">${esc(t)}</span>`).join('');
+  const bn=ap?['ap','ALL PERFECT']:fc?['fc','FULL COMBO']:['','']; // LIVE CLEARは出さない(空欄のまま)
+  ov.innerHTML='<div class="frame"></div><div id="rfit"><div id="rin"><div class="res">'
+    +`<div class="hd"><div><b>${esc(cur?cur.song.title:(custom&&custom.title)||'デモ')}</b><br>${tags}</div>`
+    +`<div class="rb"><s style="width:${Math.min(100,ratio*100)}%"></s>${[[50,'C'],[70,'B'],[85,'A'],[95,'S']].map(([p,l])=>`<u style="left:${p}%"><em>${l}</em></u>`).join('')}</div><div class="md">${rk}</div></div>`
+    +`<div class="sc"><span class="l">スコア</span><span class="n">${String(total).padStart(7,'0')}</span></div>`
+    +(best!==null?`<div class="sc hs"><span class="l">ハイスコア</span><span class="n">${String(best).padStart(7,'0')}${nr?' NEW!':''}</span></div>`:'')
+    +'<div class="pn">'+NAMES.map(k=>`<div><span style="color:${col[k]}">${k}</span><span style="color:${col[k]}">${cnt[k]||0}</span></div>`).join('')+'</div>'
+    +`<div class="rc"><div class="bnr">${bn[0]?`<span class="bt ${bn[0]}">${bn[1]}</span>${bonus?`<small>BONUS +${bonus}</small>`:''}`:''}</div><div class="wh" style="background:#ffd8c0;border-radius:99px;display:flex;justify-content:space-between;font-family:Georgia,serif"><span style="color:#08d0e8">COMBO</span><span style="color:#08c8ff">${maxCombo}</span></div>`
+    +`<div class="wh fls" style="${CFG.flDisp?'':'visibility:hidden;'}font-family:Georgia,serif;display:grid;grid-template-columns:1fr 1fr;color:#e0e"><span>${late}</span><span style="text-align:right;color:#08c8ff">${fast}</span><span style="grid-column:1/-1"><div class="fl"><s style="width:${lp}%"></s></div></span><span style="color:red">late</span><span style="text-align:right;color:#2255ff">fast</span></div>`+'</div>'
+    +'</div><div class="row" style="margin-top:14px"><button class="sm rbtn" id="rt2">リトライ</button><button class="sm rbtn" id="tt" style="background:#ffd8f4;border-color:#ff8a8a;color:#2255ff">タイトルへ</button><button class="sm rbtn" id="sl2" style="background:#d8f0ff;border-color:#8ad0ff;color:#2255ff">選曲へ</button></div></div></div>';
+  fitResult();requestAnimationFrame(fitResult);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitResult); // 文字の読み込み後にも測り直す
+  $('rt2').onclick=start;$('tt').onclick=()=>show(false);$('sl2').onclick=showSelect;
+  if(testMode){$('sl2').textContent='テスト画面へ';$('sl2').onclick=showTest}
+}
+function start(){
+  buildWC();ut=-9;
+  ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();
+  ctx.resume();stopAudio();
+  let c=cur?songChart(cur.song,cur.diff):(custom||demoChart(L));
+  if(CFG.mirror)c=mirrorChart(c);
+  L=c.lanes;notes=compile(c);autoRun=CFG.auto;
+  held=Array(L).fill(0);ptr.clear();pp.clear();combo=maxCombo=score=late=fast=brk=nonP=0;lastFL=null;cnt={};last='';lastT=-9;
+  off=c.offset||0; // 曲の何秒目が譜面の0拍目か
+  let tS=0;const tm=testMode&&!cur; // tS=譜面テストの開始位置(秒)
+  if(tm){
+    if(TC.off!==''&&isFinite(+TC.off))off=+TC.off; // 画面で指定したオフセットを優先
+    const bb=barBeats(c),s0=Math.floor(+TC.sb),e0=Math.floor(+TC.eb);
+    if(TC.sb!==''&&s0>=1)tS=B2S(bb[Math.min(s0,bb.length)-1]);
+    if(tS>0)for(const n of notes)if(n.t<tS-1e-6||(n.par&&n.par.t<tS-1e-6))n.done=n.head=true; // 開始位置より前のノーツは出さない
+    if(TC.eb!==''&&e0>=Math.max(1,s0||1)&&e0<bb.length){const tE=B2S(bb[e0]);notes=notes.filter(n=>n.t<tE-1e-6);end=Math.max(tE,...notes.map(n=>n.t+(n.len||0)))+3}
+  }
+  calcSM();
+  const ab=cur&&cur.song.store?cur.song.buf:audioBuf; // ダウンロード曲は曲自身の音源
+  song0=ctx.currentTime+2+Math.max(0,off)-tS;
+  if(ab){
+    src=ctx.createBufferSource();src.buffer=ab;src.connect(ctx.destination);
+    const a=song0-off,n0=ctx.currentTime; // 曲の頭が鳴る時刻。途中開始なら今すぐ途中から鳴らす
+    if(a>=n0)src.start(a);else{const w=n0+.05;src.start(w,w-a)}
+  }
+  if(!ab||(tm&&TC.metro))for(let b=0;B2S(b)<end;b++){const at=song0+B2S(b);if(at>=ctx.currentTime)beep(barSet.has(b)?990:660,ab?.1:.05,.04,at)}
+  ov.style.display='none';playUI(true);run=true;fit();requestAnimationFrame(loop);
+}
+// ===== 見た目調整パネル =====
+const PVC={title:'見た目プレビュー',lanes:4,bpm:120,notes:[
+ {type:'tap',beat:4,lane:0},{type:'flick',beat:4,lane:1},{type:'tap',beat:4,lane:2},{type:'tap',beat:4,lane:3},
+ {type:'tap',beat:4.5,lane:0},{type:'flick',beat:4.5,lane:2},{type:'tap',beat:4.75,lane:1},{type:'tap',beat:4.875,lane:0},
+ {type:'trace',beat:5,lane:0},{type:'damage',beat:5,lane:1},{type:'tap',beat:5,lane:2,crit:true},
+ {type:'slide',points:[{beat:4.25,lane:3},{beat:6,lane:3}],relays:[5.25]},
+ {type:'guide',points:[{beat:5.25,lane:1,width:2},{beat:6.5,lane:1,width:2}]}]};
+const TUNE=[['--','ノーツの色'],['tp','通常タップ','c'],['fl','フリック','c'],['sl','ロング始点・終点','c'],['cr','クリティカル','c'],['tr','トレース','c'],['rl','ひし形(中継点)','c'],['dm','ダメージ','c'],['dmo','ダメージの縁','c'],
+ ['--','ノーツの形'],['nh','太さ','r',.06,.3,.005],['ni','左右の余白','r',0,.4,.005],['inner','白い芯の太さ','r',.1,.9,.02],['chs','山形の大きさ','r',.4,2,.05],['cho','山形の縁','r',0,8,.5],
+ ['--','レーン'],['bg','背景','c'],['lane','レーン','c'],['lc0','縁1','c'],['lc1','縁2','c'],['lc2','縁3','c'],['lc3','縁4','c'],['bw','縁の太さ','r',0,8,.5],['li','レーン間の隙間','r',0,.3,.005],['judge','判定線','c'],['jw','判定線の太さ','r',1,10,.5],['key','キー文字','c'],['ks','キー文字の大きさ','r',.1,.7,.02],
+ ['--','スライド・ガイド'],['bt','帯(上)','c'],['bb','帯(下)','c'],['ba','帯の濃さ','r',.1,1,.05],['bi','帯の左右余白','r',0,.45,.01],['gd','ガイド','c'],['ga','ガイドの濃さ','r',.05,1,.05],
+ ['--','線・文字'],['sc','同時押し線','c'],['sw','同時押し線の太さ','r',1,8,.5],['cl','COMBO文字','c'],['cn','コンボ数字','c'],['cs','コンボ数字の大きさ','r',.1,.5,.01],['jt','判定文字の大きさ','r',16,80,2]];
+const saveST=()=>{try{localStorage.setItem('amatStyle2',JSON.stringify(ST))}catch(e){}};
+const diffST=()=>{const o={};for(const k in ST0)if(ST[k]!==ST0[k])o[k]=ST[k];return JSON.stringify(o)};
+let flow=false;
+function pvLoop(){
+  if(!pv)return;
+  const base=B2S(3.7);pvT=flow?base+(performance.now()/1000%2.6):base;
+  lastT=pvT-.3;last='perfect';combo=128;score=123456;
+  draw();requestAnimationFrame(pvLoop);
+}
+function startTune(){
+  ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();
+  L=4;notes=compile(PVC);held=[0,0,0,0];pv=true;ov.style.display='none';
+  let tp=$('tp');if(!tp){tp=document.createElement('div');tp.id='tp';document.body.append(tp)}
+  tp.style.display='block';buildTune();requestAnimationFrame(pvLoop);
+}
+function buildTune(){
+  const tp=$('tp');
+  tp.innerHTML='<div class="trow"><button id="tx">戻る</button><button id="tf">'+(flow?'止める':'流す')+'</button><button id="th">パネル隠す</button></div>'
+   +TUNE.map(([k,n,t,a,b,s])=>k==='--'?`<h4>${n}</h4>`:t==='c'
+     ?`<label><span>${n}</span><input type="color" data-k="${k}" value="${ST[k]}"></label>`
+     :`<label><span>${n}</span><input type="range" data-k="${k}" min="${a}" max="${b}" step="${s}" value="${ST[k]}"><em>${ST[k]}</em></label>`).join('')
+   +'<h4>値の書き出し / 読み込み</h4><textarea id="tj" rows="4"></textarea><div class="trow"><button id="tc">変更点をコピー</button><button id="ta">貼り付けて適用</button><button id="tr">全部リセット</button></div>';
+  tp.querySelectorAll('input').forEach(el=>el.oninput=()=>{const k=el.dataset.k;ST[k]=el.type==='range'?+el.value:el.value;if(el.nextElementSibling)el.nextElementSibling.textContent=ST[k];saveST()});
+  $('tx').onclick=()=>{pv=false;tp.style.display='none';$('tshow').style.display='none';show(false)};
+  $('tf').onclick=()=>{flow=!flow;$('tf').textContent=flow?'止める':'流す'};
+  $('th').onclick=()=>{tp.style.display='none';$('tshow').style.display='block'};
+  $('tc').onclick=async()=>{const s=diffST();$('tj').value=s;try{await navigator.clipboard.writeText(s)}catch(e){}$('tj').select()};
+  $('ta').onclick=()=>{try{Object.assign(ST,JSON.parse($('tj').value));saveST();buildTune()}catch(e){alert('読み込めません')}};
+  $('tr').onclick=()=>{ST={...ST0};saveST();buildTune()};
+}
+// ===== ノーツSE設定画面 =====
+let setBack=()=>show(false),seMsg='';
+function showSE(from){ // from: 'set'=設定画面から / それ以外=選曲画面から
+  ov.style.display='flex';ov.className='set';
+  const back=()=>from==='set'?showSet():setBack();
+  const rer=()=>{const k=ov.scrollTop;showSE(from);ov.scrollTop=k};
+  let h='<div class="frame"></div><button class="bk" id="bk">↩</button><div style="height:40px"></div>'
+   +(seMsg?`<p style="color:#d00;font-weight:700;max-width:420px">${esc(seMsg)}</p>`:'')
+   +`<div class="lab"><span>ノーツSE</span></div><button class="tg" id="seon">${CFG.se?'☑ ON':'☐ OFF'}</button>`
+   +`<div class="lab"><span>全体の音量</span></div><div class="ctl"><input type="range" class="rg" id="sev" min="0" max="100" step="1" value="${CFG.seVol}"><span class="val sv" id="sevv">${CFG.seVol}</span></div>`;
+  for(const [k,n] of SEK){
+    const c=CFG.seCfg[k],has=DEV&&!!SEBUF[k],em=!!SEEMB[k],tone=c.tone==='custom'&&!has?seDef(k):c.tone==='embed'&&!em?'beep':c.tone;
+    const opts=SETONE.map(([v,l])=>`<option value="${v}"${tone===v?' selected':''}>${l}</option>`).join('')
+      +(em?`<option value="embed"${tone==='embed'?' selected':''}>★ ${esc((SE_EMBED[k]&&SE_EMBED[k].name)||'内蔵音声')}</option>`:'')
+      +(has?`<option value="custom"${tone==='custom'?' selected':''}>♪ ${esc(c.name||'読み込んだ音声')}</option>`:'');
+    h+=`<div class="sec"><div class="lab"><span>${n}</span></div>`
+     +`<div class="ctl"><select data-t="${k}">${opts}</select><button class="sm" data-p="${k}">▶ 試聴</button></div>`
+     +`<div class="ctl"><span style="font-size:14px">音量</span><input type="range" class="rg" data-v="${k}" min="0" max="100" step="1" value="${c.vol}"><span class="val sv" id="vv_${k}">${c.vol}</span></div>`
+     +(DEV?`<div class="ctl"><button class="sm" data-f="${k}">【開発者】音声ファイルを読み込む</button>${has?`<button class="sm" data-x="${k}">読込音声を削除</button>`:''}</div>`:'')+'</div>';
+  }
+  h+='<div class="row" style="margin:10px 0 30px"><button class="sm" id="serst">すべて初期値に戻す</button></div><input type="file" id="sef" accept="audio/*" hidden>'
+   +(DEV?'<div class="row" style="margin:0 0 6px"><button class="sm on" id="seex">【開発者】埋め込み用に書き出し</button></div><textarea id="setx" rows="5" readonly style="width:min(88vw,420px);font-size:11px;margin-bottom:30px" placeholder="押すと const SE_EMBED=... が出力されます(コピーされます)。HTML内の const SE_EMBED={}; と差し替えてください"></textarea>':'');
+  ov.innerHTML=h;
+  $('bk').onclick=back;
+  $('seon').onclick=()=>{CFG.se=!CFG.se;savePrefs();rer()};
+  $('sev').oninput=e=>{CFG.seVol=+e.target.value;$('sevv').textContent=CFG.seVol;savePrefs()};
+  $('sev').onchange=()=>seTest('tap');
+  ov.querySelectorAll('[data-t]').forEach(el=>el.onchange=()=>{CFG.seCfg[el.dataset.t].tone=el.value;savePrefs();seTest(el.dataset.t)});
+  ov.querySelectorAll('[data-v]').forEach(el=>{el.oninput=()=>{CFG.seCfg[el.dataset.v].vol=+el.value;$('vv_'+el.dataset.v).textContent=el.value;savePrefs()};el.onchange=()=>seTest(el.dataset.v)});
+  ov.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>seTest(b.dataset.p));
+  const fi=$('sef');let fk='';
+  ov.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{fk=b.dataset.f;fi.click()});
+  ov.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{clearSEFile(b.dataset.x);seMsg='';rer()});
+  fi.onchange=async()=>{const f=fi.files[0];if(!f)return;try{await setSEFile(fk,f);seMsg='';seTest(fk)}catch(e){seMsg=e.message||'音声を読み込めません'}rer()};
+  if(DEV)$('seex').onclick=async()=>{
+    const o={};let n=0;
+    for(const [k] of SEK){if(SERAW[k]&&!(CRITK.includes(k)&&SERAW[k]===SERAW.crit)){o[k]={name:SERAW[k].name,data:b64(SERAW[k].data)};n++}else if(SE_EMBED[k])o[k]=SE_EMBED[k]}
+    const t='const SE_EMBED='+JSON.stringify(o)+';',tx=$('setx');tx.value=n||Object.keys(o).length?t+'\n// '+Math.round(t.length/1024)+'KB':'(読み込んだ音声がありません)';tx.select();
+    try{await navigator.clipboard.writeText(t)}catch(e){}
+  };
+  $('serst').onclick=()=>{CFG.seVol=80;CFG.seCfg=null;normSE();for(const [k] of SEK){delete SEBUF[k];delete SERAW[k];idbDel(k).catch(()=>{})}seMsg='';savePrefs();rer()};
+}
+
+// ===== 全画面 =====
+const fsOn=()=>!!(document.fullscreenElement||document.webkitFullscreenElement);
+const fsLabel=()=>fsOn()?'⛶ 全画面を解除':'⛶ 全画面';
+function fsNote(t){ // 非対応・拒否されたときの案内を、いま開いている画面に出す
+  if($('tgo')){tMsg=[t];showTest()}else{msg=t;show(false)}
+}
+function toggleFS(){
+  const d=document,el=d.documentElement,rq=el.requestFullscreen||el.webkitRequestFullscreen,ex=d.exitFullscreen||d.webkitExitFullscreen;
+  const no='この環境では全画面にできません(iPhoneのSafariは非対応。共有→ホーム画面に追加から開くと全画面で遊べます)';
+  try{
+    if(fsOn()){ex&&ex.call(d);return}
+    if(!rq){fsNote(no);return}
+    const r=rq.call(el);if(r&&r.catch)r.catch(()=>fsNote(no));
+  }catch(e){fsNote(no)}
+}
+['fullscreenchange','webkitfullscreenchange'].forEach(k=>document.addEventListener(k,()=>{document.querySelectorAll('.fsb').forEach(b=>b.textContent=fsLabel());try{fit()}catch(e){}}));
+// ===== 譜面テスト(開発用): 楽曲データと譜面JSONを入れるだけでテストプレイ =====
+let testMode=false,tInfo=null,tMsg=[],TC={sb:'',eb:'',off:'',auto:false,metro:false};
+try{const o=JSON.parse(localStorage.getItem('amatTest')||'{}');TC.auto=!!o.auto;TC.metro=!!o.metro}catch(e){}
+const saveTC=()=>{try{localStorage.setItem('amatTest',JSON.stringify({auto:TC.auto,metro:TC.metro}))}catch(e){}};
+const fmtT=v=>Math.floor(v/60)+':'+String(Math.floor(v%60)).padStart(2,'0');
+const TNAME={tap:'タップ',flick:'フリック',trace:'トレース',damage:'ダメージ',long:'ロング',slide:'スライド',guide:'ガイド'};
+function barBeats(c){ // 各小節の頭の拍(compileと同じ数え方)。.n=最後のノーツまでの小節数
+  const ms=c.meter||[{beat:0,num:4,den:4}];let last=0;
+  for(const d of c.notes)last=Math.max(last,(d.type==='slide'||d.type==='guide')?d.points[d.points.length-1].beat:(d.beat||0)+(d.len||0));
+  const out=[];
+  ms.forEach((m,i)=>{const st=m.num*4/m.den,to=i+1<ms.length?ms[i+1].beat:last+8;for(let b=m.beat;b<to-1e-9;b+=st)out.push(b)});
+  out.n=Math.max(1,out.filter(b=>b<=last+1e-9).length);
+  return out;
+}
+function countJudge(ns){ // 実際に判定される数(=最大コンボ)。タップ/フリック/トレース各1、帯ノーツは始点(四角のとき)+8分/中継点。ダメージ・ガイドは数えない
+  let c=0;for(const n of ns){if(n.type==='damage'||n.type==='guide')continue;c+=n.pts?((n.hrect?1:0)+n.ticks.length):1}return c;
+}
+const JB_NAME={tap:'タップ',flick:'フリック',trace:'トレース',edge:'始点・終点',tick:'8分・中継点'};
+function judgeBreakdown(ns){ // 判定の種類ごとの数 [全体,うちクリティカル]
+  const r={tap:[0,0],flick:[0,0],trace:[0,0],edge:[0,0],tick:[0,0]};
+  const add=(k,m,crit)=>{r[k][0]+=m;if(crit)r[k][1]+=m};
+  for(const n of ns){
+    if(n.type==='damage'||n.type==='guide')continue;
+    if(n.pts){if(n.hrect)add('edge',1,n.crit);add('tick',n.ticks.length,n.crit)}
+    else add(n.par?'edge':(n.type==='flick'?'flick':n.type==='trace'?'trace':'tap'),1,n.crit);
+  }
+  return r;
+}
+const jbText=(jb,i)=>Object.entries(jb).filter(([k,v])=>v[i]).map(([k,v])=>JB_NAME[k]+' '+v[i]).join(' / ')||'なし';
+function chartInfo(c){
+  const cn={};
+  for(const d of c.notes)cn[d.type]=(cn[d.type]||0)+1;
+  const ns=compile(c),tot=countJudge(ns),jb=judgeBreakdown(ns);
+  const bp=(c.tempo||[{bpm:c.bpm}]).map(t=>t.bpm),lo=Math.min(...bp),hi=Math.max(...bp);
+  return {c,cn,tot,jb,sec:Math.max(0,end-3),bpm:lo===hi?''+lo:lo+'〜'+hi,bars:barBeats(c)};
+}
+function readTC(){for(const [k,id] of [['sb','tsb'],['eb','teb'],['off','toff']]){const e=$(id);if(e)TC[k]=e.value}}
+async function testLoad(files){
+  readTC();tMsg=[];
+  const bz=$('tbusy');if(bz)bz.textContent='読み込み中…';
+  let gc=false,ga=false;
+  for(const f of files){
+    const nm=f.name.toLowerCase();
+    try{
+      if(/\.json$/.test(nm)||f.type==='application/json'){
+        if(gc){tMsg.push(f.name+': JSONは1つだけ読み込めます(先頭のみ使用)');continue}
+        gc=true;
+        const tx=(await f.text()).replace(/^\uFEFF/,'');let c;
+        try{c=JSON.parse(tx)}catch(e){const m=/position (\d+)/.exec(e.message);throw Error('JSONの書式が正しくありません'+(m?'('+tx.slice(0,+m[1]).split('\n').length+'行目付近)':'')+': '+e.message)}
+        if(!c||typeof c!=='object'||Array.isArray(c))throw Error('譜面JSONではありません');
+        validate(c);if(!c.notes.length)throw Error('notes が空です');
+        custom=c;tInfo=chartInfo(c);
+      }else if((f.type||'').startsWith('audio/')||/\.(mp3|m4a|aac|wav|ogg|oga|opus|flac|mp4|webm|caf)$/.test(nm)){
+        if(ga){tMsg.push(f.name+': 曲は1つだけ読み込めます(先頭のみ使用)');continue}
+        ga=true;getCtx();
+        try{audioBuf=await ctx.decodeAudioData(await f.arrayBuffer());audioName=f.name}catch(e){throw Error('曲を読み込めません(mp3/m4a/wav/ogg)')}
+      }else tMsg.push(f.name+': 対応していない形式です(楽曲 or .json)');
+    }catch(e){tMsg.push(f.name+': '+(e.message||e))}
+  }
+  showTest();
+}
+function updPos(){
+  const e=$('tpos');if(!e||!tInfo)return;readTC();
+  const bb=tInfo.bars,n=bb.n,s=Math.floor(+TC.sb),en=Math.floor(+TC.eb),p=[];
+  if(TC.sb!==''&&s>=1){const k=Math.min(s,bb.length);p.push(`開始 ${k}小節目(${fmtT(B2S(bb[k-1]))})`)}
+  if(TC.eb!==''&&en>=1)p.push(`終了 ${Math.min(en,bb.length)}小節目の終わり`);
+  e.textContent=`全${n}小節`+(p.length?' → '+p.join(' / '):'');
+}
+function showTest(){
+  ov.style.display='flex';ov.className='tst';
+  if(!custom)tInfo=null;
+  else try{if(!tInfo||tInfo.c!==custom)tInfo=chartInfo(custom);else compile(custom)}catch(e){tInfo=null}
+  const c=custom,I=tInfo,A=audioBuf,ok=!!(c&&I);
+  const eo=TC.off!==''&&isFinite(+TC.off)?+TC.off:(c&&c.offset)||0,warn=[];
+  if(ok&&A&&I.sec+eo>A.duration+.5)warn.push(`譜面の終わり(${fmtT(I.sec)})が曲の長さ(${fmtT(A.duration)})を超えています。オフセットや曲を確認してください`);
+  let h='<div class="frame"></div><button class="bk" id="bk">↩</button><div style="height:34px"></div><div class="lab"><span>譜面テスト</span></div>'
+   +'<label class="drop" id="tdz"><b style="font-size:18px">📂 ファイルを選ぶ</b><br><span style="font-size:12px">楽曲(mp3/m4a/wav/ogg)と譜面JSONを<br>まとめて選択 / ここにドロップ</span><div id="tbusy" style="font-size:12px;min-height:1.2em"></div><input type="file" id="tfi" class="fin" multiple></label>'
+   +(tMsg.length?'<div class="tbox" style="background:#ffe0e0;color:#c00">'+tMsg.map(m=>`<div>⚠ ${esc(m)}</div>`).join('')+'</div>':'')
+   +'<div class="tbox">'+(ok
+      ?`<div><b class="ok">✔ 譜面</b> ${esc(c.title||'(無題)')}</div><div class="sd">${c.lanes}レーン / BPM ${I.bpm} / 総ノーツ(最大コンボ) ${I.tot} / 約${fmtT(I.sec)}</div><div class="sd">譜面データ: ${Object.entries(I.cn).map(([k,v])=>(TNAME[k]||k)+' '+v).join(' / ')}${(()=>{const q=c.notes.filter(d=>d.crit||d.headCrit||d.tailCrit).length;return q?' (うちクリティカル指定 '+q+')':''})()}</div><div class="sd">判定 ${I.tot}: ${jbText(I.jb,0)}</div><div class="sd">★クリティカル判定 ${Object.values(I.jb).reduce((a,v)=>a+v[1],0)}: ${jbText(I.jb,1)}</div>`
+      :'<div><b class="ng">✘ 譜面</b> 未読み込み</div>')
+   +`<div class="row" style="justify-content:flex-start;margin-top:6px"><label class="sm" id="tbj">${ok?'JSONだけ差し替え':'JSONを選ぶ'}<input type="file" id="tfj" class="fin" accept=".json,application/json"></label></div></div>`
+   +'<div class="tbox">'+(A
+      ?`<div><b class="ok">✔ 曲</b> ${esc(audioName)}</div><div class="sd">長さ ${fmtT(A.duration)}</div>`
+      :'<div><b class="wn" style="font-size:14px">― 曲なし</b></div><div class="sd">曲が無い場合はメトロノーム音で再生します</div>')
+   +warn.map(w=>`<div class="wn">⚠ ${esc(w)}</div>`).join('')
+   +`<div class="row" style="justify-content:flex-start;margin-top:6px"><label class="sm" id="tba">${A?'曲だけ差し替え':'曲を選ぶ'}<input type="file" id="tfa" class="fin" accept="audio/*"></label></div></div>`
+   +'<div class="tbox"><b>テストオプション</b>'
+   +`<div class="tr2"><b>開始小節</b><input id="tsb" type="number" inputmode="numeric" min="1" step="1" placeholder="1" value="${esc(TC.sb)}"><b>終了小節</b><input id="teb" type="number" inputmode="numeric" min="1" step="1" placeholder="最後" value="${esc(TC.eb)}"></div>`
+   +'<div class="sd" id="tpos" style="text-align:center"></div>'
+   +`<div class="tr2"><b>オフセット(秒)</b><input id="toff" type="number" inputmode="decimal" step="0.001" placeholder="${(c&&c.offset)||0}" value="${esc(TC.off)}"></div>`
+   +'<div class="sd" style="text-align:center">空欄=JSONの値。曲の何秒目が0拍目か(+で曲が遅れて始まる譜面)</div>'
+   +`<div class="row" style="margin-top:6px"><button class="sm ${CFG.auto?'on':''}" id="tau">オート再生 ${CFG.auto?'ON':'OFF'}</button><button class="sm ${TC.metro?'on':''}" id="tme">メトロノーム ${TC.metro?'ON':'OFF'}</button><button class="sm" id="tcl">位置・オフセットをリセット</button></div></div>`
+   +`<div class="row" style="margin:6px 0"><button class="px" id="tgo"${ok?'':' disabled'}>▶ テスト開始</button></div>`
+   +'<div class="row" style="margin-bottom:30px"><button class="sm" id="tse">⚙ 設定(ノーツ速度・タイミング)</button><button class="sm fsb" id="fs2">'+fsLabel()+'</button></div>'
+   ;
+  ov.innerHTML=h;ov.scrollTop=0;
+  $('bk').onclick=()=>{readTC();show(false)};
+    for(const id of ['tfi','tfj','tfa']){const el=$(id);el.onchange=()=>{const f=[...el.files];el.value='';if(f.length)testLoad(f)}}
+  for(const id of ['tsb','teb','toff'])$(id).oninput=updPos;
+  updPos();
+  $('tau').onclick=()=>{readTC();CFG.auto=!CFG.auto;savePrefs();showTest()};
+  $('tme').onclick=()=>{readTC();TC.metro=!TC.metro;saveTC();showTest()};
+  $('tcl').onclick=()=>{TC.sb=TC.eb=TC.off='';showTest()};
+  $('tse').onclick=()=>{readTC();setBack=showTest;showSet()};$('fs2').onclick=()=>{readTC();toggleFS()};
+  $('tgo').onclick=()=>{readTC();saveTC();if(!custom)return;cur=null;testMode=true;start()};
+}
+// ドラッグ&ドロップ(PC): 譜面テスト画面にファイルを落とすと読み込む。他の画面では画面遷移を防ぐだけ
+addEventListener('dragover',e=>e.preventDefault());
+addEventListener('drop',e=>{e.preventDefault();if(ov.classList.contains('tst')&&ov.style.display!=='none'&&e.dataTransfer&&e.dataTransfer.files.length)testLoad([...e.dataTransfer.files])});
+
+// ===== 選曲画面 =====
+const DIFFS=[['easy','EASY'],['normal','NORMAL'],['hard','HARD'],['special','special'],['ultimate','ULTIMATE']]; // 低い→高い順(ultimate=おふざけ枠で最上位)
+const DNAME=Object.fromEntries(DIFFS);
+const DCOL={easy:'#41dca0',normal:'#6cc4d6',hard:'#d472e6',ultimate:'#b8b8c8',special:'#c49cff'};
+const DANG={special:-90,ultimate:-18,easy:54,normal:126,hard:198}; // リング上の角度(度)
+// デモ曲(見た目確認用)。どれも同じデモ譜面を、曲のBPM・難易度ごとのノーツ量で遊ぶ。impl:false=未実装曲
+// yomi=50音順用の読み(ひらがな) / tags=「All」ボタンの絞込み用タグ(曲ごとに自由に設定。メニューには使われているタグが自動で並ぶ) / 実装順=この配列の並び順
+const DEMO_SONGS=[
+ {id:'d01',title:'Sunrise Parade',yomi:'さんらいずぱれーど',tags:['ポップ','オリジナル'],bpm:128,designer:'DEMO',hue:[35,335],lv:{easy:3.2,normal:6.1,hard:9.4,special:11.2}},
+ {id:'d02',title:'ネオンの雨',yomi:'ねおんのあめ',tags:['エレクトロ','オリジナル'],bpm:174,designer:'DEMO',hue:[200,280],lv:{easy:4.0,normal:7.3,hard:10.5,ultimate:12.1,special:13.0}},
+ {id:'d03',title:'紙飛行機フライト',yomi:'かみひこうきふらいと',tags:['ポップ'],bpm:112,designer:'DEMO',hue:[120,60],lv:{easy:2.0,normal:4.4,hard:7.8}},
+ {id:'d04',title:'Starlight Express',yomi:'すたーらいとえくすぷれす',tags:['エレクトロ','ロック'],bpm:190,designer:'DEMO',hue:[250,320],lv:{normal:8.0,hard:11.4,ultimate:12.8,special:14.2}},
+ {id:'d05',title:'ひなたぼっこ日和',yomi:'ひなたぼっこびより',tags:['バラード','オリジナル'],bpm:96,designer:'DEMO',hue:[50,15],lv:{easy:1.5,normal:3.6,hard:6.2}},
+ {id:'d06',title:'Midnight Circuit',yomi:'みっどないとさーきっと',tags:['エレクトロ','ロック'],bpm:160,designer:'DEMO',hue:[270,200],lv:{easy:4.6,normal:8.1,hard:10.9,special:12.6}},
+ {id:'d07',title:'キャンディ・パルス',yomi:'きゃんでぃぱるす',tags:['ポップ'],bpm:148,designer:'DEMO',hue:[330,30],lv:{easy:3.8,normal:6.9,hard:9.9,ultimate:11.6}},
+ {id:'d08',title:'Tiny Orbit',yomi:'たいにーおーびっと',tags:['ポップ','エレクトロ'],bpm:135,designer:'DEMO',hue:[180,140],lv:{easy:3.0,normal:5.5,hard:8.7,special:10.8}},
+ {id:'d09',title:'Coming Soon…',yomi:'こみんぐすーん',tags:[],bpm:150,designer:'---',hue:[215,215],impl:false,lv:{hard:12.0}}
+];
+const SONGS=[...DEMO_SONGS];
+const SORTS=[['lv','レベル順','レベル順'],['kana','50音順','50音順'],['impl','実装順','実装順'],['bpm','BPM順','BPM順'],['len','曲の長さ順','長さ順']];
+const SS={q:'',sort:'impl',asc:true,tag:'',un:false,id:null,diff:'hard',sc:1};
+let cur=null,selVis=[],selIdx=0,infoC=new Map(),HS={};
+try{HS=JSON.parse(localStorage.getItem('amatHS')||'{}')}catch(e){}
+try{Object.assign(SS,JSON.parse(localStorage.getItem('amatSel')||'{}'))}catch(e){}
+if(!DIFFS.some(d=>d[0]===SS.diff))SS.diff='hard';
+if(!SORTS.some(x=>x[0]===SS.sort))SS.sort='impl';
+SS.asc=SS.asc!==false;if(typeof SS.tag!=='string')SS.tag='';
+const allTags=()=>[...new Set(SONGS.flatMap(s=>s.tags||[]))];
+if(SS.tag&&!allTags().includes(SS.tag))SS.tag='';
+// ===== ダウンロードデータ(スプレッドシート連携) =====
+// 公開したスプレッドシート(CSV)を見て、新しい曲・譜面があればダウンロードし、ブラウザ(IndexedDB)に保存する。
+// シートは1行=1曲。列(見出し)は次のとおり。日本語の別名も一部使えます(下のCOLS参照)。
+//   id, title, yomi, tags(/区切り), bpm, designer, hue1, hue2, audio(曲ファイルのURL), ver(曲・譜面を差し替えるたびに変える)
+//   jacket(ジャケット画像のURL) / jacket_zoom(拡大率 0.5〜4, 既定1) / jacket_x, jacket_y(表示範囲のずらし -50〜50, +で右/下側を表示)
+//   ※ ジャケットは取得時に長辺768pxへ縮小して保存。画像だけ差し替えるときはURLを変える(例 ...png?v=2)。画像だけの変更は曲を再ダウンロードしない
+//   難易度ごとに: easy_lv, easy_chart / normal_lv, normal_chart / hard_lv, hard_chart / special_lv, special_chart / ultimate_lv, ultimate_chart
+//   *_lv … 空=その難易度なし / 0=実装待ち(表示のみ・プレイ不可) / 1以上=譜面定数(*_chart に譜面JSONのURLが必要)
+//   URLは、このHTMLと同じ場所からの相対パス(例 charts/d01_hard.json)でもOK
+const DATA_URL_DEFAULT=''; // ★公開したスプレッドシートのCSVのURLをここに書く(例 'https://docs.google.com/spreadsheets/d/e/xxxx/pub?output=csv')
+const dataUrl=()=>{let u='';try{u=localStorage.getItem('amatDataUrl')||''}catch(e){}return (DEV&&u)||DATA_URL_DEFAULT};
+const COLS={id:['id','曲id','songid'],title:['title','曲名','タイトル','name'],yomi:['yomi','読み','よみ','ふりがな'],tags:['tags','タグ','ジャンル'],bpm:['bpm'],designer:['designer','譜面制作','制作','譜面作者'],audio:['audio','曲','曲データ','音源','audiourl'],hue1:['hue1','色1'],hue2:['hue2','色2'],ver:['ver','version','バージョン','更新'],jacket:['jacket','ジャケット','ジャケ','cover','画像','image'],jzoom:['jacket_zoom','ジャケットズーム','ジャケット拡大'],jx:['jacket_x','ジャケットx'],jy:['jacket_y','ジャケットy']};
+const clampNum=(v,lo,hi,d)=>{const x=parseFloat(v);return isFinite(x)?Math.min(hi,Math.max(lo,x)):d};
+const nh=h=>String(h).trim().toLowerCase().replace(/[\s_\u3000]/g,'');
+function parseCSV(t){
+  t=t.replace(/^\uFEFF/,'');const rows=[];let row=[],f='',q=false;
+  for(let i=0;i<t.length;i++){const c=t[i];
+    if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+    else if(c==='"')q=true;
+    else if(c===','){row.push(f);f=''}
+    else if(c==='\n'||c==='\r'){if(c==='\r'&&t[i+1]==='\n')i++;row.push(f);f='';rows.push(row);row=[]}
+    else f+=c;
+  }
+  if(f!==''||row.length){row.push(f);rows.push(row)}
+  return rows.filter(r=>r.some(x=>x.trim()!==''));
+}
+function parseSheet(text){
+  const rows=parseCSV(text);if(rows.length<2)throw Error('シートが空です');
+  const hd=rows[0].map(nh),find=names=>{for(const n of names){const i=hd.indexOf(nh(n));if(i>=0)return i}return -1};
+  const ci={};for(const k in COLS)ci[k]=find(COLS[k]);
+  if(ci.id<0||ci.title<0)throw Error('シートに id と title の列が見つかりません(1行目は見出し)');
+  const dc={};for(const [k,nm] of DIFFS)dc[k]={lv:find([k+'_lv',k+'定数',k+'譜面定数',nm+'_lv',nm+'定数']),ch:find([k+'_chart',k+'譜面',k+'_json',k+'_url',nm+'_chart'])};
+  const songs=[],warn=[],seen=new Set(),get=(r,k)=>ci[k]>=0?String(r[ci[k]]??'').trim():'',abs=u=>new URL(u,location.href).href;
+  rows.slice(1).forEach((r,ri)=>{
+    const id=get(r,'id'),title=get(r,'title');if(!id||!title)return;
+    if(seen.has(id)){warn.push(`id「${id}」が重複しています`);return}seen.add(id);
+    let h=0;for(const ch of id)h=(h*31+ch.charCodeAt(0))%360;
+    const h1=parseFloat(get(r,'hue1')),h2=parseFloat(get(r,'hue2'));
+    const meta={title,yomi:get(r,'yomi')||title,tags:get(r,'tags').split(/[\/|｜、]/).map(x=>x.trim()).filter(Boolean),bpm:parseFloat(get(r,'bpm'))||120,designer:get(r,'designer')||'---',hue:[isFinite(h1)?h1:h,isFinite(h2)?h2:(h+60)%360],lv:{},order:ri,ver:get(r,'ver'),jz:clampNum(get(r,'jzoom'),.5,4,1),jx:clampNum(get(r,'jx'),-50,50,0),jy:clampNum(get(r,'jy'),-50,50,0)};
+    const chartUrls={};
+    for(const [k,nm] of DIFFS){
+      const raw=dc[k].lv>=0?String(r[dc[k].lv]??'').trim():'';if(raw==='')continue;
+      const lv=parseFloat(raw);if(!isFinite(lv)||lv<0){warn.push(`${title} ${nm}: 譜面定数が数値ではありません`);continue}
+      const url=dc[k].ch>=0?String(r[dc[k].ch]??'').trim():'';
+      if(lv>0&&!url){warn.push(`${title} ${nm}: 譜面URLが空のため実装待ち扱い`);meta.lv[k]=0;continue}
+      meta.lv[k]=lv;if(lv>0)chartUrls[k]=abs(url);
+    }
+    const audioUrl=get(r,'audio')?abs(get(r,'audio')):'';
+    const jacketUrl=get(r,'jacket')?abs(get(r,'jacket')):'';
+    songs.push({id,meta,chartUrls,audioUrl,jacketUrl,asig:JSON.stringify([meta.ver,audioUrl,Object.entries(chartUrls)]),jsig:jacketUrl,metaSig:JSON.stringify(meta)});
+  });
+  return {songs,warn};
+}
+// --- 保存先(IndexedDB。使えない環境ではこのセッション中だけメモリに保持) ---
+const MEM={songs:new Map(),audio:new Map()};let kvDb=null,kvOK=true;
+function kvOpen(){return kvDb||(kvDb=new Promise((res,rej)=>{if(!window.indexedDB)return rej(Error('no idb'));const r=indexedDB.open('amatData',1);r.onupgradeneeded=()=>{r.result.createObjectStore('songs',{keyPath:'id'});r.result.createObjectStore('audio',{keyPath:'id'})};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}).catch(e=>{kvDb=null;throw e}))}
+async function kvRun(st,mode,fn,mem){
+  if(kvOK){try{const d=await kvOpen();return await new Promise((res,rej)=>{const t=d.transaction(st,mode);let rq;try{rq=fn(t.objectStore(st))}catch(e){return rej(e)}t.oncomplete=()=>res(rq?rq.result:undefined);t.onerror=t.onabort=()=>rej(t.error||Error('idb'))})}catch(e){if(e&&e.name==='QuotaExceededError')throw e;kvOK=false}}
+  return mem();
+}
+const kvAll=st=>kvRun(st,'readonly',o=>o.getAll(),()=>[...MEM[st].values()]);
+const kvGet=(st,id)=>kvRun(st,'readonly',o=>o.get(id),()=>MEM[st].get(id));
+const kvPut=(st,v)=>kvRun(st,'readwrite',o=>o.put(v),()=>{MEM[st].set(v.id,v)});
+const kvDel=(st,id)=>kvRun(st,'readwrite',o=>o.delete(id),()=>{MEM[st].delete(id)});
+let STORE=[]; // ダウンロード済みの曲(譜面つき。曲ファイルは別ストアに保存し、遊ぶときに読む)
+const JURL=new Map(); // 曲id → {元データ, 表示用URL}
+function jacketSrc(r){ // 保存したジャケット(ArrayBuffer)を表示用のURLにする。同じデータなら作り直さない
+  if(!r.jacket||!r.jacket.data)return '';
+  const c=JURL.get(r.id);if(c&&c.src===r.jacket)return c.url;if(c)URL.revokeObjectURL(c.url);
+  const url=URL.createObjectURL(new Blob([r.jacket.data],{type:r.jacket.type||'image/jpeg'}));JURL.set(r.id,{src:r.jacket,url});return url;
+}
+let JFAIL=[];
+async function fetchJacket(url){ // ジャケットを取得し長辺768px以内に縮小。戻り値: {type,data} / null=画像指定なし / undefined=取得失敗(次回再試行)
+  if(!url)return null;
+  try{
+    const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);
+    const blob=await r.blob(),bmp=await createImageBitmap(blob),k=Math.min(1,768/Math.max(bmp.width,bmp.height));
+    if(k===1&&/^image\/(jpeg|png|webp)$/.test(blob.type)){if(bmp.close)bmp.close();return {type:blob.type,data:await blob.arrayBuffer()}}
+    const cv=document.createElement('canvas');cv.width=Math.max(1,Math.round(bmp.width*k));cv.height=Math.max(1,Math.round(bmp.height*k));
+    const g2=cv.getContext('2d');g2.fillStyle='#fff';g2.fillRect(0,0,cv.width,cv.height);g2.imageSmoothingQuality='high';g2.drawImage(bmp,0,0,cv.width,cv.height);if(bmp.close)bmp.close();
+    const out=await new Promise((res,rej)=>cv.toBlob(b=>b?res(b):rej(Error('変換できません')),'image/jpeg',.88));
+    return {type:out.type,data:await out.arrayBuffer()};
+  }catch(e){return undefined}
+}
+function rebuildSongs(){ // ダウンロード曲があればそれを選曲に出す(デモ曲は開発者モードのときだけ末尾に残す)
+  const dl=STORE.slice().sort((a,b)=>(a.order||0)-(b.order||0)).map(r=>({id:r.id,title:r.title,yomi:r.yomi,tags:r.tags,bpm:r.bpm,designer:r.designer,hue:r.hue,lv:r.lv,jacket:jacketSrc(r),jz:r.jz,jx:r.jx,jy:r.jy,impl:Object.values(r.lv).some(v=>v>0)?undefined:false,store:true,data:{charts:r.charts}}));
+  SONGS.length=0;SONGS.push(...(dl.length?[]:DEMO_SONGS),...dl,...(dl.length&&DEV?DEMO_SONGS:[]));
+  infoC.clear();
+}
+async function prepSong(s){ // 遊ぶ前に曲ファイルをデコード(1回だけ)
+  if(s.buf!==undefined)return;
+  const a=await kvGet('audio',s.id);
+  if(a&&a.data){getCtx();s.buf=await ctx.decodeAudioData(a.data.slice(0))}else s.buf=null;
+}
+async function loadStore(){try{STORE=(await kvAll('songs'))||[]}catch(e){STORE=[]}rebuildSongs()}
+async function clearStore(){for(const r of STORE){try{await kvDel('songs',r.id);await kvDel('audio',r.id)}catch(e){}}STORE=[];UPD.pending=[];UPD.msg='';rebuildSongs()}
+// --- 更新の確認とダウンロード ---
+const UPD={busy:false,pending:[],err:'',msg:'',prog:'',checked:0,warn:[]};
+async function fetchSheet(url){
+  const r=await fetch(url+(url.includes('?')?'&':'?')+'_='+Date.now(),{cache:'no-store'});
+  if(!r.ok)throw Error('シートを取得できません(HTTP '+r.status+')');
+  return parseSheet(await r.text());
+}
+async function checkUpdates(manual){
+  if(UPD.busy)return;
+  const url=dataUrl();
+  if(!url){if(manual){UPD.err='データURLが未設定です'}renderUpd();return}
+  UPD.err='';if(manual){UPD.msg='確認中…';renderUpd()}
+  try{
+    const sheet=await fetchSheet(url),local=new Map(STORE.map(r=>[r.id,r])),pending=[];let ch=false;
+    for(const sg of sheet.songs){
+      const l=local.get(sg.id);
+      if(!l||l.asig!==sg.asig)pending.push(sg);
+      else if((l.jsig||'')!==sg.jsig)pending.push({...sg,jacketOnly:true}); // ジャケットだけの変更
+      else if(l.metaSig!==sg.metaSig){Object.assign(l,sg.meta,{metaSig:sg.metaSig});await kvPut('songs',l);ch=true} // 曲名・譜面定数などだけの変更はその場で反映
+    }
+    UPD.pending=pending;UPD.warn=sheet.warn;UPD.checked=Date.now();UPD.msg=manual&&!pending.length?'✓ 最新です':'';
+    if(ch)rebuildSongs();
+  }catch(e){UPD.msg='';if(manual)UPD.err='確認できませんでした: '+(e.message||e)}
+  renderUpd();
+}
+async function downloadPending(){
+  if(UPD.busy||!UPD.pending.length)return;
+  UPD.busy=true;UPD.err='';UPD.msg='';JFAIL=[];const list=UPD.pending.slice(),left=[],fail=[];let ok=0;
+  for(let i=0;i<list.length;i++){
+    const sg=list[i];UPD.prog=`${i+1}/${list.length} ${sg.meta.title}`;renderUpd();
+    try{
+      if(sg.jacketOnly){ // ジャケットだけ取り直す(曲・譜面は再ダウンロードしない)
+        const l=STORE.find(r=>r.id===sg.id);if(!l)throw Error('保存データが見つかりません');
+        const j=await fetchJacket(sg.jacketUrl);if(j===undefined)JFAIL.push(sg.meta.title);
+        await kvPut('songs',{...l,...sg.meta,metaSig:sg.metaSig,jsig:j===undefined?'':sg.jsig,jacket:j||null});
+        ok++;continue;
+      }
+      const charts={};
+      for(const k in sg.chartUrls){
+        const r=await fetch(sg.chartUrls[k],{cache:'no-store'});if(!r.ok)throw Error(`${DNAME[k]}の譜面を取得できません(HTTP ${r.status})`);
+        let c;try{c=JSON.parse((await r.text()).replace(/^\uFEFF/,''))}catch(e){throw Error(`${DNAME[k]}の譜面JSONが壊れています`)}
+        try{validate(c)}catch(e){throw Error(`${DNAME[k]}: ${e.message}`)}
+        charts[k]=c;
+      }
+      let audio=null;
+      if(sg.audioUrl){const r=await fetch(sg.audioUrl);if(!r.ok)throw Error(`曲ファイルを取得できません(HTTP ${r.status})`);audio=await r.arrayBuffer()}
+      if(audio)await kvPut('audio',{id:sg.id,data:audio});else await kvDel('audio',sg.id);
+      const jacket=await fetchJacket(sg.jacketUrl);if(jacket===undefined)JFAIL.push(sg.meta.title); // 失敗しても曲は保存(ジャケットは次回再試行)
+      await kvPut('songs',{id:sg.id,asig:sg.asig,metaSig:sg.metaSig,jsig:jacket===undefined?'':sg.jsig,jacket:jacket||null,...sg.meta,charts});
+      ok++;
+    }catch(e){left.push(sg);fail.push(`${sg.meta.title}: ${e.message||e}`)}
+  }
+  try{STORE=(await kvAll('songs'))||[]}catch(e){}
+  rebuildSongs();UPD.busy=false;UPD.pending=left;
+  UPD.msg=ok?`✓ ${ok}曲を保存しました`:'';UPD.err=[fail.length?'ダウンロードできなかった曲: '+fail.join(' / '):'',JFAIL.length?'ジャケットを取得できなかった曲(次回再試行): '+JFAIL.join(' / '):''].filter(Boolean).join(' ・ ');
+  try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){} // ブラウザに勝手に消されにくくする
+  renderUpd();
+}
+function dataStatus(){
+  const p=[`保存済み ${STORE.length}曲`];
+  if(!dataUrl())p.push('データURL未設定');
+  else p.push(UPD.checked?'最終確認 '+new Date(UPD.checked).toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'未確認');
+  if(UPD.busy)p.push('ダウンロード中 '+UPD.prog);else if(UPD.pending.length)p.push(`追加データ ${UPD.pending.length}曲`);
+  if(UPD.warn&&UPD.warn.length)p.push('シートの注意: '+UPD.warn.slice(0,3).join(' / '));
+  if(UPD.msg)p.push(UPD.msg);if(UPD.err)p.push(UPD.err);
+  return p.join(' ・ ');
+}
+function renderUpd(){
+  const ds=$('dsst');if(ds)ds.textContent=dataStatus();
+  const e=$('upd');if(!e)return;
+  let h='';
+  if(UPD.busy)h=`<span>⬇ ダウンロード中 ${esc(UPD.prog)}</span>`;
+  else if(UPD.pending.length){
+    const nn=UPD.pending.filter(q=>!STORE.some(r=>r.id===q.id)).length,nu=UPD.pending.length-nn;
+    h=`<span>追加データがあります(${[nn?'新規'+nn+'曲':'',nu?'更新'+nu+'曲':''].filter(Boolean).join('・')})</span><button class="sm on" id="udl">ダウンロード</button>`;
+  }else if(UPD.msg)h=`<span>${esc(UPD.msg)}</span>`;
+  if(UPD.err)h+=`<div class="ue">${esc(UPD.err)}</div>`;
+  e.innerHTML=h;const b=$('udl');if(b)b.onclick=downloadPending;
+}
+const dsec=()=>`<div class="lab" style="margin-top:18px"><span><b>ダウンロードデータ</b></span></div><p id="dsst" style="font-size:13px;margin:4px 0;max-width:420px;line-height:1.5">${esc(dataStatus())}</p><div class="row">${UPD.pending.length&&!UPD.busy?`<button class="sm on" id="ddl">ダウンロード(${UPD.pending.length}曲)</button>`:''}<button class="sm" id="dchk">更新を確認</button><button class="sm" id="ddel">保存データを削除</button></div>`
+  +(DEV?`<div class="wr" style="margin-top:6px"><b style="min-width:auto">データURL</b><input id="durl" type="text" value="${esc(dataUrl())}" placeholder="公開したCSVのURL" style="width:min(62vw,280px);text-align:left"></div>`:'');
+function bindData(){
+  const re=()=>showSet();
+  $('dchk').onclick=async()=>{await checkUpdates(true);re()};
+  const dl=$('ddl');if(dl)dl.onclick=async()=>{await downloadPending();re()};
+  $('ddel').onclick=async()=>{if(!confirm('ダウンロードしたデータをすべて削除しますか？'))return;await clearStore();re()};
+  const u=$('durl');if(u)u.onchange=()=>{try{localStorage.setItem('amatDataUrl',u.value.trim())}catch(e){}UPD.pending=[];UPD.checked=0;UPD.err='';re()};
+}
+const saveSel=()=>{try{localStorage.setItem('amatSel',JSON.stringify({un:SS.un,id:SS.id,diff:SS.diff,sort:SS.sort,asc:SS.asc,tag:SS.tag}))}catch(e){}};
+const hsKey=(s,d)=>(s.custom?'custom:'+s.title:s.id)+'|'+d;
+const allSongs=()=>custom?[{id:'custom',custom:true,title:custom.title||'(無題)',bpm:custom.bpm||custom.tempo[0].bpm,designer:'カスタム譜面',hue:[190,250],lv:{hard:0}},...SONGS]:SONGS;
+function pickDiff(s,d){ // 曲にその難易度が無ければ一番近い難易度にする
+  const av=DIFFS.map(x=>x[0]).filter(k=>s.lv[k]!==undefined);
+  if(av.includes(d))return d;
+  const i=DIFFS.findIndex(x=>x[0]===d);let best=av[0],bd=99;
+  for(const k of av){const dd=Math.abs(DIFFS.findIndex(x=>x[0]===k)-i);if(dd<bd){bd=dd;best=k}}
+  return best;
+}
+function songChart(s,d){ // 難易度が低いほどノーツを減らす(デモ用の簡易な間引き)
+  if(s.store)return s.data.charts[d]; // ダウンロードした曲
+  if(s.custom)return custom||demoChart(L,120);
+  const c=demoChart(L,s.bpm);c.title=s.title;
+  const f=d==='easy'?(n,i)=>n.type==='tap'?i%2===0:(n.type==='trace'||n.type==='guide')
+    :d==='normal'?(n,i)=>n.type!=='damage'&&(n.type!=='flick'||i%2===0):()=>true;
+  c.notes=c.notes.filter(f);
+  return c;
+}
+function songInfo(s,d){ // 総ノーツ数・演奏時間
+  const k=s.id+'|'+d+'|'+L;let v=infoC.get(k);if(v)return v;
+  if(s.impl===false)v={notes:'---',time:'-:--',sec:0};
+  else try{const c=songChart(s,d);const ns=compile(c),sec=Math.max(0,Math.round(end-3));v={notes:countJudge(ns),time:Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0'),sec}}catch(e){v={notes:'-',time:'-:--',sec:0}}
+  infoC.set(k,v);return v;
+}
+const toRoman=n=>{const m=[[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];let r='';for(const [v,t] of m)while(n>=v){r+=t;n-=v}return r};
+const isUlt=d=>d==='ultimate'; // アルティメイトのレベルはローマ数字で表示(シートの値は普通の数字でOK。小数部分は表示しない)
+const lvInt=(v,d)=>v?(isUlt(d)&&v>=1&&v<4000?toRoman(Math.floor(v)):Math.floor(v)):'-',lvDec=(v,d)=>v&&!isUlt(d)?v.toFixed(1):'';
+const lvTxt=(v,d)=>{const t=lvInt(v,d),n=String(t).length,k=n<=2?1:n===3?.8:n===4?.66:.52; // ローマ数字は長いとき縮小して円に収める
+  return k<1?`<span style="display:inline-block;transform:scale(${k});white-space:nowrap">${t}</span>`:t};
+const hasChart=(s,d)=>s.custom||(s.impl!==false&&s.lv[d]>0); // その難易度の譜面があるか(譜面定数0=実装待ちは無し扱い)
+function sortCmp(a,b){
+  if(a.custom||b.custom)return a.custom?-1:1; // カスタム譜面は常に先頭
+  const ix=s=>SONGS.indexOf(s),da=pickDiff(a,SS.diff),db=pickDiff(b,SS.diff);let r=0;
+  switch(SS.sort){
+    case 'lv':r=(a.lv[da]||0)-(b.lv[db]||0);break;
+    case 'kana':r=(a.yomi||a.title).localeCompare(b.yomi||b.title,'ja');break;
+    case 'bpm':r=a.bpm-b.bpm;break;
+    case 'len':r=songInfo(a,da).sec-songInfo(b,db).sec;break;
+    default:r=ix(a)-ix(b);
+  }
+  return r?(SS.asc?r:-r):ix(a)-ix(b); // 同値のときは実装順
+}
+function refreshVis(){
+  const keep=(selVis[selIdx]&&selVis[selIdx].id)||SS.id,q=SS.q.trim().toLowerCase();
+  selVis=allSongs().filter(s=>{
+    if(SS.un&&!hasChart(s,SS.diff))return false; // 未実装非表示: 選択中の難易度の譜面が無い曲はスキップ
+    if(q&&!s.title.toLowerCase().includes(q))return false;
+    if(SS.tag&&!(s.tags||[]).includes(SS.tag))return false;
+    return true;
+  }).sort(sortCmp);
+  const i=selVis.findIndex(s=>s.id===keep);
+  selIdx=i>=0?i:Math.min(selIdx,Math.max(0,selVis.length-1));
+  if(selVis[selIdx])SS.id=selVis[selIdx].id;
+}
+function selGo(i,abs){
+  if(!selVis.length)return;
+  const n=selVis.length;i=abs?Math.min(n-1,Math.max(0,i)):((i%n)+n)%n; // 通常は端でループ(先頭の上は末尾、末尾の下は先頭)。abs=つまみ操作は端で止める
+  if(i===selIdx)return;
+  selIdx=i;SS.id=selVis[i].id;saveSel();renderSel();
+}
+const textW=t=>[...t].reduce((a,ch)=>a+(ch.charCodeAt(0)>255?1:.58),0);
+const ROWPOS={'-2':[115,103,372,75],'-1':[152,190,372,75],'0':[88,378,514,108],'1':[152,553,372,75],'2':[115,640,372,75]};
+// 右パネル(ジャケット+難易度リング+Start上の余白)。s=null のときは曲なし表示
+const RING={x:775,y:508,r:90,d:56}; // リング中心・半径・難易度円の直径(Startボタン(top:634)に被らない位置)
+const anyHas=d=>allSongs().some(t=>hasChart(t,d));
+let ringRot=null;
+function ringInit(){ // 右パネルは1度だけ作って、選曲のたびに更新する(回転アニメを効かせるため)
+  let c='';
+  for(const [k,n] of DIFFS){
+    const a=DANG[k]*Math.PI/180;
+    c+=`<div class="dc" data-df="${k}" style="left:${RING.x+RING.r*Math.cos(a)-RING.d/2}px;top:${RING.y+RING.r*Math.sin(a)-RING.d/2}px;background:${DCOL[k]}"><span style="font-size:${n.length>6?12:n.length>5?14:17}px">${n}</span></div>`;
+  }
+  $('zr').innerHTML='<div class="a pnl"></div><div class="a jk" id="zjk" style="left:648px;top:108px;width:250px;height:250px"></div>'
+    +'<div class="a" id="zar" style="left:762px;top:364px;width:26px;height:14px;background:var(--dc);clip-path:polygon(0 0,100% 0,50% 100%)"></div>'
+    +'<div class="a ring" id="zrg"></div>'
+    +`<div class="a" id="zdr" style="left:0;top:0;width:920px;height:690px;pointer-events:none">${c}</div>`
+    +'<div class="a lvc" id="zlc"></div>';
+  ringRot=null;$('zr').classList.add('ni');
+}
+// s=null のときは曲なし表示。選択中の難易度が一番上(▼の下)に来るようリングを回す
+function updateRing(s){
+  const zr=$('zr'),dsel=s?pickDiff(s,SS.diff):SS.diff,lv=s?s.lv[dsel]:0;
+  zr.style.setProperty('--dc',DCOL[dsel]);
+  const jk=$('zjk');jk.style.display=$('zar').style.display=s?'':'none';
+  if(s){const [h0,h1]=s.hue;jk.style.background=`linear-gradient(135deg,hsl(${h0} 85% 68%),hsl(${h1} 85% 74%))`;jk.innerHTML=s.jacket?`<img class="jimg" src="${s.jacket}" alt="" draggable="false" style="object-position:${50+(s.jx||0)}% ${50+(s.jy||0)}%;transform:scale(${s.jz||1})">`:`<i>♪</i><span>${esc(s.title)}</span>`}
+  let rot=-90-DANG[dsel];
+  if(ringRot!==null)rot+=360*Math.round((ringRot-rot)/360); // 近い方向へ回す
+  ringRot=rot;
+  $('zdr').style.transform=`rotate(${rot}deg)`;
+  zr.querySelectorAll('.dc').forEach(d=>{
+    const k=d.dataset.df,av=s?s.lv[k]!==undefined:false,alt=!av&&SS.un&&anyHas(k); // 未実装非表示ON中は、譜面の無い難易度も押して「その難易度がある曲」へ飛べる
+    d.className='dc'+(s&&k===dsel?' on':'')+(av?'':' na')+(alt?' alt':'');
+    d.style.transform=`rotate(${-rot}deg)`; // 文字は常に正立
+  });
+  $('zlc').innerHTML=`<small>レベル</small><b>${lvTxt(lv,dsel)}</b>`;
+  if(zr.classList.contains('ni')){void zr.offsetWidth;zr.classList.remove('ni')} // 初回だけアニメ無しで配置
+}
+function renderSel(){
+  const s=selVis[selIdx],zl=$('zl'),zr=$('zr'),kn=$('zkn');
+  if(!s){
+    zl.innerHTML='<div class="a" style="left:100px;top:300px;font-size:30px;color:#14166e">該当する曲がありません</div>';updateRing(null);kn.style.top='5px';return;
+  }
+  const dsel=pickDiff(s,SS.diff);
+  let h='';
+  const n=selVis.length,seen=new Set();
+  for(const d of [0,1,-1,2,-2]){
+    const ix=((selIdx+d)%n+n)%n;if(seen.has(ix))continue;seen.add(ix); // ループ表示。曲が少ないときは同じ曲を重ねて出さない
+    const t=selVis[ix];
+    const [x,y,w,hh]=ROWPOS[d],dd=pickDiff(t,SS.diff),lv=t.lv[dd],inf=songInfo(t,dd);
+    const mx=d?32:46,fs=Math.max(20,Math.min(mx,(w-40)/Math.max(textW(t.title),4))),dia=d?56:68,cx=x-(d?100:83);
+    h+=`<div class="rw ${d?'':'c'}" data-d="${d}" style="left:${x}px;top:${y-hh/2}px;width:${w}px;height:${hh}px"><div style="font-size:${fs}px">${esc(t.title)}</div><small style="font-size:${d?18:22}px">BPM ${t.bpm}　演奏時間 ${inf.time}</small></div>`
+      +`<div class="lc" style="left:${cx}px;top:${y-dia/2}px;width:${dia}px;height:${dia}px"><small>レベル</small><b style="font-size:${d?26:34}px">${lvTxt(lv,dd)}</b></div>`
+      +(lvDec(lv,dd)?`<div class="ld" style="left:${cx+dia/2-24}px;top:${y+dia/2-4}px">${lvDec(lv,dd)}</div>`:'');
+  }
+  const inf=songInfo(s,dsel),hs=HS[hsKey(s,dsel)];
+  h+='<div class="tri" data-d="-1" style="left:331px;top:252px;clip-path:polygon(50% 0,100% 100%,0 100%)"></div>'
+    +'<div class="tri" data-d="1" style="left:331px;top:454px;clip-path:polygon(0 0,100% 0,50% 100%)"></div>'
+    +`<div class="dt" style="top:436px">総ノーツ数 <b>${inf.notes}</b></div><div class="dt" style="top:463px">譜面制作 <b style="font-size:16px">${esc(s.designer||'')}</b></div><div class="dt" style="top:490px">ハイスコア <b>${hs!==undefined?hs:'---'}</b></div>`;
+  zl.innerHTML=h;
+  updateRing(s);
+  kn.style.top=(selVis.length>1?5+selIdx/(selVis.length-1)*560:5)+'px';
+}
+function fitSel(){
+  const z=$('zs');if(!z)return;
+  const s=Math.min(ov.clientWidth/920,ov.clientHeight/690);SS.sc=s;
+  z.style.transform=`translate(-50%,-50%) scale(${s})`;
+}
+addEventListener('resize',()=>{if(ov.classList.contains('sel'))fitSel()});
+function selToast(t){const e=$('zt');if(!e)return;e.textContent=t;e.style.display='block';clearTimeout(selToast.h);selToast.h=setTimeout(()=>e.style.display='none',1400)}
+function showSelect(){
+  ov.style.display='block';ov.className='sel';infoC.clear();
+  ov.innerHTML='<div id="zs">'
+   +'<label class="zck" style="left:6px;top:14px"><input type="checkbox" id="zun"><span>未実装<br>非表示</span></label>'
+   +'<input id="zq" placeholder="楽曲を検索します🔎" style="left:124px;top:16px;width:346px;height:30px">'
+   +'<button class="tb" id="zsb" style="left:484px;width:44px;background:#8c8c98">🔍</button>'
+   +'<button class="tb" id="zlv" style="left:551px;width:85px;background:#b9f5a4;color:#14166e"></button>'
+   +'<button class="tb" id="zall" style="left:648px;width:82px;background:#ff9fe8"></button>'
+   +'<button class="tb" id="zhm" style="left:743px;width:44px;background:#3ad63a">⌂</button>'
+   +'<button class="tb" id="zsn" style="left:800px;width:45px;background:#9a9aa4">🔊</button>'
+   +'<button class="tb" id="zge" style="left:858px;width:46px;background:#8a8a96">⚙</button>'
+   +'<div id="zm" class="a"></div><div id="zf" class="a"></div>'
+   +'<div id="zl" class="a" style="left:0;top:0;width:620px;height:690px"></div>'
+   +'<div id="zk" class="a" style="left:598px;top:68px;width:40px;height:610px"><i class="trk"></i><i class="knb" id="zkn"></i></div>'
+   +'<button class="a rnd" id="zrn">ランダム</button>'
+   +'<div id="zr" class="a" style="left:0;top:0;width:920px;height:690px;pointer-events:none"></div>'
+   +'<button class="a stb" id="zst">Start</button><div class="a" id="zt"></div></div>';
+  $('zun').checked=SS.un;$('zq').value=SS.q;
+  const pr=()=>{refreshVis();saveSel();renderSel()};
+  const fit=(t,cap,w)=>Math.max(11,Math.min(cap,w/Math.max(textW(t),1)));
+  const closeMenus=()=>{$('zm').style.display='none';$('zf').style.display='none'};
+  const menu=()=>{
+    // 並び順メニュー(楽曲レベル)
+    $('zm').innerHTML='<div class="mh">並び順</div>'+SORTS.map(v=>`<button data-s="${v[0]}" class="${v[0]===SS.sort?'on':''}">${v[1]}</button>`).join('')
+      +`<hr><button data-o="1" class="${SS.asc?'on':''}">▲ 昇順</button><button data-o="0" class="${SS.asc?'':'on'}">▼ 降順</button>`;
+    const sn=SORTS.find(v=>v[0]===SS.sort),sl=sn[2]+(SS.asc?'▲':'▼');
+    $('zlv').textContent=sl;$('zlv').style.fontSize=fit(sl,15,72)+'px';
+    $('zlv').classList.toggle('on',SS.sort!=='impl'||!SS.asc);
+    // 絞込みメニュー(All) — 曲ごとのタグ
+    $('zf').innerHTML='<div class="mh">絞込み(曲ごとのタグ)</div><button data-g="" class="'+(SS.tag?'':'on')+'">すべて</button>'
+      +allTags().map(t=>`<button data-g="${esc(t)}" class="${t===SS.tag?'on':''}">${esc(t)}</button>`).join('');
+    const al=SS.tag||'All';$('zall').textContent=al;$('zall').style.fontSize=fit(al,26,68)+'px';
+    $('zall').classList.toggle('on',!!SS.tag);
+  };
+  menu();
+  $('zun').onchange=()=>{SS.un=$('zun').checked;pr();menu()};
+  $('zq').oninput=()=>{SS.q=$('zq').value;pr();menu()};
+  $('zsb').onclick=()=>$('zq').focus();
+  const toggle=id=>{const m=$(id),o=m.style.display==='block';closeMenus();if(!o)m.style.display='block'};
+  $('zlv').onclick=()=>toggle('zm');
+  $('zall').onclick=()=>toggle('zf');
+  $('zm').onclick=e=>{
+    const b=e.target.closest('button');if(!b)return;
+    if(b.dataset.s)SS.sort=b.dataset.s;else if(b.dataset.o)SS.asc=b.dataset.o==='1';else return;
+    pr();menu(); // メニューは開いたまま(昇降順と並び順を続けて切り替えられる)
+  };
+  $('zf').onclick=e=>{const b=e.target.closest('button');if(!b||b.dataset.g===undefined)return;SS.tag=b.dataset.g;closeMenus();pr();menu()};
+  $('zhm').onclick=()=>show(false);
+  $('zsn').onclick=()=>{setBack=showSelect;showSE('sel')};
+  $('zge').onclick=()=>{setBack=showSelect;showSet()};
+  $('zrn').onclick=()=>{if(selVis.length>1){let i;do{i=Math.floor(Math.random()*selVis.length)}while(i===selIdx);selGo(i)}};
+  $('zst').onclick=async()=>{
+    const s=selVis[selIdx];if(!s)return;
+    if(s.impl===false){selToast('この曲はまだ未実装です');return}
+    const d=pickDiff(s,SS.diff);
+    if(!hasChart(s,d)){selToast('この難易度はまだ実装待ちです');return}
+    if(s.store){selToast('読み込み中…');try{await prepSong(s)}catch(e){selToast('曲を読み込めません');return}}
+    cur={song:s,diff:d};testMode=false;saveSel();start();
+  };
+  // 難易度リング(#zr はクリックを通さない設定なので、円だけ有効にする)
+  $('zr').onclick=e=>{const b=e.target.closest('[data-df]');if(!b||(b.classList.contains('na')&&!b.classList.contains('alt')))return;SS.diff=b.dataset.df;pr();menu()};
+  // 曲リスト: タップで選択 / 上下スワイプ / ホイール / ▲▼
+  $('zl').addEventListener('pointerdown',e=>{
+    const t=e.target.closest('[data-d]'),dd=t?+t.dataset.d:0,y0=e.clientY,i0=selIdx;let moved=false;
+    closeMenus();
+    const mv=ev=>{const dy=ev.clientY-y0;if(Math.abs(dy)>8)moved=true;if(moved)selGo(i0+Math.round(-dy/(64*SS.sc)))};
+    const up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);removeEventListener('pointercancel',up);if(!moved&&dd)selGo(selIdx+dd)};
+    addEventListener('pointermove',mv);addEventListener('pointerup',up);addEventListener('pointercancel',up);
+  });
+  let wt=0;
+  $('zs').addEventListener('wheel',e=>{e.preventDefault();const n=performance.now();if(n-wt<70)return;wt=n;selGo(selIdx+Math.sign(e.deltaY))},{passive:false});
+  // スクロールつまみ
+  const zk=$('zk'),setK=e=>{const r=zk.getBoundingClientRect(),u=Math.min(1,Math.max(0,(e.clientY-r.top-25*SS.sc)/(r.height-50*SS.sc)));selGo(Math.round(u*(selVis.length-1)),true)};
+  zk.addEventListener('pointerdown',e=>{zk.setPointerCapture(e.pointerId);setK(e);zk.onpointermove=setK});
+  zk.addEventListener('pointerup',()=>{zk.onpointermove=null});
+  ringInit();fitSel();refreshVis();renderSel();
+}
+{const b=document.createElement('button');b.id='tshow';b.textContent='🎨 調整パネル';b.onclick=()=>{$('tp').style.display='block';b.style.display='none'};document.body.append(b)}
+show(false);
+loadSE();
+// 保存済みの曲を読み込み → タイトルに反映 → シートの更新を確認(通信できなければ何も出さない)
+loadStore().then(()=>{if($('go'))show(false);return checkUpdates(false)}).catch(()=>{});
+</script>
+</body></html>
