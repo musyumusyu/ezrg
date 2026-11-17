@@ -1,7 +1,7 @@
 // アプリ本体(同一オリジン)だけをキャッシュする Service Worker。
 // スプレッドシート/譜面/音源など外部へのリクエストには一切介入しない。
 // 更新したときは VERSION を上げる(古いキャッシュは自動削除)。
-const VERSION = 'v3';
+const VERSION = 'v4';
 const CACHE = 'amat-shell-' + VERSION;
 const SHELL = [
   './',
@@ -16,7 +16,8 @@ const SHELL = [
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE)
-      .then(c => c.addAll(SHELL.map(u => new Request(u, { cache: 'reload' }))))
+      // 1つ取得できないファイルがあっても、インストール自体は失敗させない
+      .then(c => Promise.all(SHELL.map(u => c.add(new Request(u, { cache: 'reload' })).catch(() => {}))))
       .then(() => self.skipWaiting())
   );
 });
@@ -39,10 +40,9 @@ self.addEventListener('fetch', e => {
   if (req.mode === 'navigate') {
     e.respondWith(
       fetch(req).then(r => {
-        const copy = r.clone();
-        caches.open(CACHE).then(c => c.put('./index.html', copy));
+        if (r && r.ok) { const copy = r.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
         return r;
-      }).catch(() => caches.match('./index.html').then(r => r || caches.match('./')))
+      }).catch(() => caches.match(req, { ignoreSearch: true }).then(r => r || caches.match('./index.html')).then(r => r || caches.match('./')))
     );
     return;
   }
