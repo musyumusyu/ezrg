@@ -1157,19 +1157,9 @@ const DIFFS=[['easy','EASY'],['normal','NORMAL'],['hard','HARD'],['special','spe
 const DNAME=Object.fromEntries(DIFFS);
 const DCOL={easy:'#41dca0',normal:'#6cc4d6',hard:'#d472e6',ultimate:'#b8b8c8',special:'#c49cff'};
 const DANG={special:-90,ultimate:-18,easy:54,normal:126,hard:198}; // リング上の角度(度)
-// デモ曲(見た目確認用)。どれも同じデモ譜面を、曲のBPM・難易度ごとのノーツ量で遊ぶ。impl:false=未実装曲
-// yomi=50音順用の読み(ひらがな) / tags=「All」ボタンの絞込み用タグ(曲ごとに自由に設定。メニューには使われているタグが自動で並ぶ) / 実装順=この配列の並び順
-const DEMO_SONGS=[
- {id:'d01',title:'Sunrise Parade',yomi:'さんらいずぱれーど',tags:['ポップ','オリジナル'],bpm:128,designer:'DEMO',hue:[35,335],lv:{easy:3.2,normal:6.1,hard:9.4,special:11.2}},
- {id:'d02',title:'ネオンの雨',yomi:'ねおんのあめ',tags:['エレクトロ','オリジナル'],bpm:174,designer:'DEMO',hue:[200,280],lv:{easy:4.0,normal:7.3,hard:10.5,ultimate:12.1,special:13.0}},
- {id:'d03',title:'紙飛行機フライト',yomi:'かみひこうきふらいと',tags:['ポップ'],bpm:112,designer:'DEMO',hue:[120,60],lv:{easy:2.0,normal:4.4,hard:7.8}},
- {id:'d04',title:'Starlight Express',yomi:'すたーらいとえくすぷれす',tags:['エレクトロ','ロック'],bpm:190,designer:'DEMO',hue:[250,320],lv:{normal:8.0,hard:11.4,ultimate:12.8,special:14.2}},
- {id:'d05',title:'ひなたぼっこ日和',yomi:'ひなたぼっこびより',tags:['バラード','オリジナル'],bpm:96,designer:'DEMO',hue:[50,15],lv:{easy:1.5,normal:3.6,hard:6.2}},
- {id:'d06',title:'Midnight Circuit',yomi:'みっどないとさーきっと',tags:['エレクトロ','ロック'],bpm:160,designer:'DEMO',hue:[270,200],lv:{easy:4.6,normal:8.1,hard:10.9,special:12.6}},
- {id:'d07',title:'キャンディ・パルス',yomi:'きゃんでぃぱるす',tags:['ポップ'],bpm:148,designer:'DEMO',hue:[330,30],lv:{easy:3.8,normal:6.9,hard:9.9,ultimate:11.6}},
- {id:'d08',title:'Tiny Orbit',yomi:'たいにーおーびっと',tags:['ポップ','エレクトロ'],bpm:135,designer:'DEMO',hue:[180,140],lv:{easy:3.0,normal:5.5,hard:8.7,special:10.8}},
- {id:'d09',title:'Coming Soon…',yomi:'こみんぐすーん',tags:[],bpm:150,designer:'---',hue:[215,215],impl:false,lv:{hard:12.0}}
-];
+// デモ曲は削除済み。曲はスプレッドシート(データURL)から読み込んだダウンロード曲だけが選曲に並ぶ。
+// yomi=50音順用の読み / tags=絞込み用タグ / 実装順=シートの行順
+const DEMO_SONGS=[];
 const SONGS=[...DEMO_SONGS];
 const SORTS=[['lv','レベル順','レベル順'],['kana','50音順','50音順'],['impl','実装順','実装順'],['bpm','BPM順','BPM順'],['len','曲の長さ順','長さ順']];
 const SS={q:'',sort:'impl',asc:true,tag:'',un:false,id:null,diff:'hard',sc:1};
