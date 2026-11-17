@@ -1,7 +1,7 @@
 // アプリ本体(同一オリジン)だけをキャッシュする Service Worker。
 // スプレッドシート/譜面/音源など外部へのリクエストには一切介入しない。
 // 更新したときは VERSION を上げる(古いキャッシュは自動削除)。
-const VERSION = 'v4';
+const VERSION = 'v5';
 const CACHE = 'amat-shell-' + VERSION;
 const SHELL = [
   './',
