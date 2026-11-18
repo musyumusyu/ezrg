@@ -821,7 +821,8 @@ function showSet(){
   ov.scrollTop=keep;
   $('bk').onclick=()=>setBack();$('seb').onclick=()=>showSE('set');if(OLD_DEV_TOOLS){$('wj').onclick=showWin;$('scj').onclick=showScoreCfg}
   bindData();
-  {const pn=$('pname');if(pn)pn.onchange=()=>{PL.name=pn.value.trim().slice(0,16);pn.value=PL.name;savePL()}}
+  {const pn=$('pname');if(pn)pn.onchange=()=>{PL.name=pn.value.trim().slice(0,16);pn.value=PL.name;savePL()}
+   const pb=$('pping');if(pb)pb.onclick=async()=>{const o=$('ppst');o.textContent='確認中…';const m=await pingSave();const o2=$('ppst');if(o2)o2.textContent=m}}
   ov.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{CFG[b.dataset.k]=b.dataset.v==='1';savePrefs();showSet()});
   ov.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{
     const s=SETS[+b.dataset.i];
@@ -916,7 +917,7 @@ function showResult(){
     +`<div class="hd"><div><b>${esc(cur?cur.song.title:(custom&&custom.title)||'デモ')}</b><br>${tags}</div>`
     +`<div class="rb"><s style="width:${Math.min(100,ratio*100)}%"></s>${[[50,'C'],[70,'B'],[85,'A'],[95,'S']].map(([p,l])=>`<u style="left:${p}%"><em>${l}</em></u>`).join('')}</div><div class="md">${rk}</div></div>`
     +`<div class="sc"><span class="l">スコア</span><span class="n">${String(total).padStart(7,'0')}</span></div>`
-    +(best!==null?`<div class="sc hs"><span class="l">ハイスコア</span><span class="n">${String(best).padStart(7,'0')}${nr?' NEW!':''}</span></div>`:'')+(rec?'<div id="rsv" style="grid-column:1/-1;min-height:20px;margin:-6px 0;font:700 15px/20px system-ui;text-align:center;color:#2a3a8a"></div>':'')
+    +(best!==null?`<div class="sc hs"><span class="l">ハイスコア</span><span class="n">${String(best).padStart(7,'0')}${nr?' NEW!':''}</span></div>`:'')+((rec||skipWhy())?'<div id="rsv" style="grid-column:1/-1;min-height:20px;margin:-6px 0;font:700 15px/20px system-ui;text-align:center;color:#2a3a8a">'+(rec?'':esc(skipWhy()))+'</div>':'')
     +'<div class="pn">'+NAMES.map(k=>`<div><span style="color:${col[k]}">${k}</span><span style="color:${col[k]}">${cnt[k]||0}</span></div>`).join('')+'</div>'
     +`<div class="rc"><div class="bnr">${bn[0]?`<span class="bt ${bn[0]}">${bn[1]}</span>${bonus?`<small>BONUS +${bonus}</small>`:''}`:''}</div><div class="wh" style="background:#ffd8c0;border-radius:99px;display:flex;justify-content:space-between;font-family:Georgia,serif"><span style="color:#08d0e8">COMBO</span><span style="color:#08c8ff">${maxCombo}</span></div>`
     +`<div class="wh fls" style="${CFG.flDisp?'':'visibility:hidden;'}font-family:Georgia,serif;display:grid;grid-template-columns:1fr 1fr;color:#e0e"><span>${late}</span><span style="text-align:right;color:#08c8ff">${fast}</span><span style="grid-column:1/-1"><div class="fl"><s style="width:${lp}%"></s></div></span><span style="color:red">late</span><span style="text-align:right;color:#2255ff">fast</span></div>`+'</div>'
@@ -1231,6 +1232,25 @@ function recordScore(o){ // 選曲から遊んだ通常プレイ(オート・譜
     score:o.total,rank:o.rk,fc:o.fc?1:0,ap:o.ap?1:0,perfect:cnt.perfect||0,great:cnt.great||0,good:cnt.good||0,bad:cnt.bad||0,miss:cnt.miss||0,
     combo:maxCombo,late,fast,mirror:CFG.mirror?1:0,cspeed:CFG.constSpeed?1:0,ver:self.APP_VERSION||'',rules:SHC.rules||''};
 }
+let SENDERR='';
+function skipWhy(){ // 記録しない理由(リザルト画面に表示)
+  if(testMode)return '';
+  if(autoRun)return 'オートプレイのためスコアは記録しません';
+  if(!cur)return '選曲から遊んだときだけスコアを記録します';
+  if(cur.song.custom)return '読み込んだ曲のためスコアは記録しません';
+  if(!CFG.sendScore)return 'スコア送信がOFFです(設定画面で切替)';
+  if(!saveUrl())return 'スコア送信先が未設定です(設定シートの save.url。設定画面で「更新を確認」)';
+  return '';
+}
+async function pingSave(){ // 送信先(Apps Script)への接続確認。シートには何も書かない
+  const url=saveUrl();
+  if(!url)return '✗ 送信先が未設定です。設定シートに save.url の行があるか、タブ名が settings か確認し、「更新を確認」を押してください';
+  try{
+    const r=await fetch(url,{redirect:'follow'}),t=await r.text();let j;
+    try{j=JSON.parse(t)}catch(e){return '✗ Apps Scriptの応答が想定外です。デプロイの「アクセスできるユーザー」が「全員」か、URLが …/exec か確認してください'}
+    return j&&j.ok?'✓ 接続できました(送信先は正常です)':'✗ 応答エラー: '+((j&&j.error)||'不明');
+  }catch(e){return '✗ 接続できません(URLが違う/デプロイされていない/オフライン): '+(e.message||e)}
+}
 let flushing=null;
 function flushScores(){
   const url=saveUrl();
@@ -1241,17 +1261,18 @@ function flushScores(){
       while(SQ.length){
         const batch=SQ.slice(0,20);
         const r=await fetch(url,{method:'POST',body:JSON.stringify({records:batch}),redirect:'follow'}); // 文字列ボディ=プリフライト無しの単純リクエスト
-        const j=await r.json();if(!j||!j.ok)throw Error((j&&j.error)||'rejected');
+        let j;try{j=await r.json()}catch(e){throw Error('Apps Scriptの応答が想定外(公開設定を「全員」に/URLを確認)')}
+        if(!j||!j.ok)throw Error((j&&j.error)||'受付エラー');SENDERR='';
         const done=new Set(batch.map(x=>x.uid));SQ=SQ.filter(x=>!done.has(x.uid));saveSQ();
       }
-    }catch(e){}
+    }catch(e){SENDERR=(e&&e.message)||'通信エラー'}
     flushing=null;try{renderUpd()}catch(e){}
   })();
   return flushing;
 }
 function scoreStatus(rec){ // リザルト画面の送信状況表示
   const e=$('rsv');if(!e)return;e.textContent='📤 送信中…';
-  flushScores().then(()=>{const e2=$('rsv');if(e2&&ov.className==='result')e2.textContent=SQ.some(x=>x.uid===rec.uid)?'📤 送信待ち(通信できるときに自動で送ります)':'📤 スコアをシートに送信しました'});
+  flushScores().then(()=>{const e2=$('rsv');if(e2&&ov.className==='result')e2.textContent=SQ.some(x=>x.uid===rec.uid)?'📤 送信待ち: '+(SENDERR||'通信できるときに自動で送ります'):'📤 スコアをシートに送信しました'});
 }
 // ===== 設定シート(2枚目)の読み込み =====
 // 列: key, value, value2(判定幅の「後」), memo。value が空の行は既定値のまま。同じキーが複数あれば下の行が優先。#で始まる行はコメント。
@@ -1504,7 +1525,8 @@ function dataStatus(){
   else p.push(UPD.checked?'最終確認 '+new Date(UPD.checked).toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'未確認');
   if(UPD.info)p.push(UPD.info);
   if(UPD.cfg)p.push(UPD.cfg);
-  if(SQ.length)p.push('スコア送信待ち '+SQ.length+'件');
+  p.push(saveUrl()?(CFG.sendScore?'スコア送信: ON':'スコア送信: OFF'):'スコア送信先: 未設定');
+  if(SQ.length)p.push('スコア送信待ち '+SQ.length+'件'+(SENDERR?'('+SENDERR+')':''));
   if(UPD.busy)p.push('ダウンロード中 '+UPD.prog);else if(UPD.pending.length)p.push(`追加データ ${UPD.pending.length}曲`);
   if(UPD.warn&&UPD.warn.length)p.push('シートの注意('+UPD.warn.length+'件): '+UPD.warn.slice(0,5).join(' / '));
   if(UPD.msg)p.push(UPD.msg);if(UPD.err)p.push(UPD.err);
@@ -1522,7 +1544,7 @@ function renderUpd(){
   if(UPD.err)h+=`<div class="ue">${esc(UPD.err)}</div>`;
   e.innerHTML=h;const b=$('udl');if(b)b.onclick=downloadPending;
 }
-const psec=()=>`<div class="lab" style="margin-top:18px"><span><b>プレイヤー名(スコア記録用)</b></span></div><div class="wr"><input id="pname" type="text" maxlength="16" value="${esc(PL.name)}" placeholder="未入力なら「名無し」" style="width:min(70vw,300px);text-align:left"></div>`;
+const psec=()=>`<div class="lab" style="margin-top:18px"><span><b>プレイヤー名(スコア記録用)</b></span></div><div class="wr"><input id="pname" type="text" maxlength="16" value="${esc(PL.name)}" placeholder="未入力なら「名無し」" style="width:min(70vw,300px);text-align:left"></div><div class="row" style="margin-top:6px"><button class="sm" id="pping">スコア送信先を確認</button></div><p id="ppst" style="font-size:13px;margin:4px 0;max-width:420px;line-height:1.5"></p>`;
 const dsec=()=>`<div class="lab" style="margin-top:18px"><span><b>ダウンロードデータ</b></span></div><p id="dsst" style="font-size:13px;margin:4px 0;max-width:420px;line-height:1.5">${esc(dataStatus())}</p><div class="row">${UPD.pending.length&&!UPD.busy?`<button class="sm on" id="ddl">ダウンロード(${UPD.pending.length}曲)</button>`:''}<button class="sm" id="dchk">更新を確認</button><button class="sm" id="ddel">保存データを削除</button></div>`
   +(DEV?`<div class="wr" style="margin-top:6px"><b style="min-width:auto">データURL</b><input id="durl" type="text" value="${esc(dataUrl())}" placeholder="公開したCSVのURL" style="width:min(62vw,280px);text-align:left"></div>`:'');
 function bindData(){
