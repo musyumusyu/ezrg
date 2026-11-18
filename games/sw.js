@@ -1,11 +1,13 @@
 // アプリ本体(同一オリジン)だけをキャッシュする Service Worker。
 // スプレッドシート/譜面/音源など外部へのリクエストには一切介入しない。
-// 更新したときは VERSION を上げる(古いキャッシュは自動削除)。
-const VERSION = 'v5';
+// バージョンは version.js の APP_VERSION が唯一の基準(上げると古いキャッシュは自動削除され、新版へ入れ替わる)。
+try { importScripts('version.js'); } catch (e) {}
+const VERSION = self.APP_VERSION || 'dev';
 const CACHE = 'amat-shell-' + VERSION;
 const SHELL = [
   './',
   './index.html',
+  './version.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',
@@ -36,8 +38,8 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return; // 外部(Googleシート等)は素通し
 
-  // ページ遷移: ネット優先 → 失敗(オフライン)ならキャッシュ
-  if (req.mode === 'navigate') {
+  // ページ遷移 と version.js: ネット優先 → 失敗(オフライン)ならキャッシュ(表示するバージョンを本体と食い違わせないため)
+  if (req.mode === 'navigate' || url.pathname.endsWith('/version.js')) {
     e.respondWith(
       fetch(req).then(r => {
         if (r && r.ok) { const copy = r.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }

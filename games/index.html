@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="音ゲー">
 <link rel="manifest" href="manifest.webmanifest">
+<script src="version.js"></script>
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 
@@ -193,7 +194,7 @@ const CFG={
   offset:0,              // 音ズレ補正(秒)。ズレるなら調整
   wins:null,             // 判定幅(ms)。設定画面→判定幅の設定 で変更(WD参照)
   score:{perfect:1000,great:700,good:400,bad:100,miss:0},
-  se:true,simul:true,showScore:true,keys:false, // 設定画面で切替
+  se:true,simul:true,showScore:true,keys:false,sendScore:true, // 設定画面で切替(sendScore=スコアをシートへ送信)
   mirror:false,auto:false,constSpeed:false,comboFx:true,flDisp:true, // ミラー譜面 / オート / 等速(ソフランなし) / AP・FC継続中のコンボ演出
   scoreCfg:null,         // スコア配分(開発者のみ反映。SCD参照)
   seVol:80,seCfg:null // ノーツSE: 全体音量(0-100) / 種別ごとの {tone,vol,name}
@@ -219,7 +220,7 @@ function normSE(){ // 壊れた値・未知の音色は既定(埋め込みがあ
   CFG.seVol=Number.isFinite(CFG.seVol)?Math.min(100,Math.max(0,Math.round(CFG.seVol))):80;
 }
 const PK='amatPrefs';
-function savePrefs(){try{localStorage.setItem(PK,JSON.stringify({scroll:CFG.scroll,offset:CFG.offset,se:CFG.se,simul:CFG.simul,showScore:CFG.showScore,keys:CFG.keys,wins:CFG.wins,seVol:CFG.seVol,seCfg:CFG.seCfg,seSig:CFG.seSig,mirror:CFG.mirror,auto:CFG.auto,constSpeed:CFG.constSpeed,comboFx:CFG.comboFx,flDisp:CFG.flDisp,scoreCfg:CFG.scoreCfg}))}catch(e){}}
+function savePrefs(){try{localStorage.setItem(PK,JSON.stringify({scroll:CFG.scroll,offset:CFG.offset,se:CFG.se,simul:CFG.simul,showScore:CFG.showScore,keys:CFG.keys,wins:CFG.wins,seVol:CFG.seVol,seCfg:CFG.seCfg,seSig:CFG.seSig,mirror:CFG.mirror,auto:CFG.auto,sendScore:CFG.sendScore,constSpeed:CFG.constSpeed,comboFx:CFG.comboFx,flDisp:CFG.flDisp,scoreCfg:CFG.scoreCfg}))}catch(e){}}
 try{Object.assign(CFG,JSON.parse(localStorage.getItem(PK)||'{}'))}catch(e){}
 normSE();
 function normWins(){ // 既定値に設定シートの値を重ねる(壊れた値は既定に戻す)
@@ -404,6 +405,7 @@ function compile(c){
       // 既定: slide=始点タップ/終点ホールド(見た目タップ・判定トレース)、guide=判定なし・始点終点なし
       const isG=d.type==='guide',hk=d.head??(isG?'none':'tap'),tk=d.tail??(d.type==='slide'?'hold':'none'),pl=n.pts[n.pts.length-1];
       n.hrect=!isG&&hk==='tap';n.hcol=d.headColor||d.color;
+      n.hc=!!(d.headCrit??d.crit); // 始点そのもの(スライド本体が始点を兼ねる場合)のクリティカル。中継点・8分判定は従来どおり n.crit
       const ex=(k,lane,w,crit,color,t)=>out.push({type:k==='hold'?'trace':k,look:k==='hold'?'tap':undefined,lane,w,crit:!!crit,color,t,done:false,sc:n.sc,ct:d.type,par:n,kd:k});
       if(isG||!n.hrect){n.head=true;if(hk!=='none')ex(hk,n.lane,n.w,d.headCrit??d.crit,d.headColor||d.color,n.t)}
       if(tk!=='none')ex(tk,pl.lane,pl.w,d.tailCrit??d.crit,d.tailColor||d.color,pl.t);
@@ -448,10 +450,12 @@ function playSE(kind,v,at){ // v=0..1 の最終音量
     default:osc('sine',1100*f,0,.25,.07); // beep
   }
 }
+const hcOf=n=>n.pts?n.hc:n.crit; // 判定・SE・色で使う「そのノーツ自身(スライドなら始点)」のクリティカル
 function se(n,force){ // n=ノーツ。force=種別を強制(中継点の粒など)
   if(!CFG.se||!ctx)return;
   const b=force||(n.type==='flick'?'flick':n.type==='trace'?'trace':'tap');
-  const k=(force==='dmghit'||force==='dmgsafe')?force:n.crit?(b==='flick'?'critflick':b==='trace'?'crittrace':'crit'):b;
+  const cr=force?n.crit:hcOf(n); // 強制種別(中継点)=スライド全体のcrit / 指定なし=ノーツ自身(スライドなら始点)のcrit
+  const k=(force==='dmghit'||force==='dmgsafe')?force:cr?(b==='flick'?'critflick':b==='trace'?'crittrace':'crit'):b;
   const c=CFG.seCfg[k],v=CFG.seVol/100*c.vol/100;
   if(c.tone==='off'||v<=0)return;
   playSE(k,v);
@@ -491,7 +495,7 @@ function catCounts(ns){ // 判定カテゴリごとの個数
   const r={},add=(cat,crit)=>{const k=(crit?'c':'')+cat;r[k]=(r[k]||0)+1};
   for(const n of ns){
     if(n.done||n.type==='damage'||n.type==='guide')continue;
-    if(n.pts){if(n.hrect)add('head',n.crit);n.ticks.forEach((_,i)=>add(n.tsfx[i]?'relay':'tick',n.crit))}
+    if(n.pts){if(n.hrect)add('head',n.hc);n.ticks.forEach((_,i)=>add(n.tsfx[i]?'relay':'tick',n.crit))}
     else add(catN(n),n.crit);
   }
   return r;
@@ -542,18 +546,18 @@ function press(l){ // タップ・ロング始点
   const j=jname(nkind(r.n),r.sd);
   if(j==='miss'&&r.sd<0)return; // 判定範囲より早い入力は無視(ノーツを消費してミスにしない)
   r.n.head=true;if(r.n.type==='tap')r.n.done=true;
-  judge(j,r.n.crit,r.sd,catN(r.n));if(j!=='miss')se(r.n);
+  judge(j,hcOf(r.n),r.sd,catN(r.n));if(j!=='miss')se(r.n);
 }
 function scrub(l,id){ // フリック（擦り）
   const r=nearest(l,['flick'],false);if(!r)return;
   if(r.sd<0){r.n.pd=id;return} // 判定タイミングより前の入力 → 丁度に入力したものとして待つ(update側で判定。待つ間に離したらrelPendで判定)
-  r.n.done=true;const j=jname('flick',r.sd);judge(j,r.n.crit,r.sd,catN(r.n));if(j!=='miss')se(r.n);
+  r.n.done=true;const j=jname('flick',r.sd);judge(j,hcOf(r.n),r.sd,catN(r.n));if(j!=='miss')se(r.n);
 }
 function relPend(id){ // 待機中に指を離した → 離した瞬間の時間差で判定
   const t=T();
   for(const n of notes){
     if(n.done||n.pd!==id)continue;
-    const sd=t-n.t,j=jname('flick',sd);n.done=true;judge(j,n.crit,sd,catN(n));if(j!=='miss')se(n);
+    const sd=t-n.t,j=jname('flick',sd);n.done=true;judge(j,hcOf(n),sd,catN(n));if(j!=='miss')se(n);
   }
 }
 const ease=(c,u)=>c==='in'?u*u:c==='out'?1-(1-u)*(1-u):c==='smooth'?u*u*(3-2*u):u; // in=加速 out=減速
@@ -572,10 +576,10 @@ function holdsAt(n,time){
 function autoPlay(t){ // 譜面テストのオート再生: 時刻が来たノーツを全部perfectで処理
   for(const n of notes){
     if(n.done||n.t>t)continue;
-    if(n.type==='tap'||n.type==='flick'||n.type==='trace'){n.done=n.head=true;judge('perfect',n.crit,undefined,catN(n));se(n)}
+    if(n.type==='tap'||n.type==='flick'||n.type==='trace'){n.done=n.head=true;judge('perfect',hcOf(n),undefined,catN(n));se(n)}
     else if(n.type==='damage'){n.done=true;se(n,'dmgsafe')}
     else if(n.pts&&n.type!=='guide'){
-      if(!n.head){n.head=true;judge('perfect',n.crit,undefined,catN(n));se(n)}
+      if(!n.head){n.head=true;judge('perfect',hcOf(n),undefined,catN(n));se(n)}
       while(n.ti<n.ticks.length&&n.ticks[n.ti]<=t){judge('perfect',n.crit,undefined,n.tsfx[n.ti]?'relay':'tick');if(n.tsfx[n.ti])se(n,'trace');n.ti++}
     }
   }
@@ -586,12 +590,12 @@ function update(){
   for(const n of notes){
     if(n.done)continue;
     if(n.type==='tap'||n.type==='flick'){
-      if(n.pd!==undefined){if(t>=n.t){n.done=true;judge('perfect',n.crit,undefined,catN(n));se(n)}} // 早く擦った分は判定タイミング丁度で確定
+      if(n.pd!==undefined){if(t>=n.t){n.done=true;judge('perfect',hcOf(n),undefined,catN(n));se(n)}} // 早く擦った分は判定タイミング丁度で確定
       else if(t>n.t+WC[n.type].miss[1]){n.done=n.head=true;judge('miss')}
     }else if(n.type==='trace'){
       const h=WC.trace.hit;
       if(!n.la&&t>=n.t-h[0]&&hd(n))n.la=true; // 早く触れていたら「丁度に触れた」ことにして待つ
-      if(n.la){if(t>=n.t){n.done=true;judge('perfect',n.crit,undefined,catN(n));se(n)}}
+      if(n.la){if(t>=n.t){n.done=true;judge('perfect',hcOf(n),undefined,catN(n));se(n)}}
       else if(t>n.t+h[1]){n.done=true;judge('miss')}
     }else if(n.type==='damage'){
       const h=WC.damage.hit; // 前フレーム〜今フレームが範囲と重なればOK(短い範囲でもフレームの隙間で漏れない)
@@ -726,7 +730,7 @@ function draw(){
         g.closePath();g.fill();
       }
       g.globalAlpha=1;
-      if(n.hrect){const q0=posAt(n,t0);pill(ox+q0.lo*lw+PX,Y(n,t0),q0.w*lw-2*PX,n.hcol||n.color||(n.crit?ST.cr:ST.sl),ph,n.crit)}
+      if(n.hrect){const q0=posAt(n,t0);pill(ox+q0.lo*lw+PX,Y(n,t0),q0.w*lw-2*PX,n.hcol||n.color||(n.hc?ST.cr:ST.sl),ph,n.hc)}
       for(const tm of n.rl||[]){ // 中継点(トレース風のひし形)
         if(tm<t)continue;const yy=Y(n,tm);if(yy<-10||yy>h+10)continue;
         const q=posAt(n,tm);diamond(ox+(q.lo+q.w/2)*lw,yy,ph*.5,ST.rl);
@@ -787,7 +791,7 @@ function show(fin){
   ov.innerHTML='<div class="frame"></div>'+DECO+'<div class="logo"><div class="bw"><div class="blade"></div></div><b>天照</b><i>amatYraSEN</i></div><div class="sub">簡単!?リズムゲーム</div><div id="upd" class="upd"></div><button class="px" id="go">PLAY</button><button class="sm on" id="tst" style="font-size:16px;padding:8px 22px">🛠 譜面テスト</button>'+sel
     +'<div class="row"><button class="sm" id="load">譜面JSON</button><button class="sm" id="aud">曲を読み込む</button><button class="sm" id="set">設定</button><button class="sm fsb" id="fs">'+fsLabel()+'</button>'+(DEV?'<button class="sm" id="tune">見た目調整</button>':'')+'</div>'
     +(audioName?`<p style="font-size:16px">曲: ${esc(audioName)}</p>`:'')+'<input id="f" type="file" accept=".json,application/json" hidden><input id="a" type="file" accept="audio/*" hidden>'
-    +(msg?`<p style="color:var(--dm);font-weight:700">${esc(msg)}</p>`:'')+'<div class="ver">ver.proto'+(DEV?' [DEV]':'')+'</div>';
+    +(msg?`<p style="color:var(--dm);font-weight:700">${esc(msg)}</p>`:'')+'<div class="ver">ver.'+(self.APP_VERSION||'proto')+(DEV?' [DEV]':'')+'</div>';
   renderUpd();
   ov.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{L=+b.dataset.n;show(false)});
   const d=$('demo');if(d)d.onclick=()=>{custom=null;msg='';show(false)};
@@ -802,7 +806,7 @@ const SETS=[
   {n:'ノーツ速度',st:[1,.1,.01],get:()=>1.65/CFG.scroll,set:v=>CFG.scroll=1.65/v,min:.5,max:12,def:1.5},
   {n:'タイミング調整(ms)',st:[10,1,.1],get:()=>CFG.offset*1000,set:v=>CFG.offset=v/1000,min:-500,max:500,def:0}
 ];
-const TOGS=[['ミラー譜面','mirror'],['スコア表示','showScore'],['等速','constSpeed'],['オート','auto'],['コンボ演出','comboFx'],['FAST/LATE表示','flDisp'],['SE','se'],['同時押しライン','simul'],['キー表示','keys']];
+const TOGS=[['ミラー譜面','mirror'],['スコア表示','showScore'],['等速','constSpeed'],['オート','auto'],['コンボ演出','comboFx'],['FAST/LATE表示','flDisp'],['SE','se'],['同時押しライン','simul'],['キー表示','keys'],['スコア送信','sendScore']];
 const rnd=v=>+(+v).toFixed(2);
 function showSet(){
   const keep=ov.className==='set'?ov.scrollTop:0;
@@ -813,10 +817,11 @@ function showSet(){
     +`<span class="val">${rnd(s.get())}</span>`
     +[...s.st].reverse().map(v=>`<button data-i="${i}" data-d="${v}">+${v}</button>`).join('')
     +`<button data-i="${i}" data-r="1" style="color:#18d8e8">RESET</button></div>`).join('');
-  ov.innerHTML='<div class="frame"></div><button class="bk" id="bk">↩</button><div class="tgrid">'+tg+'</div>'+rows+'<div class="row" style="margin-top:16px"><button class="sm on" id="seb" style="font-size:16px;padding:8px 22px">ノーツSEの詳細設定 →</button></div>'+dsec()+(OLD_DEV_TOOLS?'<div class="row" style="margin-top:12px"><button class="sm on" id="wj" style="font-size:16px;padding:8px 22px">判定幅の設定(ms) →【開発者】</button></div><div class="row" style="margin-top:12px;margin-bottom:30px"><button class="sm on" id="scj" style="font-size:16px;padding:8px 22px">スコア配分の設定 →【開発者】</button></div>':'<div style="height:30px"></div>');
+  ov.innerHTML='<div class="frame"></div><button class="bk" id="bk">↩</button><div class="tgrid">'+tg+'</div>'+rows+'<div class="row" style="margin-top:16px"><button class="sm on" id="seb" style="font-size:16px;padding:8px 22px">ノーツSEの詳細設定 →</button></div>'+psec()+dsec()+(OLD_DEV_TOOLS?'<div class="row" style="margin-top:12px"><button class="sm on" id="wj" style="font-size:16px;padding:8px 22px">判定幅の設定(ms) →【開発者】</button></div><div class="row" style="margin-top:12px;margin-bottom:30px"><button class="sm on" id="scj" style="font-size:16px;padding:8px 22px">スコア配分の設定 →【開発者】</button></div>':'<div style="height:30px"></div>');
   ov.scrollTop=keep;
   $('bk').onclick=()=>setBack();$('seb').onclick=()=>showSE('set');if(OLD_DEV_TOOLS){$('wj').onclick=showWin;$('scj').onclick=showScoreCfg}
   bindData();
+  {const pn=$('pname');if(pn)pn.onchange=()=>{PL.name=pn.value.trim().slice(0,16);pn.value=PL.name;savePL()}}
   ov.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{CFG[b.dataset.k]=b.dataset.v==='1';savePrefs();showSet()});
   ov.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{
     const s=SETS[+b.dataset.i];
@@ -902,6 +907,7 @@ function showResult(){
   let best=null,nr=false; // ハイスコアの更新(選曲から遊んだ時のみ。オート時は記録しない)
   if(cur&&!autoRun){const k=hsKey(cur.song,cur.diff);best=HS[k]||0;if(total>best){best=total;nr=true;HS[k]=total;try{localStorage.setItem('amatHS',JSON.stringify(HS))}catch(e){}}}
   const rk=ratio>=.95?'S':ratio>=.85?'A':ratio>=.7?'B':ratio>=.5?'C':'E';
+  const rec=recordScore({total,rk,fc,ap});if(rec){SQ.push(rec);if(SQ.length>300)SQ=SQ.slice(-300);saveSQ()}
   const col={perfect:'#8aa8ff',great:'#6a2cff',good:'#ff5a10',bad:'#1aa81a',miss:'#10105a'};
   const lt=late+fast,lp=lt?late/lt*100:50;
   const tags=[`${L}レーン`+(cur?' / '+DNAME[cur.diff]:''),CFG.mirror?'MIRROR':'',CFG.constSpeed?'等速':'',autoRun?'AUTO':''].filter(Boolean).map(t=>`<span class="tag">${esc(t)}</span>`).join('');
@@ -910,12 +916,13 @@ function showResult(){
     +`<div class="hd"><div><b>${esc(cur?cur.song.title:(custom&&custom.title)||'デモ')}</b><br>${tags}</div>`
     +`<div class="rb"><s style="width:${Math.min(100,ratio*100)}%"></s>${[[50,'C'],[70,'B'],[85,'A'],[95,'S']].map(([p,l])=>`<u style="left:${p}%"><em>${l}</em></u>`).join('')}</div><div class="md">${rk}</div></div>`
     +`<div class="sc"><span class="l">スコア</span><span class="n">${String(total).padStart(7,'0')}</span></div>`
-    +(best!==null?`<div class="sc hs"><span class="l">ハイスコア</span><span class="n">${String(best).padStart(7,'0')}${nr?' NEW!':''}</span></div>`:'')
+    +(best!==null?`<div class="sc hs"><span class="l">ハイスコア</span><span class="n">${String(best).padStart(7,'0')}${nr?' NEW!':''}</span></div>`:'')+(rec?'<div id="rsv" style="grid-column:1/-1;min-height:20px;margin:-6px 0;font:700 15px/20px system-ui;text-align:center;color:#2a3a8a"></div>':'')
     +'<div class="pn">'+NAMES.map(k=>`<div><span style="color:${col[k]}">${k}</span><span style="color:${col[k]}">${cnt[k]||0}</span></div>`).join('')+'</div>'
     +`<div class="rc"><div class="bnr">${bn[0]?`<span class="bt ${bn[0]}">${bn[1]}</span>${bonus?`<small>BONUS +${bonus}</small>`:''}`:''}</div><div class="wh" style="background:#ffd8c0;border-radius:99px;display:flex;justify-content:space-between;font-family:Georgia,serif"><span style="color:#08d0e8">COMBO</span><span style="color:#08c8ff">${maxCombo}</span></div>`
     +`<div class="wh fls" style="${CFG.flDisp?'':'visibility:hidden;'}font-family:Georgia,serif;display:grid;grid-template-columns:1fr 1fr;color:#e0e"><span>${late}</span><span style="text-align:right;color:#08c8ff">${fast}</span><span style="grid-column:1/-1"><div class="fl"><s style="width:${lp}%"></s></div></span><span style="color:red">late</span><span style="text-align:right;color:#2255ff">fast</span></div>`+'</div>'
     +'</div><div class="row" style="margin-top:14px"><button class="sm rbtn" id="rt2">リトライ</button><button class="sm rbtn" id="tt" style="background:#ffd8f4;border-color:#ff8a8a;color:#2255ff">タイトルへ</button><button class="sm rbtn" id="sl2" style="background:#d8f0ff;border-color:#8ad0ff;color:#2255ff">選曲へ</button></div></div></div>';
   fitResult();requestAnimationFrame(fitResult);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitResult); // 文字の読み込み後にも測り直す
+  if(rec)scoreStatus(rec);
   $('rt2').onclick=start;$('tt').onclick=()=>show(false);$('sl2').onclick=showSelect;
   if(testMode){$('sl2').textContent='テスト画面へ';$('sl2').onclick=showTest}
 }
@@ -1072,7 +1079,7 @@ function judgeBreakdown(ns){ // 判定の種類ごとの数 [全体,うちクリ
   const add=(k,m,crit)=>{r[k][0]+=m;if(crit)r[k][1]+=m};
   for(const n of ns){
     if(n.type==='damage'||n.type==='guide')continue;
-    if(n.pts){if(n.hrect)add('edge',1,n.crit);add('tick',n.ticks.length,n.crit)}
+    if(n.pts){if(n.hrect)add('edge',1,n.hc);add('tick',n.ticks.length,n.crit)}
     else add(n.par?'edge':(n.type==='flick'?'flick':n.type==='trace'?'trace':'tap'),1,n.crit);
   }
   return r;
@@ -1207,6 +1214,45 @@ function parseCSV(t){
   if(f!==''||row.length){row.push(f);rows.push(row)}
   return rows.filter(r=>r.some(x=>x.trim()!==''));
 }
+// ===== スコア保存 =====
+// 端末内のハイスコア(amatHS)に加え、設定シートの save.url(Apps Scriptウェブアプリ)へ送信し、スプレッドシートの3枚目「scores」に記録する。
+// 送信できないとき(オフライン等)は端末内のキューに残し、通信できるようになったら自動で再送する。同じ記録は uid で重複排除。
+const PLK='amatPlayer',SQK='amatScoreQ';
+let PL={id:'',name:''};try{Object.assign(PL,JSON.parse(localStorage.getItem(PLK)||'{}'))}catch(e){}
+const rid=()=>{try{return crypto.randomUUID()}catch(e){return Date.now().toString(36)+Math.random().toString(36).slice(2,10)}};
+const savePL=()=>{try{localStorage.setItem(PLK,JSON.stringify(PL))}catch(e){}};
+if(!PL.id){PL.id=rid();savePL()}
+let SQ=[];try{SQ=JSON.parse(localStorage.getItem(SQK)||'[]');if(!Array.isArray(SQ))SQ=[]}catch(e){SQ=[]}
+const saveSQ=()=>{try{localStorage.setItem(SQK,JSON.stringify(SQ))}catch(e){}};
+const saveUrl=()=>(SHC.save&&SHC.save.url)||'';
+function recordScore(o){ // 選曲から遊んだ通常プレイ(オート・譜面テスト・自分で読み込んだ曲を除く)だけ記録
+  if(!cur||autoRun||testMode||cur.song.custom||!CFG.sendScore||!saveUrl())return null;
+  return {uid:rid(),t:new Date().toISOString(),pid:PL.id,name:(PL.name||'').slice(0,16),song:cur.song.id,title:cur.song.title,diff:cur.diff,lanes:L,
+    score:o.total,rank:o.rk,fc:o.fc?1:0,ap:o.ap?1:0,perfect:cnt.perfect||0,great:cnt.great||0,good:cnt.good||0,bad:cnt.bad||0,miss:cnt.miss||0,
+    combo:maxCombo,late,fast,mirror:CFG.mirror?1:0,cspeed:CFG.constSpeed?1:0,ver:self.APP_VERSION||'',rules:SHC.rules||''};
+}
+let flushing=null;
+function flushScores(){
+  const url=saveUrl();
+  if(flushing)return flushing;
+  if(!url||!CFG.sendScore||!SQ.length||navigator.onLine===false)return Promise.resolve();
+  flushing=(async()=>{
+    try{
+      while(SQ.length){
+        const batch=SQ.slice(0,20);
+        const r=await fetch(url,{method:'POST',body:JSON.stringify({records:batch}),redirect:'follow'}); // 文字列ボディ=プリフライト無しの単純リクエスト
+        const j=await r.json();if(!j||!j.ok)throw Error((j&&j.error)||'rejected');
+        const done=new Set(batch.map(x=>x.uid));SQ=SQ.filter(x=>!done.has(x.uid));saveSQ();
+      }
+    }catch(e){}
+    flushing=null;try{renderUpd()}catch(e){}
+  })();
+  return flushing;
+}
+function scoreStatus(rec){ // リザルト画面の送信状況表示
+  const e=$('rsv');if(!e)return;e.textContent='📤 送信中…';
+  flushScores().then(()=>{const e2=$('rsv');if(e2&&ov.className==='result')e2.textContent=SQ.some(x=>x.uid===rec.uid)?'📤 送信待ち(通信できるときに自動で送ります)':'📤 スコアをシートに送信しました'});
+}
 // ===== 設定シート(2枚目)の読み込み =====
 // 列: key, value, value2(判定幅の「後」), memo。value が空の行は既定値のまま。同じキーが複数あれば下の行が優先。#で始まる行はコメント。
 //  win.<種別>.<判定>  value=前ms value2=後ms(value2が空なら前後同じ)   例 win.tap.perfect | 50 | 50
@@ -1219,7 +1265,7 @@ function parseSettings(text){
   if(hi<0)return null;
   const hd=rows[hi].map(nh),ik=hd.indexOf('key'),iv=hd.indexOf('value'),i2=hd.indexOf('value2');
   if(iv<0)return null;
-  const o={win:{},score:{w:{},acc:{}},se:{kinds:{}},style:{},warn:[],n:{win:0,score:0,se:0,style:0}};
+  const o={win:{},score:{w:{},acc:{}},se:{kinds:{}},style:{},save:null,rules:'',warn:[],n:{win:0,score:0,se:0,style:0}};
   const num=s=>parseFloat(String(s).normalize('NFKC').replace(/,/g,'')),seK=SEK.map(x=>x[0]),skip=(k,why)=>o.warn.push(`${k}: ${why}`);
   for(const r of rows.slice(hi+1)){
     const key=String(r[ik]??'').trim();if(!key||key[0]==='#')continue;
@@ -1245,6 +1291,10 @@ function parseSettings(text){
         else{skip(key,'未知のキー');continue}
         o.n.se++;
       }else skip(key,'未知のキー');
+    }else if(key==='save.url'){
+      if(!/^https:\/\/script\.google\.com\/macros\/(?:a\/[^\/]+\/)?s\/[\w-]+\/exec$/.test(v)){skip(key,'Apps Scriptのウェブアプリ URL(…/exec)ではありません');continue}
+      o.save={url:v};
+    }else if(key==='rules.version'){o.rules=v.slice(0,32);
     }else if(p[0]==='style'&&p.length===2){
       if(!(p[1] in ST0)){skip(key,'未知のキー');continue}
       if(typeof ST0[p[1]]==='number'){const x=num(v);if(!isFinite(x)){skip(key,'数値ではありません');continue}o.style[p[1]]=x}
@@ -1298,11 +1348,12 @@ async function syncSettings(songUrl){
     }catch(e){}
   }
   if(!o){UPD.cfg=!cands.length?'':(SHC.n?'設定シートを取得できませんでした(前回の値を使用)':'設定シート未検出(2枚目のタブ名を settings にしてください)');return}
-  SHC={win:o.win,score:o.score,se:o.se,style:o.style,n:o.n};
+  SHC={win:o.win,score:o.score,se:o.se,style:o.style,save:o.save,rules:o.rules,n:o.n};
   try{localStorage.setItem(SCK,JSON.stringify(SHC))}catch(e){}
   normWins();buildWC();normScore();ST={...ST0,...SHC.style};
   const ok=await syncSheetSE(true);applySheetSE(ok);
-  UPD.cfg=`設定シート: 判定${o.n.win}・スコア${o.n.score}・SE${o.n.se}・見た目${o.n.style}項目`+(ok?'':' ⚠SE音声の一部を取得できません')+(o.warn.length?` ⚠${o.warn.length}件: ${o.warn.slice(0,3).join(' / ')}`:'');
+  flushScores();
+  UPD.cfg=`設定シート: 判定${o.n.win}・スコア${o.n.score}・SE${o.n.se}・見た目${o.n.style}項目`+(o.save?'・スコア保存先あり':'')+(ok?'':' ⚠SE音声の一部を取得できません')+(o.warn.length?` ⚠${o.warn.length}件: ${o.warn.slice(0,3).join(' / ')}`:'');
 }
 function parseSheet(text){
   const rows=parseCSV(text);
@@ -1453,6 +1504,7 @@ function dataStatus(){
   else p.push(UPD.checked?'最終確認 '+new Date(UPD.checked).toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'未確認');
   if(UPD.info)p.push(UPD.info);
   if(UPD.cfg)p.push(UPD.cfg);
+  if(SQ.length)p.push('スコア送信待ち '+SQ.length+'件');
   if(UPD.busy)p.push('ダウンロード中 '+UPD.prog);else if(UPD.pending.length)p.push(`追加データ ${UPD.pending.length}曲`);
   if(UPD.warn&&UPD.warn.length)p.push('シートの注意('+UPD.warn.length+'件): '+UPD.warn.slice(0,5).join(' / '));
   if(UPD.msg)p.push(UPD.msg);if(UPD.err)p.push(UPD.err);
@@ -1470,6 +1522,7 @@ function renderUpd(){
   if(UPD.err)h+=`<div class="ue">${esc(UPD.err)}</div>`;
   e.innerHTML=h;const b=$('udl');if(b)b.onclick=downloadPending;
 }
+const psec=()=>`<div class="lab" style="margin-top:18px"><span><b>プレイヤー名(スコア記録用)</b></span></div><div class="wr"><input id="pname" type="text" maxlength="16" value="${esc(PL.name)}" placeholder="未入力なら「名無し」" style="width:min(70vw,300px);text-align:left"></div>`;
 const dsec=()=>`<div class="lab" style="margin-top:18px"><span><b>ダウンロードデータ</b></span></div><p id="dsst" style="font-size:13px;margin:4px 0;max-width:420px;line-height:1.5">${esc(dataStatus())}</p><div class="row">${UPD.pending.length&&!UPD.busy?`<button class="sm on" id="ddl">ダウンロード(${UPD.pending.length}曲)</button>`:''}<button class="sm" id="dchk">更新を確認</button><button class="sm" id="ddel">保存データを削除</button></div>`
   +(DEV?`<div class="wr" style="margin-top:6px"><b style="min-width:auto">データURL</b><input id="durl" type="text" value="${esc(dataUrl())}" placeholder="公開したCSVのURL" style="width:min(62vw,280px);text-align:left"></div>`:'');
 function bindData(){
@@ -1689,13 +1742,36 @@ function showSelect(){
 {const b=document.createElement('button');b.id='tshow';b.textContent='🎨 調整パネル';b.onclick=()=>{$('tp').style.display='block';b.style.display='none'};document.body.append(b)}
 show(false);
 loadSE();
+addEventListener('online',()=>flushScores());document.addEventListener('visibilitychange',()=>{if(!document.hidden)flushScores()});setTimeout(flushScores,4000);
 // 保存済みの曲を読み込み → タイトルに反映 → シートの更新を確認(通信できなければ何も出さない)
 loadStore().then(()=>{if($('go'))show(false);return checkUpdates(false)}).catch(()=>{});
 </script>
 <script>
-// PWA: Service Worker 登録(file:// や非対応環境では何もしない)
+// PWA: Service Worker 登録 + 新バージョンの通知(file:// や非対応環境では何もしない)
 if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){
-  window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})});
+  const hadCtrl=!!navigator.serviceWorker.controller;let shown=false;
+  async function showUpdate(){
+    if(shown)return;shown=true;
+    let v='';try{const t=await (await fetch('version.js',{cache:'no-store'})).text();v=(t.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/)||[])[1]||''}catch(e){}
+    const wait=()=>{ // プレイ中は出さず、終わってから表示
+      try{if(typeof run!=='undefined'&&run){setTimeout(wait,3000);return}}catch(e){}
+      const d=document.createElement('div');
+      d.style.cssText='position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:99999;background:#1b2a6b;color:#fff;border:2px solid #b69cf0;border-radius:12px;padding:10px 14px;font:700 15px/1.3 sans-serif;display:flex;gap:10px;align-items:center;box-shadow:0 4px 16px #0008;max-width:92vw';
+      d.innerHTML='<span>新しいバージョン'+(v?' ('+v+')':'')+'があります</span><button style="font:inherit;padding:6px 12px;border-radius:8px;border:0;background:#fff;color:#1b2a6b" id="updgo">更新</button><button style="font:inherit;padding:6px 8px;border:0;background:none;color:#fff" id="updx">✕</button>';
+      document.body.append(d);
+      d.querySelector('#updgo').onclick=()=>location.reload();
+      d.querySelector('#updx').onclick=()=>d.remove();
+    };wait();
+  }
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(reg=>{
+      const chk=()=>reg.update().catch(()=>{});
+      document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()}); // 開き直すたびに新版を確認
+      setInterval(chk,30*60*1000);
+    }).catch(()=>{});
+    // 初回インストール以外で、新しいService Workerに切り替わったら通知
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{if(hadCtrl)showUpdate()});
+  });
 }
 </script>
 </body></html>
