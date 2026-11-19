@@ -689,7 +689,8 @@ function ncol(n){ // 通常タップ=水色 / フリック=ピンク / ロング
 const comboGrad=(k,y0,y1)=>{const q=g.createLinearGradient(0,y0,0,y1),c=k==='ap'?['#8fd2ff','#9fa8ff','#b88cf2']:['#f070c0','#f08aa0','#f2a070'];q.addColorStop(0,c[0]);q.addColorStop(.5,c[1]);q.addColorStop(1,c[2]);return q};
 function draw(){
   const w=cv.clientWidth,h=cv.clientHeight,jy=h*CFG.judgeY,GM=geom(w),lw=GM.lp,ox=GM.ox,rp=GM.rp,lw0=w/L,t=T(),IN=GM.IN,PX=GM.PX,BX=GM.BX,ph=Math.max(10,Math.min(rp*ST.nh,70)),LC=[ST.lc0,ST.lc1,ST.lc2,ST.lc3];
-  const sn=new Map(),Y=(n,x)=>{const k=n.sc;if(!sn.has(k))sn.set(k,spos(k,t));return jy-(spos(k,x)-sn.get(k))/CFG.scroll*jy};
+  const scr=CFG.scroll*(PRAC&&PRAC.keep&&cur?PR:1); // 練習で「落下速度を変えない」のとき、曲の速度に合わせて見える範囲を伸縮
+  const sn=new Map(),Y=(n,x)=>{const k=n.sc;if(!sn.has(k))sn.set(k,spos(k,t));return jy-(spos(k,x)-sn.get(k))/scr*jy};
   g.fillStyle=ST.bg;g.fillRect(0,0,w,h);
   for(let i=0;i<L;i++){
     const x0=ox+i*lw+IN,bw=lw-2*IN;g.fillStyle=ST.lane;g.fillRect(x0,0,bw,h);
@@ -698,7 +699,7 @@ function draw(){
   }
   g.strokeStyle='rgba(255,255,255,.14)';g.lineWidth=1;
   const s0=spos(0,t);
-  for(const bt of bars){const yb=jy-(spos(0,bt)-s0)/CFG.scroll*jy;if(yb>0&&yb<h){g.beginPath();g.moveTo(0,yb);g.lineTo(w,yb);g.stroke()}}
+  for(const bt of bars){const yb=jy-(spos(0,bt)-s0)/scr*jy;if(yb>0&&yb<h){g.beginPath();g.moveTo(0,yb);g.lineTo(w,yb);g.stroke()}}
   g.fillStyle=ST.judge;g.fillRect(0,jy-ST.jw/2,w,ST.jw);
   const ks=CFG.keys&&KS[L];if(ks){g.font=`${rp*ST.ks}px system-ui`;g.textAlign='center';g.fillStyle=ST.key;for(let i=0;i<L;i++)g.fillText(ks[i],ox+(i+.5)*lw,jy+(h-jy)*.5+rp*.13)}
   if(CFG.simul){ // 同時押しライン
@@ -1930,7 +1931,7 @@ function showArchive(){
 }
 
 // ---- 練習モード: 範囲(小節)・速度・メトロノーム・ループを選んで練習。スコアは記録しない
-const PRD={sb:'',eb:'',rate:1,loop:true};
+const PRD={sb:'',eb:'',rate:1,loop:true,keep:true};
 function loadPrac(){try{const o=JSON.parse(localStorage.getItem('amatPrac')||'{}');return {...PRD,...o,sb:'',eb:''}}catch(e){return {...PRD}}}
 function showPractice(){
   const c0=cur&&cur.song&&songChart(cur.song,cur.diff);
@@ -1942,15 +1943,20 @@ function showPractice(){
     +`<div style="font-weight:700">${esc(cur.song.title)} / ${DNAME[cur.diff]}</div><div style="font-size:13px;color:#557">全${nb}小節 / スコアは記録されません</div>`
     +row('開始小節',`<input id="prS" type="number" min="1" max="${nb}" placeholder="最初から" value="${esc(P.sb)}" style="width:100px;font-size:16px;padding:4px">`)
     +row('終了小節',`<input id="prE" type="number" min="1" max="${nb}" placeholder="最後まで" value="${esc(P.eb)}" style="width:100px;font-size:16px;padding:4px">`)
-    +row('速度',[.5,.6,.7,.8,.9,1].map(v=>`<button class="sm${P.rate===v?' on':''}" data-r="${v}">${Math.round(v*100)}%</button>`).join(''))
+    +row('速度',`<input id="prRg" type="range" min="10" max="300" step="1" value="${Math.round(P.rate*100)}" style="width:min(240px,50vw)"><input id="prRn" type="number" min="10" max="300" step="1" value="${Math.round(P.rate*100)}" style="width:70px;font-size:16px;padding:4px"><span>%</span>`)
+    +row('',[50,70,80,90,100,120,150].map(v=>`<button class="sm${Math.round(P.rate*100)===v?' on':''}" data-r="${v}">${v}%</button>`).join(''))
+    +row('ノーツの落下',`<button class="sm${P.keep?' on':''}" id="prK">${P.keep?'速度を変えない':'曲に合わせる'}</button>`)
     +row('繰り返し',`<button class="sm${P.loop?' on':''}" id="prL">${P.loop?'ON':'OFF'}</button>`)
-    +'<div style="font-size:12px;color:#557;max-width:360px">速度を落とすと曲の音程も下がります。小節の数え方は譜面データの小節番号と同じです。</div>'
+    +'<div style="font-size:12px;color:#557;max-width:380px">速度を変えると曲の音程も変わります。「速度を変えない」は、曲が遅くても速くてもノーツが落ちる実際の速さを今の設定のままにします。小節の数え方は譜面データの小節番号と同じです。</div>'
     +'<div class="row" style="margin-top:14px"><button class="sm" id="prG" style="font-size:20px;padding:8px 40px">開始</button></div>';
-  const rd=()=>{const f=v=>{v=Math.floor(+v);return v>=1?String(Math.min(v,nb)):''};P.sb=f($('prS').value);P.eb=f($('prE').value);if(P.sb&&P.eb&&+P.eb<+P.sb)P.eb=P.sb;try{localStorage.setItem('amatPrac',JSON.stringify({rate:P.rate,loop:P.loop}))}catch(e){}};
+  const rd=()=>{const f=v=>{v=Math.floor(+v);return v>=1?String(Math.min(v,nb)):''};P.sb=f($('prS').value);P.eb=f($('prE').value);if(P.sb&&P.eb&&+P.eb<+P.sb)P.eb=P.sb;try{localStorage.setItem('amatPrac',JSON.stringify({rate:P.rate,loop:P.loop,keep:P.keep}))}catch(e){}};
   $('bk').onclick=()=>{rd();PRAC=null;showSelect()};
-  ov.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{rd();P.rate=+b.dataset.r;showPractice()});
+  const setR=v=>{v=Math.max(10,Math.min(300,Math.round(+v)||100));P.rate=v/100;$('prRg').value=v;$('prRn').value=v;ov.querySelectorAll('[data-r]').forEach(b=>b.classList.toggle('on',+b.dataset.r===v))};
+  $('prRg').oninput=e=>setR(e.target.value);$('prRn').onchange=e=>setR(e.target.value);
+  ov.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>setR(b.dataset.r));
+  $('prK').onclick=()=>{rd();P.keep=!P.keep;showPractice()};
   $('prL').onclick=()=>{rd();P.loop=!P.loop;showPractice()};
-  $('prG').onclick=()=>{rd();testMode=false;delete P.seek;start()};
+  $('prG').onclick=()=>{setR($('prRn').value);rd();testMode=false;delete P.seek;start()};
 }
 function selGo(i,abs){
   if(!selVis.length)return;
