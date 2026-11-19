@@ -1762,7 +1762,7 @@ function pvSchedule(force){
 addEventListener('pointerdown',()=>{if(PV.wait){PV.wait=false;if(ov.className==='sel')pvSchedule(true)}},true);
 setInterval(()=>{if(PV.id&&(ov.className!=='sel'||ov.style.display==='none'||document.hidden))pvStop()},400);
 
-// ---- 譜面保管所: ダウンロード済みの曲・難易度ごとに譜面データの中身を見る
+// ---- 譜面データ: ダウンロード済みの曲・難易度ごとに譜面データの中身を見る
 const AR={id:null,diff:null,json:false,view:'data',per:4};
 function chartStats(c){
   const by={},bpms=new Set((c.tempo||[{bpm:c.bpm}]).map(x=>x.bpm));
@@ -1817,13 +1817,20 @@ function scoreDraw(M,G,vw,vh,dpr,V){
     if(nt.pts){
       const b0=S2B(nt.pts[0].t),b1=S2B(nt.pts[nt.pts.length-1].t),isG=nt.type==='guide';
       G.globalAlpha=isG?ST.ga:ST.ba;
-      for(let i=0;i<nt.pts.length-1;i++){
-        const a=nt.pts[i],q=nt.pts[i+1],ba=S2B(a.t),bq=S2B(q.t);
-        G.fillStyle=a.col||(isG?(nt.color||ST.gd):(nt.color||bg));
-        for(let s0=ba;s0<bq-1e-9;s0+=.1){const e=Math.min(bq,s0+.1),kk=colOf((s0+e)/2);if(!vis(kk))continue;
+      let grp=null;
+      const flush=()=>{if(!grp||grp.L.length<2){grp=null;return}
+        G.fillStyle=grp.col;G.beginPath();grp.L.forEach((p,m)=>m?G.lineTo(p[0],p[1]):G.moveTo(p[0],p[1]));for(let m=grp.R.length-1;m>=0;m--)G.lineTo(grp.R[m][0],grp.R[m][1]);G.closePath();G.fill();grp=null};
+      for(let i=0;i<nt.pts.length-1;i++){ // 同じ列・同じ色は1つの多角形として塗る(分割線や重なりの縞が出ないように)
+        const a=nt.pts[i],q=nt.pts[i+1],ba=S2B(a.t),bq=S2B(q.t),col=a.col||(isG?(nt.color||ST.gd):(nt.color||bg));
+        for(let s0=ba;s0<bq-1e-9;s0+=.1){const e=Math.min(bq,s0+.1),kk=colOf((s0+e)/2);
+          if(!vis(kk)){flush();continue}
+          if(grp&&(grp.k!==kk||grp.col!==col)){const lp=grp.L[grp.L.length-1];flush();void lp}
           const p1=posAt(nt,B2S(s0)),p2=posAt(nt,B2S(e));
-          G.beginPath();G.moveTo(X(kk,p1.lo)+BX,Y(kk,s0));G.lineTo(X(kk,p1.lo+p1.w)-BX,Y(kk,s0));G.lineTo(X(kk,p2.lo+p2.w)-BX,Y(kk,e)-.5);G.lineTo(X(kk,p2.lo)+BX,Y(kk,e)-.5);G.closePath();G.fill()}
+          if(!grp)grp={k:kk,col,L:[[X(kk,p1.lo)+BX,Y(kk,s0)]],R:[[X(kk,p1.lo+p1.w)-BX,Y(kk,s0)]]};
+          grp.L.push([X(kk,p2.lo)+BX,Y(kk,e)]);grp.R.push([X(kk,p2.lo+p2.w)-BX,Y(kk,e)]);
+        }
       }
+      flush();
       G.globalAlpha=1;
       if(nt.hrect&&vis(k)){const q0=posAt(nt,nt.pts[0].t);pill(X(k,q0.lo)+PX,Y(k,b0),q0.w*LW-2*PX,nt.hcol||nt.color||(nt.hc?ST.cr:ST.sl),ph,nt.hc,G)}
       for(const tm of nt.rl||[]){const bb=S2B(tm),kk=colOf(bb);if(!vis(kk))continue;const q=posAt(nt,tm);diamond(X(kk,q.lo+q.w/2),Y(kk,bb),ph*.5,ST.rl,G)}
@@ -1879,7 +1886,7 @@ function showArchive(){
   if(!ss.find(x=>x.id===AR.id)){AR.id=ss[0]&&ss[0].id;AR.diff=null}
   const s=ss.find(x=>x.id===AR.id),ds=s?DIFFS.filter(([k])=>s.lv[k]>0&&s.data.charts[k]):[];
   if(s&&!ds.find(([k])=>k===AR.diff))AR.diff=ds[0]&&ds[0][0];
-  let h='<div class="frame"></div><button class="bk" id="bk">↩</button><div style="height:40px"></div><h3 style="margin:6px 0">譜面保管所</h3>';
+  let h='<div class="frame"></div><button class="bk" id="bk">↩</button><div style="height:40px"></div><h3 style="margin:6px 0">譜面データ</h3>';
   if(!s)h+='<p>ダウンロード済みの譜面がありません。</p>';
   else{
     h+='<div style="max-width:560px;width:90%"><select id="arS" style="width:100%;font-size:16px;padding:6px;margin-bottom:8px">'+ss.map(x=>`<option value="${esc(x.id)}"${x.id===s.id?' selected':''}>${esc(x.title)}</option>`).join('')+'</select>'
@@ -1887,7 +1894,7 @@ function showArchive(){
     h+='<div class="row" style="justify-content:center;margin-bottom:8px"><button class="sm'+(AR.view==='data'?' on':'')+'" data-v="data">データ</button><button class="sm'+(AR.view==='score'?' on':'')+'" data-v="score">譜面一覧</button>'+(AR.view==='score'?'<select id="arP" style="font-size:15px;padding:4px">'+[4,8,16].map(v=>`<option value="${v}"${v===AR.per?' selected':''}>${v}小節/列</option>`).join('')+'</select>':'')+'</div>';
     let c=null,st=null;try{c=s.data.charts[AR.diff];st=AR.view==='score'?{}:chartStats(c)}catch(e){}
     if(!st)h+='<p>この譜面は読み込めませんでした。</p>';
-    else if(AR.view==='score')h+='</div><div style="font-size:13px;color:#557;margin-bottom:4px">2本指で拡大縮小 / ドラッグで移動(PCはホイールで拡大縮小) <button class="sm" id="arF" style="font-size:13px;padding:2px 10px">全体</button> <button class="sm" id="arZi" style="font-size:13px;padding:2px 10px">＋</button> <button class="sm" id="arZo" style="font-size:13px;padding:2px 10px">－</button> <button class="sm" id="arImg" style="font-size:13px;padding:2px 10px">🖼 画像で保存</button></div><div id="arW" style="width:94vw;height:62vh;background:#000;border-radius:6px;margin:0 auto;overflow:hidden"><canvas id="arCv" style="display:block;width:100%;height:100%"></canvas></div><div>';
+    else if(AR.view==='score')h+='</div><div style="font-size:13px;color:#557;margin-bottom:4px">2本指で拡大縮小 / ドラッグで移動(PCはホイールで拡大縮小) <button class="sm" id="arF" style="font-size:13px;padding:2px 10px">全体</button> <button class="sm" id="arZi" style="font-size:13px;padding:2px 10px">＋</button> <button class="sm" id="arZo" style="font-size:13px;padding:2px 10px">－</button> <button class="sm" id="arImg" style="font-size:13px;padding:2px 10px">画像で保存</button></div><div id="arW" style="width:94vw;height:62vh;background:#000;border-radius:6px;margin:0 auto;overflow:hidden"><canvas id="arCv" style="display:block;width:100%;height:100%"></canvas></div><div>';
     else{
       const mx=Math.max(1,...st.dens),W=560,H=70,bw=W/st.dens.length;
       const bars=st.dens.map((v,i)=>`<rect x="${(i*bw).toFixed(1)}" y="${(H-v/mx*H).toFixed(1)}" width="${Math.max(1,bw-1).toFixed(1)}" height="${(v/mx*H).toFixed(1)}" fill="#4a7cff"/>`).join('');
@@ -1905,7 +1912,7 @@ function showArchive(){
   $('bk').onclick=showSelect;
   ov.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{AR.view=b.dataset.v;showArchive()});
   if($('arP'))$('arP').onchange=e=>{AR.per=+e.target.value;showArchive()};
-  if($('arCv')){try{const sv=scoreView($('arCv'),s.data.charts[AR.diff],AR.per);$('arF').onclick=sv.fit;$('arZi').onclick=()=>sv.zoom(1.4);$('arZo').onclick=()=>sv.zoom(1/1.4);$('arImg').onclick=async()=>{const b=$('arImg');b.textContent='作成中…';const ok=await sv.save((s.title+'_'+DNAME[AR.diff]).replace(/[\\/:*?"<>|\s]+/g,'_')+'.png');b.textContent=ok?'🖼 画像で保存':'保存できませんでした'}}catch(e){$('arW').innerHTML='<p style="color:#fff;padding:10px">描画できませんでした: '+esc(e.message)+'</p>'}}
+  if($('arCv')){try{const sv=scoreView($('arCv'),s.data.charts[AR.diff],AR.per);$('arF').onclick=sv.fit;$('arZi').onclick=()=>sv.zoom(1.4);$('arZo').onclick=()=>sv.zoom(1/1.4);$('arImg').onclick=async()=>{const b=$('arImg');b.textContent='作成中…';const ok=await sv.save((s.title+'_'+DNAME[AR.diff]).replace(/[\\/:*?"<>|\s]+/g,'_')+'.png');b.textContent=ok?'画像で保存':'保存できませんでした'}}catch(e){$('arW').innerHTML='<p style="color:#fff;padding:10px">描画できませんでした: '+esc(e.message)+'</p>'}}
   if($('arS'))$('arS').onchange=e=>{AR.id=e.target.value;AR.diff=null;showArchive()};
   ov.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{AR.diff=b.dataset.d;showArchive()});
   if($('arJ'))$('arJ').onclick=()=>{AR.json=!AR.json;const k=ov.scrollTop;showArchive();ov.scrollTop=k};
@@ -1997,7 +2004,7 @@ function showSelect(){
    +'<button class="tb" id="zhm" style="left:743px;width:44px;background:#3ad63a">⌂</button>'
    +'<button class="tb" id="zsn" style="left:800px;width:45px;background:#9a9aa4">🔊</button>'
    +'<button class="tb" id="zge" style="left:858px;width:46px;background:#8a8a96">⚙</button>'
-   +'<button class="tb" id="zar" style="left:690px;top:62px;width:214px;height:28px;background:#7a8cff;font-size:14px">📚 譜面保管所</button>'
+   +'<button class="tb" id="zar" style="left:690px;top:62px;width:214px;height:28px;background:#7a8cff;font-size:14px">譜面データを見る</button>'
    +'<div id="zm" class="a"></div><div id="zf" class="a"></div>'
    +'<div id="zl" class="a" style="left:0;top:0;width:620px;height:690px"></div>'
    +'<div id="zk" class="a" style="left:598px;top:68px;width:40px;height:610px"><i class="trk"></i><i class="knb" id="zkn"></i></div>'
@@ -2037,7 +2044,7 @@ function showSelect(){
   $('zhm').onclick=()=>show(false);
   $('zsn').onclick=()=>{setBack=showSelect;showSE('sel')};
   $('zge').onclick=()=>{setBack=showSelect;showSet()};
-  $('zar').onclick=showArchive;
+  $('zar').onclick=()=>{const c=selVis[selIdx];if(c&&c.store){AR.id=c.id;AR.diff=pickDiff(c,SS.diff)}showArchive()}; // 選んでいる曲・難易度を開く
   $('zrn').onclick=()=>{if(selVis.length>1){let i;do{i=Math.floor(Math.random()*selVis.length)}while(i===selIdx);selGo(i)}};
   $('zst').onclick=async()=>{
     const s=selVis[selIdx];if(!s)return;
