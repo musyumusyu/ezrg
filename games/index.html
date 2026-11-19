@@ -87,6 +87,12 @@ button{font:inherit;cursor:pointer}
 .upd{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;font-size:15px;font-weight:700;color:#fff;text-shadow:0 1px 3px #0008}
 .upd:empty{display:none}.upd .ue{width:100%;font-size:12px;color:#ffd6d6}
 #ov.set input[type=text]{user-select:text;-webkit-user-select:text}
+/* 設定: 速度確認(右側の1レーン) / 音に合わせた調整 */
+.spw{position:fixed;right:calc(2.5vw + 16px + env(safe-area-inset-right));top:62px;bottom:calc(2.5vh + 14px);display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;z-index:5}
+.spw .spc{background:#a6f6fd;color:#14166e;font:700 14px system-ui;padding:2px 12px;border-radius:99px;white-space:nowrap}
+.spw canvas{flex:1;min-height:0;border-radius:14px;box-shadow:0 0 0 3px #fff9}
+.calw{width:140px;height:min(32vh,220px);flex:none}.calw canvas{border-radius:14px;box-shadow:0 0 0 3px #fff9}
+.calr b{font-size:30px;color:#e0e}
 /* 判定幅 */
 #ov.set>*{flex:none}
 .wr{display:flex;gap:6px;align-items:center;justify-content:center;margin:3px 0}.wr b{min-width:68px;text-align:right;font-size:14px}
@@ -817,9 +823,9 @@ function showSet(){
     +`<span class="val">${rnd(s.get())}</span>`
     +[...s.st].reverse().map(v=>`<button data-i="${i}" data-d="${v}">+${v}</button>`).join('')
     +`<button data-i="${i}" data-r="1" style="color:#18d8e8">RESET</button></div>`).join('');
-  ov.innerHTML='<div class="frame"></div><button class="bk" id="bk">↩</button><div class="tgrid">'+tg+'</div>'+rows+'<div class="row" style="margin-top:16px"><button class="sm on" id="seb" style="font-size:16px;padding:8px 22px">ノーツSEの詳細設定 →</button></div>'+psec()+dsec()+(OLD_DEV_TOOLS?'<div class="row" style="margin-top:12px"><button class="sm on" id="wj" style="font-size:16px;padding:8px 22px">判定幅の設定(ms) →【開発者】</button></div><div class="row" style="margin-top:12px;margin-bottom:30px"><button class="sm on" id="scj" style="font-size:16px;padding:8px 22px">スコア配分の設定 →【開発者】</button></div>':'<div style="height:30px"></div>');
+  ov.innerHTML='<div class="frame"></div><button class="bk" id="bk">↩</button><div class="spw" id="spw"><div class="spc">速度確認</div><canvas id="spv"></canvas></div><div class="tgrid">'+tg+'</div>'+rows+'<div class="row" style="margin-top:12px"><button class="sm on" id="calb" style="font-size:16px;padding:8px 22px">音に合わせてタイミング調整 →</button></div><div class="row" style="margin-top:16px"><button class="sm on" id="seb" style="font-size:16px;padding:8px 22px">ノーツSEの詳細設定 →</button></div>'+psec()+dsec()+(OLD_DEV_TOOLS?'<div class="row" style="margin-top:12px"><button class="sm on" id="wj" style="font-size:16px;padding:8px 22px">判定幅の設定(ms) →【開発者】</button></div><div class="row" style="margin-top:12px;margin-bottom:30px"><button class="sm on" id="scj" style="font-size:16px;padding:8px 22px">スコア配分の設定 →【開発者】</button></div>':'<div style="height:30px"></div>');
   ov.scrollTop=keep;
-  $('bk').onclick=()=>setBack();$('seb').onclick=()=>showSE('set');if(OLD_DEV_TOOLS){$('wj').onclick=showWin;$('scj').onclick=showScoreCfg}
+  $('bk').onclick=()=>setBack();$('seb').onclick=()=>showSE('set');$('calb').onclick=showCal;spvStart();if(OLD_DEV_TOOLS){$('wj').onclick=showWin;$('scj').onclick=showScoreCfg}
   bindData();
   {const pn=$('pname');if(pn)pn.onchange=()=>{PL.name=pn.value.trim().slice(0,16);pn.value=PL.name;savePL()}
    const pb=$('pping');if(pb)pb.onclick=async()=>{const o=$('ppst');o.textContent='確認中…';const m=await pingSave();const o2=$('ppst');if(o2)o2.textContent=m}}
@@ -829,6 +835,104 @@ function showSet(){
     s.set(b.dataset.r?s.def:Math.min(s.max,Math.max(s.min,rnd(s.get()+ +b.dataset.d))));
     savePrefs();showSet();
   });
+}
+// ===== 設定: 速度確認(右側の1レーン) と 音に合わせたタイミング調整 =====
+function lane1(c,W,H,items,flash){ // 1レーンを描く。items=[{dt,col}] dt=判定線に届くまでの秒数 / flash=判定線のきらめき(0〜1)
+  const li=ST.li,p6=W/(1+li),T=Math.max(p6*6*.02,p6*(1-2*li)*.84),jy=H*CFG.judgeY,x0=(W-T)/2;
+  const rr1=(x,y,w,hh,r)=>{r=Math.min(r,w/2,hh/2);c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+hh,r);c.arcTo(x+w,y+hh,x,y+hh,r);c.arcTo(x,y+hh,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()};
+  c.fillStyle=ST.bg;c.fillRect(0,0,W,H);
+  c.fillStyle=ST.lane;c.fillRect(x0,0,T,H);
+  c.fillStyle=ST.lc0;c.fillRect(x0-ST.bw/2,0,ST.bw,H);c.fillRect(x0+T-ST.bw/2,0,ST.bw,H);
+  c.fillStyle=ST.judge;c.fillRect(0,jy-ST.jw/2,W,ST.jw);
+  if(flash>0){c.fillStyle=`rgba(255,255,255,${.35*flash})`;c.fillRect(x0,jy-26,T,26)}
+  const ph=Math.max(10,Math.min(p6*ST.nh,70)),pw=p6*(1-2*ST.ni);
+  for(const n of items){
+    if(n.dt<0)continue;
+    const y=jy-n.dt/CFG.scroll*jy;if(y<-ph||y>H+ph)continue;
+    rr1((W-pw)/2,y-ph/2,pw,ph,ph/2);c.fillStyle=n.col||ST.tp;c.fill();
+    const ih=ph*ST.inner;rr1((W-pw)/2+ph*.45,y-ih/2,pw-ph*.9,ih,ih/2);c.fillStyle='#fff';c.fill();
+  }
+}
+function paint1(cvp,items,flash){ // canvasの実寸に合わせて描く
+  const r=cvp.getBoundingClientRect(),d=Math.min(2,devicePixelRatio||1),W=Math.max(1,Math.round(r.width*d)),H=Math.max(1,Math.round(r.height*d));
+  if(cvp.width!==W||cvp.height!==H){cvp.width=W;cvp.height=H}
+  const c=cvp.getContext('2d');c.setTransform(d,0,0,d,0,0);lane1(c,r.width,r.height,items,flash);
+}
+const SPV={raf:0};
+function spvLoop(){ // 設定画面の右側に、現在のノーツ速度で落ちてくる1レーンを出す(2拍/秒のループ)
+  const cvp=document.getElementById('spv');
+  if(!cvp||!cvp.isConnected||ov.className!=='set'){SPV.raf=0;return}
+  const wrap=cvp.parentNode,avail=(innerWidth-560)/2-innerWidth*.025-24; // 設定の列(最大540px)の右に余白があるときだけ表示
+  if(avail<72)wrap.style.display='none';
+  else{
+    wrap.style.display='flex';wrap.style.width=Math.min(190,avail)+'px';
+    const iv=.5,tau=performance.now()/1000,items=[];let fl=0;
+    for(let k=Math.floor((tau-.2)/iv);k*iv<=tau+CFG.scroll+.05;k++){const dt=k*iv-tau;if(dt>-.2)items.push({dt,col:ST.tp});if(dt<=0&&dt>-.15)fl=Math.max(fl,1+dt/.15)}
+    paint1(cvp,items,fl);
+  }
+  SPV.raf=requestAnimationFrame(spvLoop);
+}
+const spvStart=()=>{if(!SPV.raf)SPV.raf=requestAnimationFrame(spvLoop)};
+
+// --- 音に合わせたタイミング調整: クリック音に合わせてタップ → ズレの中央値を「タイミング調整」に反映 ---
+const CAL={iv:.6,n:20,skip:4,raf:0,run:false,t0:0,taps:[],used:new Set()};
+function calClick(at,accent){const c=getCtx(),o=c.createOscillator(),gn=c.createGain();o.type='sine';o.frequency.value=accent?1500:1000;
+  gn.gain.setValueAtTime(0,at);gn.gain.linearRampToValueAtTime(.5,at+.002);gn.gain.exponentialRampToValueAtTime(.001,at+.07);o.connect(gn);gn.connect(c.destination);o.start(at);o.stop(at+.09)}
+function calTap(e){
+  if(!CAL.run||(e&&e.target&&e.target.closest&&e.target.closest('button')))return;
+  if(e&&e.type==='keydown'){if(e.repeat)return;if(e.code!=='Space'&&e.code!=='Enter')return;e.preventDefault()}
+  const tt=getCtx().currentTime,k=Math.round((tt-CAL.t0)/CAL.iv);
+  if(k<CAL.skip||k>=CAL.n||CAL.used.has(k))return;
+  const d=tt-(CAL.t0+k*CAL.iv);if(Math.abs(d)>.28)return; // 大きく外れたタップは無視
+  CAL.used.add(k);CAL.taps.push(d);
+}
+function stopCal(){CAL.run=false;if(CAL.raf)cancelAnimationFrame(CAL.raf);CAL.raf=0;removeEventListener('pointerdown',calTap);removeEventListener('keydown',calTap)}
+function calLoop(){
+  const cvp=document.getElementById('calc');
+  if(!cvp||!cvp.isConnected||ov.className!=='set'){stopCal();return}
+  const c=getCtx(),now=c.currentTime,items=[];let fl=0;
+  if(CAL.run){
+    for(let k=0;k<CAL.n;k++){const dt=CAL.t0+k*CAL.iv-now;if(dt>-.2&&dt<CFG.scroll+.1)items.push({dt,col:k<CAL.skip?'#9aa0b0':ST.tp});if(dt<=0&&dt>-.15)fl=Math.max(fl,1+dt/.15)}
+    const st=$('calst'),meas=CAL.taps.length;
+    if(st)st.textContent=now<CAL.t0?'準備…':(now<CAL.t0+CAL.skip*CAL.iv?'カウント中(まだ測りません)':`測定中 ${meas} / ${CAL.n-CAL.skip}`);
+    if(now>CAL.t0+(CAL.n-1)*CAL.iv+.8){calResult();return}
+  }
+  paint1(cvp,items,fl);CAL.raf=requestAnimationFrame(calLoop);
+}
+function calStart(){
+  const c=getCtx();if(c.resume)c.resume();
+  CAL.t0=c.currentTime+1.2;CAL.taps=[];CAL.used=new Set();CAL.run=true;
+  for(let k=0;k<CAL.n;k++)calClick(CAL.t0+k*CAL.iv,k%4===0);
+  addEventListener('pointerdown',calTap);addEventListener('keydown',calTap);
+  $('calres').innerHTML='';$('calgo').style.display='none';
+  if(!CAL.raf)CAL.raf=requestAnimationFrame(calLoop);
+}
+function calResult(){
+  CAL.run=false;removeEventListener('pointerdown',calTap);removeEventListener('keydown',calTap);
+  const a=[...CAL.taps].sort((x,y)=>x-y),n=a.length,need=Math.ceil((CAL.n-CAL.skip)/2);
+  const st=$('calst'),box=$('calres');if(st)st.textContent='';
+  const retry='<button class="sm" id="calre">もう一度</button>';
+  if(n<need){box.innerHTML=`<p>タップが少なすぎました(${n}回)。クリック音に合わせて、${CAL.n-CAL.skip}回ほどタップしてください。</p><div class="row">${retry}</div>`}
+  else{
+    const med=a.length%2?a[(n-1)/2]:(a[n/2-1]+a[n/2])/2,mean=a.reduce((s,x)=>s+x,0)/n,sd=Math.sqrt(a.reduce((s,x)=>s+(x-mean)**2,0)/n);
+    const ms=Math.max(-500,Math.min(500,Math.round(med*1000))),cur=Math.round(CFG.offset*1000);
+    box.innerHTML=`<p class="calr">タップは音より<br><b>${ms>0?'+':''}${ms}ms</b> ${ms>2?'遅め':ms<-2?'早め':'ほぼぴったり'}<br><span style="font-size:13px">(${n}回 / ばらつき ±${Math.round(sd*1000)}ms)</span></p>`
+      +(sd>.04?'<p style="font-size:13px;color:#c00">ばらつきが大きいです。もう一度やり直すと精度が上がります。</p>':'')
+      +`<p style="font-size:13px">適用すると「タイミング調整」が ${cur}ms → <b>${ms}ms</b> になります</p>`
+      +`<div class="row"><button class="sm on" id="calap">この値にする</button>${retry}</div>`;
+    $('calap').onclick=()=>{CFG.offset=ms/1000;savePrefs();stopCal();showSet()};
+  }
+  $('calre').onclick=()=>{box.innerHTML='';$('calgo').style.display='';CAL.taps=[];CAL.used=new Set();if(!CAL.raf)CAL.raf=requestAnimationFrame(calLoop)};
+}
+function showCal(){
+  stopCal();ov.style.display='flex';ov.className='set';
+  ov.innerHTML='<div class="frame"></div><button class="bk" id="bk">↩</button><div style="height:46px"></div>'
+   +'<div class="lab"><span><b>音に合わせて調整</b></span></div>'
+   +'<p style="font-size:14px;max-width:440px">クリック音に合わせて、画面をどこでもタップ(キーボードはスペース)してください。最初の4拍はカウントで、そのあと16回ぶん測ります。普段遊ぶときと同じイヤホン・スピーカーで行ってください。</p>'
+   +'<div class="calw"><canvas id="calc"></canvas></div><div id="calst" style="min-height:22px;font-weight:700"></div>'
+   +'<div id="calres"></div><div class="row"><button class="sm on" id="calgo" style="font-size:16px;padding:8px 26px">スタート</button></div>';
+  $('bk').onclick=()=>{stopCal();showSet()};$('calgo').onclick=calStart;
+  CAL.raf=requestAnimationFrame(calLoop);
 }
 const WK={tap:'タップ',flick:'フリック',head:'ロング・スライドの始点',trace:'トレース・終点ホールド',tick:'中継点(途中の粒)',damage:'ダメージ'};
 const WH={trace:'前: この時間より前から指が乗っていれば判定 / 後: この時間を過ぎても指が無いとmiss',tick:'前: 粒より何ms前から判定するか / 後: 粒を過ぎて何msまで待つか(0=ぴったり)',damage:'この範囲で指が乗っているとダメージ(前=何ms前から / 後=何ms後まで)'};
