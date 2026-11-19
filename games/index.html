@@ -1197,8 +1197,8 @@ if(SS.tag&&!allTags().includes(SS.tag))SS.tag='';
 //   *_lv … 空=その難易度なし / 0=実装待ち(表示のみ・プレイ不可) / 1以上=譜面定数(*_chart に譜面JSONのURLが必要)
 //   URLは、このHTMLと同じ場所からの相対パス(例 charts/d01_hard.json)でもOK
 const DATA_URL_DEFAULT='https://docs.google.com/spreadsheets/d/1HFgTQJoniLT7iGfScrrdxTn3wQ0QGQk9-iW5BVPEIHk/edit'; // ★公開したスプレッドシートのCSVのURLをここに書く(例 'https://docs.google.com/spreadsheets/d/e/xxxx/pub?output=csv')
-const SETTINGS_URL_DEFAULT=''; // 設定シートのCSV URL。空=曲シートと同じブックの「settings」(または「設定」)タブを自動で読む。「ウェブに公開」のpub形式URLを使うときだけ、2枚目のCSV URLをここへ
-const SETTINGS_TABS=['settings','設定'];
+const SETTINGS_URL_DEFAULT=''; // 設定シートのCSV URL。空=曲シートと同じブックの「settings」「setting」「設定」などのタブを自動で読む。「ウェブに公開」のpub形式URLを使うときだけ、2枚目のCSV URLをここへ
+const SETTINGS_TABS=['settings','setting','Settings','Setting','設定','設定シート','config']; // 2枚目のタブ名の候補(上から順に探す)
 const dataUrl=()=>{let u='';try{u=localStorage.getItem('amatDataUrl')||''}catch(e){}return (DEV&&u)||DATA_URL_DEFAULT};
 const COLS={id:['id','曲id','songid'],title:['title','曲名','タイトル','name'],yomi:['yomi','読み','よみ','ふりがな'],tags:['tags','タグ','ジャンル'],bpm:['bpm'],designer:['designer','譜面制作','制作','譜面作者'],audio:['audio','曲','曲データ','音源','audiourl'],hue1:['hue1','色1'],hue2:['hue2','色2'],ver:['ver','version','バージョン','更新'],jacket:['jacket','ジャケット','ジャケ','cover','画像','image'],jzoom:['jacket_zoom','ジャケットズーム','ジャケット拡大'],jx:['jacket_x','ジャケットx'],jy:['jacket_y','ジャケットy']};
 const clampNum=(v,lo,hi,d)=>{const x=parseFloat(v);return isFinite(x)?Math.min(hi,Math.max(lo,x)):d};
@@ -1225,7 +1225,8 @@ const savePL=()=>{try{localStorage.setItem(PLK,JSON.stringify(PL))}catch(e){}};
 if(!PL.id){PL.id=rid();savePL()}
 let SQ=[];try{SQ=JSON.parse(localStorage.getItem(SQK)||'[]');if(!Array.isArray(SQ))SQ=[]}catch(e){SQ=[]}
 const saveSQ=()=>{try{localStorage.setItem(SQK,JSON.stringify(SQ))}catch(e){}};
-const saveUrl=()=>(SHC.save&&SHC.save.url)||'';
+const SAVE_URL_DEFAULT='https://script.google.com/macros/s/AKfycbwuQxiL9Hwo9ddrvEntfHB8ICqxlk2f78NH7WtwBhOfQP3aY8OpDZA6FrvzXNUlHxExaA/exec'; // スコア送信先(Apps Scriptの …/exec URL)。ここに直接書けば、設定シートの save.url が読めなくても送信できる(シートの値があればそちらを優先)
+const saveUrl=()=>(SHC.save&&SHC.save.url)||SAVE_URL_DEFAULT;
 function recordScore(o){ // 選曲から遊んだ通常プレイ(オート・譜面テスト・自分で読み込んだ曲を除く)だけ記録
   if(!cur||autoRun||testMode||cur.song.custom||!CFG.sendScore||!saveUrl())return null;
   return {uid:rid(),t:new Date().toISOString(),pid:PL.id,name:(PL.name||'').slice(0,16),song:cur.song.id,title:cur.song.title,diff:cur.diff,lanes:L,
@@ -1244,7 +1245,7 @@ function skipWhy(){ // 記録しない理由(リザルト画面に表示)
 }
 async function pingSave(){ // 送信先(Apps Script)への接続確認。シートには何も書かない
   const url=saveUrl();
-  if(!url)return '✗ 送信先が未設定です。設定シートに save.url の行があるか、タブ名が settings か確認し、「更新を確認」を押してください';
+  if(!url)return '✗ 送信先が未設定です。「更新を確認」を押したあと、設定画面の下の小さな文字(「設定シート…」で始まる部分)に原因が出ます。急ぐ場合は index.html の SAVE_URL_DEFAULT にURLを直接書いても動きます';
   try{
     const r=await fetch(url,{redirect:'follow'}),t=await r.text();let j;
     try{j=JSON.parse(t)}catch(e){return '✗ Apps Scriptの応答が想定外です。デプロイの「アクセスできるユーザー」が「全員」か、URLが …/exec か確認してください'}
@@ -1286,11 +1287,13 @@ function parseSettings(text){
   if(hi<0)return null;
   const hd=rows[hi].map(nh),ik=hd.indexOf('key'),iv=hd.indexOf('value'),i2=hd.indexOf('value2');
   if(iv<0)return null;
-  const o={win:{},score:{w:{},acc:{}},se:{kinds:{}},style:{},save:null,rules:'',warn:[],n:{win:0,score:0,se:0,style:0}};
+  const o={win:{},score:{w:{},acc:{}},se:{kinds:{}},style:{},save:null,rules:'',blank:[],warn:[],n:{win:0,score:0,se:0,style:0}};
+  const p0Blank=k=>{const m=k.match(/^style\.(\w+)$/);return !!(m&&typeof ST0[m[1]]==='string')}; // 色の行が空 = 文字の値が消えた疑い
   const num=s=>parseFloat(String(s).normalize('NFKC').replace(/,/g,'')),seK=SEK.map(x=>x[0]),skip=(k,why)=>o.warn.push(`${k}: ${why}`);
   for(const r of rows.slice(hi+1)){
     const key=String(r[ik]??'').trim();if(!key||key[0]==='#')continue;
-    const v=String(r[iv]??'').trim(),v2=i2>=0?String(r[i2]??'').trim():'';if(v==='')continue;
+    const v=String(r[iv]??'').trim(),v2=i2>=0?String(r[i2]??'').trim():'';
+    if(v===''){if(p0Blank(key))o.blank.push(key);continue}
     const p=key.split('.');
     if(p[0]==='win'&&p.length===3){
       if(!(WD[p[1]]&&WD[p[1]][p[2]])){skip(key,'未知のキー');continue}
@@ -1323,12 +1326,14 @@ function parseSettings(text){
       o.n.style++;
     }else skip(key,'未知のキー');
   }
+  if(o.blank.length>=3)o.warn.unshift(`色など文字の値が空の行が${o.blank.length}行あります。Googleの仕様で、数値と文字が混ざった列は文字が空で届くことがあります。settingsの value・value2 列を選び「表示形式→数字→書式なしテキスト」にして、値を入れ直してください(テンプレートの新しい版は対応済み)`);
   return o;
 }
 function settingsUrls(songUrl){
   if(SETTINGS_URL_DEFAULT)return [SETTINGS_URL_DEFAULT];
+  const viaScript=saveUrl()?SETTINGS_TABS.slice(0,3).map(t=>`${saveUrl()}?sheet=${encodeURIComponent(t)}`):[]; // Apps Script経由(書式の影響を受けない)を優先
   const m=normSheetUrl(songUrl).match(/^(https:\/\/docs\.google\.com\/spreadsheets\/d\/(?!e\/)[^\/?#]+)\/gviz\/tq/);
-  return m?SETTINGS_TABS.map(t=>`${m[1]}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(t)}`):[];
+  return viaScript.concat(m?SETTINGS_TABS.map(t=>`${m[1]}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(t)}`):[]);
 }
 async function syncSheetSE(net){ // 設定シートのSE音声を、保存済み(IndexedDB)または通信で取得してデコード。戻り値: 全部そろったか
   const kinds=(SHC.se&&SHC.se.kinds)||{};let ok=true;
@@ -1360,21 +1365,27 @@ function applySheetSE(ok){ // シートの音色・音量を「既定」とし�
   savePrefs();
 }
 async function syncSettings(songUrl){
-  const cands=settingsUrls(songUrl);let o=null;
+  const cands=settingsUrls(songUrl);let o=null,tabName='',why=[];
   for(const u of cands){
+    const tab=(u.match(/[?&]sheet=([^&]+)/)||[])[1];const tn=(tab?decodeURIComponent(tab):'URL指定')+(u.startsWith('https://script.google.com/')?'(Apps Script経由)':'');
     try{
-      const r=await fetch(u+(u.includes('?')?'&':'?')+'_='+Date.now(),{cache:'no-store'});if(!r.ok)continue;
-      const t=await r.text();if(/^\s*<(!doctype|html)/i.test(t))continue;
-      o=parseSettings(t);if(o)break;
-    }catch(e){}
+      const r=await fetch(u+(u.includes('?')?'&':'?')+'_='+Date.now(),{cache:'no-store'});
+      if(!r.ok){why.push(`${tn}: 取得できません(HTTP ${r.status})`);continue}
+      const t=await r.text();
+      if(/^\s*<(!doctype|html)/i.test(t)){why.push(`${tn}: ページが返りました(「リンクを知っている全員」で共有されているか確認)`);continue}
+      o=parseSettings(t);
+      if(o){tabName=tn;break}
+      const f=(parseCSV(t).find(x=>x.some(c=>String(c).trim()))||[]).slice(0,4).map(c=>String(c).trim()).join(' | ').slice(0,50);
+      why.push(`${tn}: 見出し(key, value)がありません。読めた先頭行=「${f}」`);
+    }catch(e){why.push(`${tn}: 通信できません(${(e&&e.message)||'エラー'})`)}
   }
-  if(!o){UPD.cfg=!cands.length?'':(SHC.n?'設定シートを取得できませんでした(前回の値を使用)':'設定シート未検出(2枚目のタブ名を settings にしてください)');return}
+  if(!o){UPD.cfg=!cands.length?'':(SHC.n?'設定シートを取得できませんでした(前回の値を使用) ':'設定シート未検出 → ')+why.slice(0,2).join(' / ');return}
   SHC={win:o.win,score:o.score,se:o.se,style:o.style,save:o.save,rules:o.rules,n:o.n};
   try{localStorage.setItem(SCK,JSON.stringify(SHC))}catch(e){}
   normWins();buildWC();normScore();ST={...ST0,...SHC.style};
   const ok=await syncSheetSE(true);applySheetSE(ok);
   flushScores();
-  UPD.cfg=`設定シート: 判定${o.n.win}・スコア${o.n.score}・SE${o.n.se}・見た目${o.n.style}項目`+(o.save?'・スコア保存先あり':'')+(ok?'':' ⚠SE音声の一部を取得できません')+(o.warn.length?` ⚠${o.warn.length}件: ${o.warn.slice(0,3).join(' / ')}`:'');
+  UPD.cfg=`設定シート(${tabName}): 判定${o.n.win}・スコア${o.n.score}・SE${o.n.se}・見た目${o.n.style}項目`+(o.save?'・スコア保存先あり':'')+(ok?'':' ⚠SE音声の一部を取得できません')+(o.warn.length?` ⚠${o.warn.length}件: ${o.warn.slice(0,3).join(' / ')}`:'');
 }
 function parseSheet(text){
   const rows=parseCSV(text);
