@@ -148,8 +148,6 @@ button{font:inherit;cursor:pointer}
 .jk i{font-style:normal;font-size:110px;line-height:1}.jk span{font-size:20px;font-weight:700;padding:0 10px}
 .lamps{position:absolute;left:9px;bottom:9px;width:60%;display:flex;justify-content:space-between;pointer-events:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
 .lp{width:calc((100% - 4*7.5px)/5);aspect-ratio:1;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);display:block}
-.lp-x{background:#111}.lp-n{background:#a8a8a8}.lp-c{background:#ffd400}
-.lp-fc{background:linear-gradient(#ff3aa8,#ff8a2a)}.lp-ap{background:linear-gradient(#4aa8ff,#a060f0)}.lp-ag{background:linear-gradient(135deg,#fff3c4,#a8ec9c)}
 .jimg{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;-webkit-user-drag:none}
 .ring{left:681px;top:414px;width:188px;height:188px;border-radius:50%;border:8px solid var(--dc);transition:border-color .4s}
 #zr{--dc:#c49cff}
@@ -190,6 +188,36 @@ button{font:inherit;cursor:pointer}
 .tr2 b{font-size:13px}
 .tr2 input{width:76px;padding:6px 4px;border:2px solid #000;border-radius:6px;background:#fff;color:#14166e;font-size:16px;text-align:center;user-select:text;-webkit-user-select:text}
 .px:disabled{opacity:.4;filter:grayscale(1);cursor:default}
+
+/* ===== B-style 統一ボタン ===== */
+.bk{width:48px;height:48px;border-radius:16px;border:3px solid #fff;background:linear-gradient(#7ae8ff,#14a6e6);box-shadow:0 3px 0 rgba(0,0,0,.2),inset 0 -5px 0 rgba(0,0,0,.12);overflow:hidden;display:flex;align-items:center;justify-content:center;padding:0;z-index:5}
+.bk::before{content:"";position:absolute;left:4px;right:4px;top:3px;height:42%;border-radius:12px 12px 20px 20px;background:rgba(255,255,255,.38);pointer-events:none}
+.bk:active,.tb:active,.sm:active,.rbtn:active{transform:translateY(2px)}
+.sm,.rbtn,.tb:not(.ib),#zm button,#zf button{position:relative;overflow:hidden;font-weight:700}
+.tb:not(.ib){position:absolute;border-radius:16px;border:3px solid #fff;box-shadow:0 3px 0 rgba(0,0,0,.2),inset 0 -5px 0 rgba(0,0,0,.1);text-shadow:0 1px 2px rgba(0,40,90,.35)}
+.tb:not(.ib)::before,.sm::before,.rbtn::before{content:"";position:absolute;left:4px;right:4px;top:2px;height:42%;border-radius:10px 10px 16px 16px;background:rgba(255,255,255,.36);pointer-events:none}
+.tb .ic.d,.tb .ic{margin:0 2px}
+#zlv{background:linear-gradient(#c8fbb0,#6fd86a)!important;color:#0d3a1a!important;text-shadow:0 1px 0 rgba(255,255,255,.6)!important}
+#zall{background:linear-gradient(#ffb8f0,#f06ad0)!important}
+.sm{border-radius:14px;border:3px solid #fff;background:linear-gradient(#ffffff,#cfe6ff);box-shadow:0 3px 0 rgba(0,0,0,.18),inset 0 -4px 0 rgba(0,40,120,.1);padding:6px 14px}
+.sm.on{background:linear-gradient(#5fe0ff,#10a8f0);color:#fff;text-shadow:0 1px 2px rgba(0,40,90,.4)}
+.rbtn{background:linear-gradient(#d6ffe2,#7fe8a4);border:3px solid #fff;color:#0d6a3a;border-radius:16px}
+#zm button,#zf button{border-radius:12px;border:2px solid #fff;background:linear-gradient(#ecfff6,#a9eccf);box-shadow:0 2px 0 rgba(0,0,0,.18);color:#0d3a4a}
+#zf button{background:linear-gradient(#fff0fc,#ffc0f0)}
+#zm button.on{background:linear-gradient(#5fe0ff,#10a8f0);color:#fff}
+#zf button.on{background:linear-gradient(#ff9ae8,#e84ac8);color:#fff}
+.tri{width:84px!important;height:58px!important;background:none!important;filter:none!important;border-radius:18px;border:3px solid #fff;box-sizing:border-box;background:linear-gradient(#6cf0d4,#14c4a4)!important;clip-path:none!important;box-shadow:0 3px 0 rgba(0,0,0,.2),inset 0 -5px 0 rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-left:-9px}
+.tri::before{content:"";position:absolute;left:4px;right:4px;top:3px;height:42%;border-radius:12px 12px 20px 20px;background:rgba(255,255,255,.38);pointer-events:none}
+.tri .ic{width:34px;height:34px;pointer-events:none}
+.tri:active{transform:translateY(2px)}
+.lamps{filter:drop-shadow(0 2px 2px rgba(0,0,0,.55))}
+.lp{position:relative;background:#fff!important}
+.lp::before,.lp::after{content:"";position:absolute;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.lp::before{inset:10%;background:var(--c)}
+.lp::after{inset:10%;background:linear-gradient(rgba(255,255,255,.55) 0 50%,rgba(0,0,0,.2) 50% 100%);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.lp-x{--c:#2a2a2e}.lp-n{--c:#b4b4b8}.lp-c{--c:#ffd21a}
+.lp-fc{--c:linear-gradient(#ff3aa8,#ff8a2a)}.lp-ap{--c:linear-gradient(#4aa8ff,#a060f0)}.lp-ag{--c:linear-gradient(135deg,#fff3c4,#a8ec9c)}
+.lp-x::after{opacity:.5}
 </style></head><body>
 <canvas id="c"></canvas>
 <div id="ov"></div><button id="rt" class="pb">リトライ</button><button id="hm" class="pb">選曲へ</button>
@@ -214,7 +242,7 @@ const CFG={
   wins:null,             // 判定幅(ms)。設定画面→判定幅の設定 で変更(WD参照)
   score:{perfect:1000,great:700,good:400,bad:100,miss:0},
   se:true,simul:true,showScore:true,keys:false,sendScore:true, // 設定画面で切替(sendScore=スコアをシートへ送信)
-  mirror:false,auto:false,constSpeed:false,comboFx:true,flDisp:true,lite:false,fps:false,fpsCap:120,uiSe:true, // ミラー譜面 / オート / 等速(ソフランなし) / AP・FC継続中のコンボ演出
+  mirror:false,auto:false,constSpeed:false,comboFx:true,flDisp:true,lite:false,fps:false,fpsCap:120,uiSe:true,uiTone:'mallet', // ミラー譜面 / オート / 等速(ソフランなし) / AP・FC継続中のコンボ演出
   scoreCfg:null,         // スコア配分(開発者のみ反映。SCD参照)
   seVol:80,seCfg:null // ノーツSE: 全体音量(0-100) / 種別ごとの {tone,vol,name}
 };
@@ -239,7 +267,7 @@ function normSE(){ // 壊れた値・未知の音色は既定(埋め込みがあ
   CFG.seVol=Number.isFinite(CFG.seVol)?Math.min(100,Math.max(0,Math.round(CFG.seVol))):80;
 }
 const PK='amatPrefs';
-function savePrefs(){try{localStorage.setItem(PK,JSON.stringify({scroll:CFG.scroll,offset:CFG.offset,se:CFG.se,simul:CFG.simul,showScore:CFG.showScore,keys:CFG.keys,wins:CFG.wins,seVol:CFG.seVol,seCfg:CFG.seCfg,seSig:CFG.seSig,mirror:CFG.mirror,auto:CFG.auto,sendScore:CFG.sendScore,constSpeed:CFG.constSpeed,comboFx:CFG.comboFx,flDisp:CFG.flDisp,lite:CFG.lite,fps:CFG.fps,fpsCap:CFG.fpsCap,uiSe:CFG.uiSe,scoreCfg:CFG.scoreCfg}))}catch(e){}}
+function savePrefs(){try{localStorage.setItem(PK,JSON.stringify({scroll:CFG.scroll,offset:CFG.offset,se:CFG.se,simul:CFG.simul,showScore:CFG.showScore,keys:CFG.keys,wins:CFG.wins,seVol:CFG.seVol,seCfg:CFG.seCfg,seSig:CFG.seSig,mirror:CFG.mirror,auto:CFG.auto,sendScore:CFG.sendScore,constSpeed:CFG.constSpeed,comboFx:CFG.comboFx,flDisp:CFG.flDisp,lite:CFG.lite,fps:CFG.fps,fpsCap:CFG.fpsCap,uiSe:CFG.uiSe,uiTone:CFG.uiTone,scoreCfg:CFG.scoreCfg}))}catch(e){}}
 try{Object.assign(CFG,JSON.parse(localStorage.getItem(PK)||'{}'))}catch(e){}
 normSE();
 function normWins(){ // 既定値に設定シートの値を重ねる(壊れた値は既定に戻す)
@@ -541,23 +569,34 @@ document.body.insertAdjacentHTML('beforeend',`<svg width="0" height="0" style="p
 <symbol id="ic-gear" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M10.3 2.5h3.4l.5 2.4 1.7.7 2-1.4 2.4 2.4-1.4 2 .7 1.7 2.4.5v3.4l-2.4.5-.7 1.7 1.4 2-2.4 2.4-2-1.4-1.7.7-.5 2.4h-3.4l-.5-2.4-1.7-.7-2 1.4-2.4-2.4 1.4-2-.7-1.7-2.4-.5v-3.4l2.4-.5.7-1.7-1.4-2 2.4-2.4 2 1.4 1.7-.7zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></symbol>
 <symbol id="ic-full" viewBox="0 0 24 24"><path d="M3.5 3.5h6v2.6H6.1v3.4H3.5zM14.5 3.5h6v6h-2.6V6.1h-3.4zM20.5 14.5v6h-6v-2.6h3.4v-3.4zM9.5 20.5h-6v-6h2.6v3.4h3.4z"/></symbol>
 <symbol id="ic-fold" viewBox="0 0 24 24"><path d="M3 6.8A1.8 1.8 0 0 1 4.8 5h4.3l2 2.4h8.1A1.8 1.8 0 0 1 21 9.2v8.5a1.8 1.8 0 0 1-1.8 1.8H4.8A1.8 1.8 0 0 1 3 17.7z"/></symbol>
+<symbol id="ic-back" viewBox="0 0 24 24"><path d="M10.2 4.2 3.4 10.4a2 2 0 0 0 0 2.9l6.8 6.2a1.4 1.4 0 0 0 2.3-1v-3.1c4.2 0 6.9 1.3 8.4 4.4.2.4.9.3.9-.2-.2-6-3.4-10.3-9.3-10.9V5.2a1.4 1.4 0 0 0-2.3-1z" transform="translate(0 -.4)"/></symbol>
+<symbol id="ic-up" viewBox="0 0 24 24"><path d="M12 6.2 3.8 14.6a1.6 1.6 0 0 0 1.1 2.7h14.2a1.6 1.6 0 0 0 1.1-2.7z"/></symbol>
+<symbol id="ic-dn" viewBox="0 0 24 24"><path d="M12 17.8 3.8 9.4a1.6 1.6 0 0 1 1.1-2.7h14.2a1.6 1.6 0 0 1 1.1 2.7z"/></symbol>
 </defs></svg>`);
 const IC=(n,c='')=>`<svg class="ic ${c}" viewBox="0 0 24 24"><use href="#ic-${n}"/></svg>`; // 線のない塗りアイコン(絵文字の代わり)
-function uiSE(kind){ // ボタンなどを押したときの操作音(短い合成音)
+const UI_TONES=[['mallet','マリンバ'],['glass','グラス'],['bubble','バブル'],['click','クリック']];
+function uiSE(kind){ // ボタンなどを押したときの操作音(tap/ok/back)。音色は設定で選べる
   try{
     const c=getCtx();if(c.state==='suspended')c.resume();
-    const t=c.currentTime,vol=(CFG.seVol/100)*.35,g=c.createGain();g.connect(c.destination);
-    const f=kind==='ok'?[660,990,1320]:[1040,1560];
-    f.forEach((hz,i)=>{const o=c.createOscillator();o.type='sine';o.frequency.value=hz;const gi=c.createGain();o.connect(gi);gi.connect(g);
-      const st=t+i*.05;gi.gain.setValueAtTime(0,st);gi.gain.linearRampToValueAtTime(1,st+.004);gi.gain.exponentialRampToValueAtTime(.001,st+(kind==='ok'?.16:.07));o.start(st);o.stop(st+.2)});
-    g.gain.value=vol;
+    const tone=UI_TONES.some(x=>x[0]===CFG.uiTone)?CFG.uiTone:'mallet';
+    const t=c.currentTime+.005,out=c.createGain();out.gain.value=(CFG.seVol/100)*.5;
+    const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=7000;out.connect(lp);lp.connect(c.destination);
+    const seq={tap:[[784,0]],ok:[[659,0],[880,.065],[1319,.13]],back:[[659,0],[494,.07]]}[kind]||[[784,0]];
+    const tn=(type,hz,st,pk,d,hz2)=>{const o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.setValueAtTime(hz,st);if(hz2)o.frequency.exponentialRampToValueAtTime(hz2,st+d*.7);
+      g.gain.setValueAtTime(0,st);g.gain.linearRampToValueAtTime(pk,st+.003);g.gain.exponentialRampToValueAtTime(.0008,st+d);o.connect(g);g.connect(out);o.start(st);o.stop(st+d+.05)};
+    seq.forEach(([hz,dt],i)=>{const st=t+dt,last=i===seq.length-1,long=kind==='ok'&&last?1.8:1;
+      if(tone==='mallet'){tn('sine',hz,st,.9,.28*long);tn('sine',hz*4,st,.28,.07);tn('sine',hz*9.2,st,.07,.025)}
+      else if(tone==='glass'){tn('sine',hz*2,st,.55,.45*long);tn('sine',hz*5.4,st,.18,.2);tn('sine',hz*8.1,st,.08,.1)}
+      else if(tone==='bubble'){tn('sine',hz*.7,st,.8,.11*long,hz*1.6)}
+      else{tn('triangle',hz*1.2,st,.5,.035);tn('sine',150,st,.5,.05,70)}
+    });
   }catch(e){}
 }
 addEventListener('pointerdown',e=>{
   if(!CFG.uiSe||CFG.seVol<=0)return;
   const b=e.target.closest&&e.target.closest('button,.dc,.jk,.tb,.a.stb,.a.prb,select,input[type=range]');
   if(!b||b.disabled)return;
-  uiSE(b.id==='zst'||b.id==='zjk'||b.id==='prG'||b.id==='rt'||b.id==='rt2'?'ok':'tap');
+  uiSE(b.id==='zst'||b.id==='zjk'||b.id==='prG'||b.id==='rt'||b.id==='rt2'?'ok':(b.id==='bk'||b.classList.contains('bk'))?'back':'tap');
 },true);
 const saveBlob=(name,blob)=>{const a=document.createElement('a'),u=URL.createObjectURL(blob);a.href=u;a.download=name;a.rel='noopener';a.style.display='none';document.body.appendChild(a);a.click();setTimeout(()=>{a.remove();URL.revokeObjectURL(u)},60000)}; // 共有画面を経由せず、そのままダウンロード(URLは長めに保持)
 const esc=t=>String(t).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
@@ -886,13 +925,13 @@ function showSet(){
   const keep=ov.className==='set'?ov.scrollTop:0;
   ov.style.display='flex';ov.className='set';
   const tg0=TOGS.map(([n,k])=>`<div class="tgi"><div class="lab"><span><b>${n}</b></span></div><div class="rdg"><button class="rdb ${CFG[k]?'sel':''}" data-k="${k}" data-v="1">on<i></i></button><button class="rdb ${CFG[k]?'':'sel'}" data-k="${k}" data-v="0"><i></i>off</button></div></div>`).join('');
-  const tg=tg0+`<div class="tgi"><div class="lab"><span><b>フレームレート</b></span></div><div class="rdg"><button class="rdb ${CFG.fpsCap===60?'sel':''}" data-fc="60">60fps<i></i></button><button class="rdb ${CFG.fpsCap===60?'':'sel'}" data-fc="120"><i></i>120fps</button></div></div>`;
+  const tg=tg0+`<div class="tgi"><div class="lab"><span><b>操作音の種類</b></span></div><div class="rdg" style="flex-wrap:wrap;justify-content:center">${UI_TONES.map(x=>`<button class="rdb ${CFG.uiTone===x[0]?'sel':''}" data-ut="${x[0]}"><i></i>${x[1]}</button>`).join('')}</div></div><div class="tgi"><div class="lab"><span><b>フレームレート</b></span></div><div class="rdg"><button class="rdb ${CFG.fpsCap===60?'sel':''}" data-fc="60">60fps<i></i></button><button class="rdb ${CFG.fpsCap===60?'':'sel'}" data-fc="120"><i></i>120fps</button></div></div>`;
   const rows=SETS.map((s,i)=>`<div class="lab"><span><b>${s.n}</b></span></div><div class="ctl">`
     +[...s.st].map(v=>`<button data-i="${i}" data-d="${-v}">-${v}</button>`).join('')
     +`<span class="val">${rnd(s.get())}</span>`
     +[...s.st].reverse().map(v=>`<button data-i="${i}" data-d="${v}">+${v}</button>`).join('')
     +`<button data-i="${i}" data-r="1" style="color:#18d8e8">RESET</button></div>`).join('');
-  ov.innerHTML='<div class="frame"></div><button class="bk" id="bk">↩</button><div class="spw" id="spw"><div class="spc">速度確認</div><canvas id="spv"></canvas></div><div class="tgrid">'+tg+'</div>'+rows+'<div class="row" style="margin-top:12px"><button class="sm on" id="calb" style="font-size:16px;padding:8px 22px">音に合わせてタイミング調整 →</button></div><div class="row" style="margin-top:16px"><button class="sm on" id="seb" style="font-size:16px;padding:8px 22px">ノーツSEの詳細設定 →</button></div>'+psec()+usec()+dsec()+(OLD_DEV_TOOLS?'<div class="row" style="margin-top:12px"><button class="sm on" id="wj" style="font-size:16px;padding:8px 22px">判定幅の設定(ms) →【開発者】</button></div><div class="row" style="margin-top:12px;margin-bottom:30px"><button class="sm on" id="scj" style="font-size:16px;padding:8px 22px">スコア配分の設定 →【開発者】</button></div>':'<div style="height:30px"></div>');
+  ov.innerHTML='<div class="frame"></div><button class="bk" id="bk">'+IC("back")+'</button><div class="spw" id="spw"><div class="spc">速度確認</div><canvas id="spv"></canvas></div><div class="tgrid">'+tg+'</div>'+rows+'<div class="row" style="margin-top:12px"><button class="sm on" id="calb" style="font-size:16px;padding:8px 22px">音に合わせてタイミング調整 →</button></div><div class="row" style="margin-top:16px"><button class="sm on" id="seb" style="font-size:16px;padding:8px 22px">ノーツSEの詳細設定 →</button></div>'+psec()+usec()+dsec()+(OLD_DEV_TOOLS?'<div class="row" style="margin-top:12px"><button class="sm on" id="wj" style="font-size:16px;padding:8px 22px">判定幅の設定(ms) →【開発者】</button></div><div class="row" style="margin-top:12px;margin-bottom:30px"><button class="sm on" id="scj" style="font-size:16px;padding:8px 22px">スコア配分の設定 →【開発者】</button></div>':'<div style="height:30px"></div>');
   ov.scrollTop=keep;
   $('bk').onclick=()=>setBack();$('seb').onclick=()=>showSE('set');$('calb').onclick=showCal;spvStart();if(OLD_DEV_TOOLS){$('wj').onclick=showWin;$('scj').onclick=showScoreCfg}
   bindData();
@@ -900,6 +939,7 @@ function showSet(){
   {const pn=$('pname');if(pn)pn.onchange=()=>{PL.name=pn.value.trim().slice(0,16);pn.value=PL.name;savePL()}
    const pb=$('pping');if(pb)pb.onclick=async()=>{const o=$('ppst');o.textContent='確認中…';const m=await pingSave();const o2=$('ppst');if(o2)o2.textContent=m}}
   ov.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{CFG[b.dataset.k]=b.dataset.v==='1';savePrefs();showSet()});
+  ov.querySelectorAll('[data-ut]').forEach(b=>b.onclick=()=>{CFG.uiTone=b.dataset.ut;savePrefs();showSet();uiSE('ok')});
   ov.querySelectorAll('[data-fc]').forEach(b=>b.onclick=()=>{CFG.fpsCap=+b.dataset.fc;savePrefs();showSet()});
   ov.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{
     const s=SETS[+b.dataset.i];
@@ -997,7 +1037,7 @@ function calResult(){
 }
 function showCal(){
   stopCal();ov.style.display='flex';ov.className='set';
-  ov.innerHTML='<div class="frame"></div><button class="bk" id="bk">↩</button><div style="height:46px"></div>'
+  ov.innerHTML='<div class="frame"></div><button class="bk" id="bk">'+IC("back")+'</button><div style="height:46px"></div>'
    +'<div class="lab"><span><b>音に合わせて調整</b></span></div>'
    +'<p style="font-size:14px;max-width:440px">クリック音に合わせて、画面をどこでもタップ(キーボードはスペース)してください。最初の4拍はカウントで、そのあと16回ぶん測ります。普段遊ぶときと同じイヤホン・スピーカーで行ってください。</p>'
    +'<div class="calw"><canvas id="calc"></canvas></div><div id="calst" style="min-height:22px;font-weight:700"></div>'
@@ -1016,7 +1056,7 @@ function wbox(k){
 }
 function showWin(){
   ov.style.display='flex';ov.className='set';
-  let h='<div class="frame"></div><button class="bk" id="bk">↩</button><div style="height:46px"></div>'
+  let h='<div class="frame"></div><button class="bk" id="bk">'+IC("back")+'</button><div style="height:46px"></div>'
    +'<p style="font-size:12px;max-width:440px;text-align:left">各値はms。<b>前</b>=ノーツより早い側 / <b>後</b>=遅い側。タップ系は内側(perfect)から順に判定します。<br><b>miss</b>の前=ノーツがタッチを吸い始める位置(badより外でタップするとmiss扱いでノーツが消える)、後=この時間を過ぎると自動でmiss。missをbadと同じにすると、badの範囲=受付範囲になります(初期値)。</p>';
   for(const k in WD){
     h+=`<div class="lab"><span>${WK[k]}</span></div>`;
@@ -1044,7 +1084,7 @@ function showScoreCfg(){
   try{const c=custom||demoChart(L);cn=catCounts(compile(c))}catch(e){}
   const calc=()=>{let W=0;for(const k in cn)W+=cn[k]*sc.w[k];return W>0?1e6/W:0};
   const info=k=>{const u=calc(),n=cn[k]||0;return n?`${n}個 → 1個あたり最大 ${(u*sc.w[k]).toFixed(1)}点`:'この譜面には無し'};
-  let h='<div class="frame"></div><button class="bk" id="bk">↩</button><div style="height:46px"></div>'
+  let h='<div class="frame"></div><button class="bk" id="bk">'+IC("back")+'</button><div style="height:46px"></div>'
    +'<p style="font-size:12px;max-width:440px;text-align:left">各判定に<b>重み</b>を設定し、<b>重みの合計で100万点を按分</b>します。1回の得点＝(100万÷重みの合計)×重み×精度。<br>フルコンボ(コンボ切れ無し)でFCボーナス、さらにオールパーフェクトでAPボーナスを加算します。個数は現在の譜面(カスタム/デモ)で計算。</p>';
   for(const base in SCN){
     h+=`<div class="lab"><span>${SCN[base]}</span></div><div class="wr"><b></b><span style="width:62px;font-size:12px">通常</span><span style="width:62px;font-size:11px">クリティカル</span></div>`
@@ -1197,7 +1237,7 @@ function showSE(from){ // from: 'set'=設定画面から / それ以外=選曲�
   ov.style.display='flex';ov.className='set';
   const back=()=>from==='set'?showSet():setBack();
   const rer=()=>{const k=ov.scrollTop;showSE(from);ov.scrollTop=k};
-  let h='<div class="frame"></div><button class="bk" id="bk">↩</button><div style="height:40px"></div>'
+  let h='<div class="frame"></div><button class="bk" id="bk">'+IC("back")+'</button><div style="height:40px"></div>'
    +(seMsg?`<p style="color:#d00;font-weight:700;max-width:420px">${esc(seMsg)}</p>`:'')
    +`<div class="lab"><span>ノーツSE</span></div><button class="tg" id="seon">${CFG.se?'☑ ON':'☐ OFF'}</button>`
    +`<div class="lab"><span>全体の音量</span></div><div class="ctl"><input type="range" class="rg" id="sev" min="0" max="100" step="1" value="${CFG.seVol}"><span class="val sv" id="sevv">${CFG.seVol}</span></div>`;
@@ -1325,7 +1365,7 @@ function showTest(){
   const c=custom,I=tInfo,A=audioBuf,ok=!!(c&&I);
   const eo=TC.off!==''&&isFinite(+TC.off)?+TC.off:(c&&c.offset)||0,warn=[];
   if(ok&&A&&I.sec+eo>A.duration+.5)warn.push(`譜面の終わり(${fmtT(I.sec)})が曲の長さ(${fmtT(A.duration)})を超えています。オフセットや曲を確認してください`);
-  let h='<div class="frame"></div><button class="bk" id="bk">↩</button><div style="height:34px"></div><div class="lab"><span>譜面テスト</span></div>'
+  let h='<div class="frame"></div><button class="bk" id="bk">'+IC("back")+'</button><div style="height:34px"></div><div class="lab"><span>譜面テスト</span></div>'
    +'<label class="drop" id="tdz"><b style="font-size:18px">'+IC('fold','d')+'ファイルを選ぶ</b><br><span style="font-size:12px">楽曲(mp3/m4a/wav/ogg)と譜面JSONを<br>まとめて選択 / ここにドロップ</span><div id="tbusy" style="font-size:12px;min-height:1.2em"></div><input type="file" id="tfi" class="fin" multiple></label>'
    +(tMsg.length?'<div class="tbox" style="background:#ffe0e0;color:#c00">'+tMsg.map(m=>`<div>⚠ ${esc(m)}</div>`).join('')+'</div>':'')
    +'<div class="tbox">'+(ok
@@ -2034,7 +2074,7 @@ function showArchive(){
   if(!ss.find(x=>x.id===AR.id)){AR.id=ss[0]&&ss[0].id;AR.diff=null}
   const s=ss.find(x=>x.id===AR.id),ds=s?DIFFS.filter(([k])=>s.lv[k]>0&&s.data.charts[k]):[];
   if(s&&!ds.find(([k])=>k===AR.diff))AR.diff=ds[0]&&ds[0][0];
-  let h='<div class="frame"></div><button class="bk" id="bk">↩</button><div style="height:40px"></div><h3 style="margin:6px 0">譜面データ</h3>';
+  let h='<div class="frame"></div><button class="bk" id="bk">'+IC("back")+'</button><div style="height:40px"></div><h3 style="margin:6px 0">譜面データ</h3>';
   if(!s)h+='<p>ダウンロード済みの譜面がありません。</p>';
   else{
     h+='<div style="max-width:560px;width:90%"><select id="arS" style="width:100%;font-size:16px;padding:6px;margin-bottom:8px">'+ss.map(x=>`<option value="${esc(x.id)}"${x.id===s.id?' selected':''}>${esc(x.title)}</option>`).join('')+'</select>'
@@ -2078,7 +2118,7 @@ function showPractice(){
   const P=PRAC||(PRAC=loadPrac()),nb=barBeats(c0).n;
   ov.style.display='flex';ov.className='set';
   const row=(l,h)=>`<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:10px 0;flex-wrap:wrap"><span style="min-width:96px;text-align:right;color:#557">${l}</span>${h}</div>`;
-  ov.innerHTML='<div class="frame"></div><button class="bk" id="bk">↩</button><div style="height:40px"></div><h3 style="margin:6px 0">練習モード</h3>'
+  ov.innerHTML='<div class="frame"></div><button class="bk" id="bk">'+IC("back")+'</button><div style="height:40px"></div><h3 style="margin:6px 0">練習モード</h3>'
     +`<div style="font-weight:700">${esc(cur.song.title)} / ${DNAME[cur.diff]}</div><div style="font-size:13px;color:#557">全${nb}小節 / スコアは記録されません</div>`
     +row('開始小節',`<input id="prS" type="number" min="1" max="${nb}" placeholder="最初から" value="${esc(P.sb)}" style="width:100px;font-size:16px;padding:4px">`)
     +row('終了小節',`<input id="prE" type="number" min="1" max="${nb}" placeholder="最後まで" value="${esc(P.eb)}" style="width:100px;font-size:16px;padding:4px">`)
@@ -2159,8 +2199,8 @@ function renderSel(){
       +(lvDec(lv,dd)?`<div class="ld" style="left:${cx+dia/2-24}px;top:${y+dia/2-4}px">${lvDec(lv,dd)}</div>`:'');
   }
   const inf=songInfo(s,dsel),hs=HS[hsKey(s,dsel)];
-  h+='<div class="tri" data-d="-1" style="left:331px;top:252px;clip-path:polygon(50% 0,100% 100%,0 100%)"></div>'
-    +'<div class="tri" data-d="1" style="left:331px;top:454px;clip-path:polygon(0 0,100% 0,50% 100%)"></div>'
+  h+='<div class="tri" data-d="-1" style="left:331px;top:262px">'+IC("up")+'</div>'
+    +'<div class="tri" data-d="1" style="left:331px;top:454px">'+IC("dn")+'</div>'
     +`<div class="dt" style="top:436px">総ノーツ数 <b>${inf.notes}</b></div><div class="dt" style="top:463px">譜面制作 <b style="font-size:16px">${esc(s.designer||'')}</b></div><div class="dt" style="top:490px">ハイスコア <b>${hs!==undefined?hs:'---'}</b></div>`;
   zl.innerHTML=h;
   updateRing(s);
@@ -2199,8 +2239,8 @@ function showSelect(){
     // 並び順メニュー(楽曲レベル)
     $('zm').innerHTML='<div class="mh">並び順</div>'+SORTS.map(v=>`<button data-s="${v[0]}" class="${v[0]===SS.sort?'on':''}">${v[1]}</button>`).join('')
       +`<hr><button data-o="1" class="${SS.asc?'on':''}">▲ 昇順</button><button data-o="0" class="${SS.asc?'':'on'}">▼ 降順</button>`;
-    const sn=SORTS.find(v=>v[0]===SS.sort),sl=sn[2]+(SS.asc?'▲':'▼');
-    $('zlv').textContent=sl;$('zlv').style.fontSize=fit(sl,15,72)+'px';
+    const sn=SORTS.find(v=>v[0]===SS.sort),sl=sn[2]+(SS.asc?'▲':'▼'),slh=esc(sn[2])+IC(SS.asc?'up':'dn','d');
+    $('zlv').innerHTML=slh;$('zlv').style.fontSize=fit(sl,15,72)+'px';
     $('zlv').classList.toggle('on',SS.sort!=='impl'||!SS.asc);
     // 絞込みメニュー(All) — 曲ごとのタグ
     $('zf').innerHTML='<div class="mh">絞込み(曲ごとのタグ)</div><button data-g="" class="'+(SS.tag?'':'on')+'">すべて</button>'
