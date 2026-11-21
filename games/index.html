@@ -56,7 +56,10 @@ button{font:inherit;cursor:pointer}
 .pn div{display:flex;justify-content:space-between}
 .wh{background:#fff;border-radius:26px;padding:8px 18px;font-size:24px}
 .hd{grid-column:1/-1;background:#e8e8e8;border-radius:28px;padding:16px 22px;display:flex;gap:14px;align-items:center}
-.hd b{font-size:26px}
+.hd{position:relative}.hd b{font-size:26px}
+.rjk{position:absolute;left:10px;top:50%;transform:translateY(-50%);border-radius:14%;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.25);background:#ccc}.rjk img{width:100%;height:100%;object-fit:cover;display:block}
+.pn .adv{display:block;margin-top:10px;padding-top:8px;border-top:2px dashed #999;font:700 14px/1.4 system-ui;color:#333}.pn .adv b{display:block;font:700 30px/1.2 Georgia,serif;color:#2255ff}.pn .adv small{display:block;font-weight:400;font-size:12px;color:#555}
+.pn .adv button{margin-top:4px;font-size:14px;padding:3px 14px}
 .hd .tag{display:inline-block;margin:4px 6px 0 0;padding:0 14px;border-radius:99px;background:#c97cff;color:#fff;font-size:15px}
 .sc{grid-column:1/-1;background:#b0ffff;border-radius:30px;padding:8px 26px;display:flex;justify-content:space-between;align-items:center;color:#00a8ff}
 .sc .l{font-size:30px}.sc .n{font-family:Georgia,serif;font-size:52px;letter-spacing:.14em}
@@ -69,6 +72,7 @@ button{font:inherit;cursor:pointer}
 .bnr{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:var(--bh);text-align:center;line-height:1.1} /* 右列の先頭: COMBOの上に FULL COMBO / ALL PERFECT を出す空欄(常に確保) */
 .bnr .bt{font:italic 900 26px Georgia,serif;letter-spacing:.04em;white-space:nowrap}
 .bnr .bt.ap{background:linear-gradient(#4aa8ff,#a060f0);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 3px #fff)}
+.bnr .bt.ag{background:linear-gradient(#fff0b8,#86e08a);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 1px #2e8b3a) drop-shadow(0 1px 1px rgba(40,110,50,.8))}
 .bnr .bt.fc{background:linear-gradient(#ff3aa8,#ff8a2a);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 3px #fff)}
 .bnr small{display:block;font:700 14px system-ui;letter-spacing:.04em;color:#2255ff;margin-top:2px}
 .rbtn{background:#b8ffcc;border-color:#fff58a;color:#e0e;font-size:20px;padding:8px 20px;white-space:nowrap}
@@ -121,6 +125,10 @@ button{font:inherit;cursor:pointer}
 #zs button{border:0;padding:0;font-family:inherit}
 .tb{position:absolute;top:14px;height:44px;border-radius:99px;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;z-index:3}
 .tb.on{outline:3px solid #fff58a}
+.tb.ib{border-radius:16px;border:3px solid #fff;box-shadow:0 3px 0 rgba(0,0,0,.2),inset 0 -5px 0 rgba(0,0,0,.12);position:absolute;overflow:hidden}
+.tb.ib::before{content:"";position:absolute;left:4px;right:4px;top:3px;height:42%;border-radius:12px 12px 20px 20px;background:rgba(255,255,255,.38);pointer-events:none}
+.ic{width:26px;height:26px;fill:#fff;stroke:rgba(0,40,90,.55);stroke-width:1.2;stroke-linejoin:round;paint-order:stroke;position:relative;display:inline-block;vertical-align:middle}
+.ic.d{width:1.15em;height:1.15em;fill:#3a46c8;stroke:none;vertical-align:-.2em;margin-right:.3em}
 #zq{position:absolute;z-index:3;border:0;border-radius:99px;padding:0 14px;font-size:16px;background:#fff;color:#14166e;user-select:text;-webkit-user-select:text}
 .zck{position:absolute;z-index:3;display:flex;align-items:center;gap:3px;font-size:14px;color:#14166e}
 .zck input{width:26px;height:26px;margin:0}
@@ -138,6 +146,10 @@ button{font:inherit;cursor:pointer}
 .pnl{left:640px;top:62px;width:275px;height:566px;border-radius:30px;background:linear-gradient(#ffc2f5 0 316px,#f1f2c4 316px);border:2px solid #fff}
 .jk{border:0;box-shadow:6px -6px 0 var(--dc);transition:box-shadow .4s;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.35);overflow:hidden;text-align:center}
 .jk i{font-style:normal;font-size:110px;line-height:1}.jk span{font-size:20px;font-weight:700;padding:0 10px}
+.lamps{position:absolute;left:9px;bottom:9px;width:60%;display:flex;justify-content:space-between;pointer-events:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+.lp{width:calc((100% - 4*7.5px)/5);aspect-ratio:1;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);display:block}
+.lp-x{background:#111}.lp-n{background:#a8a8a8}.lp-c{background:#ffd400}
+.lp-fc{background:linear-gradient(#ff3aa8,#ff8a2a)}.lp-ap{background:linear-gradient(#4aa8ff,#a060f0)}.lp-ag{background:linear-gradient(135deg,#fff3c4,#a8ec9c)}
 .jimg{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;-webkit-user-drag:none}
 .ring{left:681px;top:414px;width:188px;height:188px;border-radius:50%;border:8px solid var(--dc);transition:border-color .4s}
 #zr{--dc:#c49cff}
@@ -145,7 +157,7 @@ button{font:inherit;cursor:pointer}
 #zar{transition:background .4s}
 #zr.ni *{transition:none!important}
 .dc{position:absolute;width:56px;height:56px;border-radius:50%;border:2px solid #666;color:#222;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .5s cubic-bezier(.25,.8,.25,1),opacity .3s}
-#zr .dc{pointer-events:auto}
+#zr .dc,#zr .jk{pointer-events:auto}
 .dc.on{border:4px solid #fff;box-shadow:0 0 0 3px #f2d200,0 0 12px #fff;z-index:2}.dc.na{opacity:.3;cursor:default}.dc.na.alt{cursor:pointer}
 .lvc{left:728px;top:461px;width:94px;height:94px;border-radius:50%;background:radial-gradient(circle at 40% 30%,#6ffcff,#10c4ea);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;border:3px solid #fff}
 .lvc small{font-size:20px}.lvc b{font-size:46px;font-weight:500}
@@ -202,7 +214,7 @@ const CFG={
   wins:null,             // 判定幅(ms)。設定画面→判定幅の設定 で変更(WD参照)
   score:{perfect:1000,great:700,good:400,bad:100,miss:0},
   se:true,simul:true,showScore:true,keys:false,sendScore:true, // 設定画面で切替(sendScore=スコアをシートへ送信)
-  mirror:false,auto:false,constSpeed:false,comboFx:true,flDisp:true,lite:false,fps:false, // ミラー譜面 / オート / 等速(ソフランなし) / AP・FC継続中のコンボ演出
+  mirror:false,auto:false,constSpeed:false,comboFx:true,flDisp:true,lite:false,fps:false,fpsCap:120,uiSe:true, // ミラー譜面 / オート / 等速(ソフランなし) / AP・FC継続中のコンボ演出
   scoreCfg:null,         // スコア配分(開発者のみ反映。SCD参照)
   seVol:80,seCfg:null // ノーツSE: 全体音量(0-100) / 種別ごとの {tone,vol,name}
 };
@@ -227,7 +239,7 @@ function normSE(){ // 壊れた値・未知の音色は既定(埋め込みがあ
   CFG.seVol=Number.isFinite(CFG.seVol)?Math.min(100,Math.max(0,Math.round(CFG.seVol))):80;
 }
 const PK='amatPrefs';
-function savePrefs(){try{localStorage.setItem(PK,JSON.stringify({scroll:CFG.scroll,offset:CFG.offset,se:CFG.se,simul:CFG.simul,showScore:CFG.showScore,keys:CFG.keys,wins:CFG.wins,seVol:CFG.seVol,seCfg:CFG.seCfg,seSig:CFG.seSig,mirror:CFG.mirror,auto:CFG.auto,sendScore:CFG.sendScore,constSpeed:CFG.constSpeed,comboFx:CFG.comboFx,flDisp:CFG.flDisp,lite:CFG.lite,fps:CFG.fps,scoreCfg:CFG.scoreCfg}))}catch(e){}}
+function savePrefs(){try{localStorage.setItem(PK,JSON.stringify({scroll:CFG.scroll,offset:CFG.offset,se:CFG.se,simul:CFG.simul,showScore:CFG.showScore,keys:CFG.keys,wins:CFG.wins,seVol:CFG.seVol,seCfg:CFG.seCfg,seSig:CFG.seSig,mirror:CFG.mirror,auto:CFG.auto,sendScore:CFG.sendScore,constSpeed:CFG.constSpeed,comboFx:CFG.comboFx,flDisp:CFG.flDisp,lite:CFG.lite,fps:CFG.fps,fpsCap:CFG.fpsCap,uiSe:CFG.uiSe,scoreCfg:CFG.scoreCfg}))}catch(e){}}
 try{Object.assign(CFG,JSON.parse(localStorage.getItem(PK)||'{}'))}catch(e){}
 normSE();
 function normWins(){ // 既定値に設定シートの値を重ねる(壊れた値は既定に戻す)
@@ -494,7 +506,8 @@ async function loadSE(){
 }
 
 let pv=false,pvT=0;
-let PR=1,PRAC=null; // 練習モードの再生速度 / 練習設定(通常プレイではnull)
+let PR=1,PRAC=null,DT=[]; // DT=今回のプレイでの打鍵のずれ(秒。正=遅い)
+ // 練習モードの再生速度 / 練習設定(通常プレイではnull)
 const T=()=>pv?pvT:(ctx.currentTime-song0)*PR-CFG.offset;
 
 // ===== 判定 =====
@@ -517,10 +530,36 @@ function judge(j,crit,sd,cat){
   last=autoRun&&j!=='miss'?'AUTO':j+(crit?' ★':'');lastT=T();cnt[j]=(cnt[j]||0)+1;
   lastFL=null; // 直前の判定がfast/lateか(perfect以外でタイミングがあるときだけ)
   if(sd!==undefined&&j!=='perfect'&&j!=='miss'){if(sd>0)late++;else fast++;lastFL=sd>0?'late':'fast'}
+  if(sd!==undefined&&!autoRun&&j!=='miss'&&DT.length<20000)DT.push(sd);
   if(j!=='perfect')nonP++;
   if(j==='bad'||j==='miss'){combo=0;brk++}else{combo++;maxCombo=Math.max(maxCombo,combo)}
   if(cat)score+=SM.unit*CFG.scoreCfg.w[(crit?'c':'')+cat]*CFG.scoreCfg.acc[j];
 }
+document.body.insertAdjacentHTML('beforeend',`<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="ic-home" viewBox="0 0 24 24"><path d="M12 2.8 2.6 11.2a.8.8 0 0 0 .5 1.4H5V20a1.2 1.2 0 0 0 1.2 1.2h3.4v-5.6h4.8v5.6h3.4A1.2 1.2 0 0 0 19 20v-7.4h1.9a.8.8 0 0 0 .5-1.4z"/></symbol>
+<symbol id="ic-spk" viewBox="0 0 24 24"><path d="M3.6 9.2h3.6L12 5v14l-4.8-4.2H3.6z"/><path d="M15.4 8.6a4.6 4.6 0 0 1 0 6.8" fill="none" stroke-width="2.4" stroke-linecap="round"/><path d="M18.4 5.8a8.6 8.6 0 0 1 0 12.4" fill="none" stroke-width="2.4" stroke-linecap="round"/></symbol>
+<symbol id="ic-gear" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M10.3 2.5h3.4l.5 2.4 1.7.7 2-1.4 2.4 2.4-1.4 2 .7 1.7 2.4.5v3.4l-2.4.5-.7 1.7 1.4 2-2.4 2.4-2-1.4-1.7.7-.5 2.4h-3.4l-.5-2.4-1.7-.7-2 1.4-2.4-2.4 1.4-2-.7-1.7-2.4-.5v-3.4l2.4-.5.7-1.7-1.4-2 2.4-2.4 2 1.4 1.7-.7zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></symbol>
+<symbol id="ic-full" viewBox="0 0 24 24"><path d="M3.5 3.5h6v2.6H6.1v3.4H3.5zM14.5 3.5h6v6h-2.6V6.1h-3.4zM20.5 14.5v6h-6v-2.6h3.4v-3.4zM9.5 20.5h-6v-6h2.6v3.4h3.4z"/></symbol>
+<symbol id="ic-fold" viewBox="0 0 24 24"><path d="M3 6.8A1.8 1.8 0 0 1 4.8 5h4.3l2 2.4h8.1A1.8 1.8 0 0 1 21 9.2v8.5a1.8 1.8 0 0 1-1.8 1.8H4.8A1.8 1.8 0 0 1 3 17.7z"/></symbol>
+</defs></svg>`);
+const IC=(n,c='')=>`<svg class="ic ${c}" viewBox="0 0 24 24"><use href="#ic-${n}"/></svg>`; // 線のない塗りアイコン(絵文字の代わり)
+function uiSE(kind){ // ボタンなどを押したときの操作音(短い合成音)
+  try{
+    const c=getCtx();if(c.state==='suspended')c.resume();
+    const t=c.currentTime,vol=(CFG.seVol/100)*.35,g=c.createGain();g.connect(c.destination);
+    const f=kind==='ok'?[660,990,1320]:[1040,1560];
+    f.forEach((hz,i)=>{const o=c.createOscillator();o.type='sine';o.frequency.value=hz;const gi=c.createGain();o.connect(gi);gi.connect(g);
+      const st=t+i*.05;gi.gain.setValueAtTime(0,st);gi.gain.linearRampToValueAtTime(1,st+.004);gi.gain.exponentialRampToValueAtTime(.001,st+(kind==='ok'?.16:.07));o.start(st);o.stop(st+.2)});
+    g.gain.value=vol;
+  }catch(e){}
+}
+addEventListener('pointerdown',e=>{
+  if(!CFG.uiSe||CFG.seVol<=0)return;
+  const b=e.target.closest&&e.target.closest('button,.dc,.jk,.tb,.a.stb,.a.prb,select,input[type=range]');
+  if(!b||b.disabled)return;
+  uiSE(b.id==='zst'||b.id==='zjk'||b.id==='prG'||b.id==='rt'||b.id==='rt2'?'ok':'tap');
+},true);
+const saveBlob=(name,blob)=>{const a=document.createElement('a'),u=URL.createObjectURL(blob);a.href=u;a.download=name;a.rel='noopener';a.style.display='none';document.body.appendChild(a);a.click();setTimeout(()=>{a.remove();URL.revokeObjectURL(u)},60000)}; // 共有画面を経由せず、そのままダウンロード(URLは長めに保持)
 const esc=t=>String(t).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 function stopAudio(){try{src&&src.stop()}catch(e){}src=null}
 const ovl=(n,i)=>i+1>n.lane+.001&&i<n.lane+n.w-.001; // レーンiがノーツと重なっているか(小数位置のスライドはまたぐ両レーンが対象)
@@ -703,7 +742,7 @@ function visList(t,Y,h,ph,scr){ // 画面の近くにあるノーツだけを数
   }
   return VIS.list;
 }
-const SIM={src:null,g:[]},FP={n:0,t0:0,v:0};
+const SIM={src:null,g:[]},FP={n:0,t0:0,v:0,last:0};
 const comboGrad=(k,y0,y1)=>{const q=g.createLinearGradient(0,y0,0,y1),c=k==='ap'?['#8fd2ff','#9fa8ff','#b88cf2']:['#f070c0','#f08aa0','#f2a070'];q.addColorStop(0,c[0]);q.addColorStop(.5,c[1]);q.addColorStop(1,c[2]);return q};
 function draw(){
   const w=cv.clientWidth,h=cv.clientHeight,jy=h*CFG.judgeY,GM=geom(w),lw=GM.lp,ox=GM.ox,rp=GM.rp,lw0=w/L,t=T(),IN=GM.IN,PX=GM.PX,BX=GM.BX,ph=Math.max(10,Math.min(rp*ST.nh,70)),LC=[ST.lc0,ST.lc1,ST.lc2,ST.lc3];
@@ -793,7 +832,7 @@ function draw(){
   const fx=CFG.comboFx&&!pv&&brk===0?(nonP===0?'ap':'fc'):null,by=cy+ls*1.8+ns*.95; // AP継続=青紫 / フルコン継続=ピンク〜オレンジ
   g.font=`${ns}px Georgia,serif`;g.fillStyle=fx?comboGrad(fx,by-ns*.75,by):ST.cn;g.fillText(combo,w/2,by);g.fillStyle=ST.cn;
   if(CFG.showScore){g.font='14px system-ui';g.fillText('SCORE '+Math.floor(score),w/2,22)}
-  if(CFG.fps){g.font='12px system-ui';g.textAlign='left';g.fillStyle='#fff';g.fillText(FP.v+' fps / '+Math.round(FP.ms||0)+' ms',6,14);g.textAlign='center'}
+  if(CFG.fps){g.font='12px system-ui';g.textAlign='left';g.fillStyle='#fff';g.fillText(FP.v+' fps / '+Math.round(FP.ms||0)+' ms',6,h-8);g.textAlign='center'}
   if(t>end-2){ // 終了演出: ALL PERFECT / FULL COMBO / Live Clear
     const fc=brk===0,ap=fc&&nonP===0,yy=h*.45;g.globalAlpha=Math.min(1,(t-(end-2))/.5);
     g.font=`${ap||fc?'italic 800 ':''}${Math.min(w*(ap||fc?.1:.14),ap||fc?64:90)}px system-ui`;
@@ -806,7 +845,9 @@ seekBtn('sk1','−10秒',-10,'left');seekBtn('sk2','+10秒',10,'right');
 const playUI=v=>{$('sk1').style.display=$('sk2').style.display=v&&PRAC&&cur?'block':'none';$('rt').style.display=$('hm').style.display=v?'block':'none';$('hm').textContent=testMode?'テストへ':PRAC&&cur?'練習設定へ':'選曲へ'};
 function loop(){
   if(!run)return;
-  const n0=performance.now();update();draw();FP.ms=FP.ms===undefined?0:FP.ms*.9+(performance.now()-n0)*.1;if(++FP.n>=30){FP.v=Math.round((FP.n-1)*1000/(n0-FP.t0));FP.n=0;FP.t0=n0}else if(FP.n===1)FP.t0=n0;
+  const n0=performance.now();
+  if(CFG.fpsCap===60&&n0-FP.last<14){requestAnimationFrame(loop);return} // 60fps指定: 120Hz画面では1フレームおきに処理
+  FP.last=n0;update();draw();FP.ms=FP.ms===undefined?0:FP.ms*.9+(performance.now()-n0)*.1;if(++FP.n>=30){FP.v=Math.round((FP.n-1)*1000/(n0-FP.t0));FP.n=0;FP.t0=n0}else if(FP.n===1)FP.t0=n0;
   if(T()>end){run=false;stopAudio();playUI(false);if(PRAC&&cur){if(PRAC.loop){delete PRAC.seek;start()}else showPractice();return}show(true);return}
   requestAnimationFrame(loop);
 }
@@ -839,24 +880,27 @@ const SETS=[
   {n:'ノーツ速度',st:[1,.1,.01],get:()=>1.65/CFG.scroll,set:v=>CFG.scroll=1.65/v,min:.5,max:12,def:1.5},
   {n:'タイミング調整(ms)',st:[10,1,.1],get:()=>CFG.offset*1000,set:v=>CFG.offset=v/1000,min:-500,max:500,def:0}
 ];
-const TOGS=[['ミラー譜面','mirror'],['スコア表示','showScore'],['等速','constSpeed'],['オート','auto'],['コンボ演出','comboFx'],['FAST/LATE表示','flDisp'],['軽量描画(解像度を下げる)','lite'],['FPS表示','fps'],['SE','se'],['同時押しライン','simul'],['キー表示','keys'],['スコア送信','sendScore']];
+const TOGS=[['ミラー譜面','mirror'],['スコア表示','showScore'],['等速','constSpeed'],['オート','auto'],['コンボ演出','comboFx'],['FAST/LATE表示','flDisp'],['軽量描画(解像度を下げる)','lite'],['FPS表示','fps'],['操作音','uiSe'],['SE','se'],['同時押しライン','simul'],['キー表示','keys'],['スコア送信','sendScore']];
 const rnd=v=>+(+v).toFixed(2);
 function showSet(){
   const keep=ov.className==='set'?ov.scrollTop:0;
   ov.style.display='flex';ov.className='set';
-  const tg=TOGS.map(([n,k])=>`<div class="tgi"><div class="lab"><span><b>${n}</b></span></div><div class="rdg"><button class="rdb ${CFG[k]?'sel':''}" data-k="${k}" data-v="1">on<i></i></button><button class="rdb ${CFG[k]?'':'sel'}" data-k="${k}" data-v="0"><i></i>off</button></div></div>`).join('');
+  const tg0=TOGS.map(([n,k])=>`<div class="tgi"><div class="lab"><span><b>${n}</b></span></div><div class="rdg"><button class="rdb ${CFG[k]?'sel':''}" data-k="${k}" data-v="1">on<i></i></button><button class="rdb ${CFG[k]?'':'sel'}" data-k="${k}" data-v="0"><i></i>off</button></div></div>`).join('');
+  const tg=tg0+`<div class="tgi"><div class="lab"><span><b>フレームレート</b></span></div><div class="rdg"><button class="rdb ${CFG.fpsCap===60?'sel':''}" data-fc="60">60fps<i></i></button><button class="rdb ${CFG.fpsCap===60?'':'sel'}" data-fc="120"><i></i>120fps</button></div></div>`;
   const rows=SETS.map((s,i)=>`<div class="lab"><span><b>${s.n}</b></span></div><div class="ctl">`
     +[...s.st].map(v=>`<button data-i="${i}" data-d="${-v}">-${v}</button>`).join('')
     +`<span class="val">${rnd(s.get())}</span>`
     +[...s.st].reverse().map(v=>`<button data-i="${i}" data-d="${v}">+${v}</button>`).join('')
     +`<button data-i="${i}" data-r="1" style="color:#18d8e8">RESET</button></div>`).join('');
-  ov.innerHTML='<div class="frame"></div><button class="bk" id="bk">↩</button><div class="spw" id="spw"><div class="spc">速度確認</div><canvas id="spv"></canvas></div><div class="tgrid">'+tg+'</div>'+rows+'<div class="row" style="margin-top:12px"><button class="sm on" id="calb" style="font-size:16px;padding:8px 22px">音に合わせてタイミング調整 →</button></div><div class="row" style="margin-top:16px"><button class="sm on" id="seb" style="font-size:16px;padding:8px 22px">ノーツSEの詳細設定 →</button></div>'+psec()+dsec()+(OLD_DEV_TOOLS?'<div class="row" style="margin-top:12px"><button class="sm on" id="wj" style="font-size:16px;padding:8px 22px">判定幅の設定(ms) →【開発者】</button></div><div class="row" style="margin-top:12px;margin-bottom:30px"><button class="sm on" id="scj" style="font-size:16px;padding:8px 22px">スコア配分の設定 →【開発者】</button></div>':'<div style="height:30px"></div>');
+  ov.innerHTML='<div class="frame"></div><button class="bk" id="bk">↩</button><div class="spw" id="spw"><div class="spc">速度確認</div><canvas id="spv"></canvas></div><div class="tgrid">'+tg+'</div>'+rows+'<div class="row" style="margin-top:12px"><button class="sm on" id="calb" style="font-size:16px;padding:8px 22px">音に合わせてタイミング調整 →</button></div><div class="row" style="margin-top:16px"><button class="sm on" id="seb" style="font-size:16px;padding:8px 22px">ノーツSEの詳細設定 →</button></div>'+psec()+usec()+dsec()+(OLD_DEV_TOOLS?'<div class="row" style="margin-top:12px"><button class="sm on" id="wj" style="font-size:16px;padding:8px 22px">判定幅の設定(ms) →【開発者】</button></div><div class="row" style="margin-top:12px;margin-bottom:30px"><button class="sm on" id="scj" style="font-size:16px;padding:8px 22px">スコア配分の設定 →【開発者】</button></div>':'<div style="height:30px"></div>');
   ov.scrollTop=keep;
   $('bk').onclick=()=>setBack();$('seb').onclick=()=>showSE('set');$('calb').onclick=showCal;spvStart();if(OLD_DEV_TOOLS){$('wj').onclick=showWin;$('scj').onclick=showScoreCfg}
   bindData();
+  bindUd();
   {const pn=$('pname');if(pn)pn.onchange=()=>{PL.name=pn.value.trim().slice(0,16);pn.value=PL.name;savePL()}
    const pb=$('pping');if(pb)pb.onclick=async()=>{const o=$('ppst');o.textContent='確認中…';const m=await pingSave();const o2=$('ppst');if(o2)o2.textContent=m}}
   ov.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{CFG[b.dataset.k]=b.dataset.v==='1';savePrefs();showSet()});
+  ov.querySelectorAll('[data-fc]').forEach(b=>b.onclick=()=>{CFG.fpsCap=+b.dataset.fc;savePrefs();showSet()});
   ov.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{
     const s=SETS[+b.dataset.i];
     s.set(b.dataset.r?s.def:Math.min(s.max,Math.max(s.min,rnd(s.get()+ +b.dataset.d))));
@@ -1038,23 +1082,38 @@ function showResult(){
   const total=Math.round(score+bonus),ratio=SM.unit?Math.min(1,score/1e6):0;
   let best=null,nr=false; // ハイスコアの更新(選曲から遊んだ時のみ。オート時は記録しない)
   if(cur&&!autoRun){const k=hsKey(cur.song,cur.diff);best=HS[k]||0;if(total>best){best=total;nr=true;HS[k]=total;try{localStorage.setItem('amatHS',JSON.stringify(HS))}catch(e){}}}
+  const ag=fc&&!ap&&!(cnt.good>0),lv=ap?4:ag?3:fc?2:1;
+  if(cur&&!autoRun&&!PRAC&&!testMode){const k=hsKey(cur.song,cur.diff);if((CLR[k]||0)<lv){CLR[k]=lv;try{localStorage.setItem('amatClear',JSON.stringify(CLR))}catch(e){}}}
   const rk=ratio>=.95?'S':ratio>=.85?'A':ratio>=.7?'B':ratio>=.5?'C':'E';
   const rec=recordScore({total,rk,fc,ap});if(rec){SQ.push(rec);if(SQ.length>300)SQ=SQ.slice(-300);saveSQ()}
   const col={perfect:'#8aa8ff',great:'#6a2cff',good:'#ff5a10',bad:'#1aa81a',miss:'#10105a'};
   const lt=late+fast,lp=lt?late/lt*100:50;
   const tags=[`${L}レーン`+(cur?' / '+DNAME[cur.diff]:''),CFG.mirror?'MIRROR':'',CFG.constSpeed?'等速':'',autoRun?'AUTO':''].filter(Boolean).map(t=>`<span class="tag">${esc(t)}</span>`).join('');
-  const bn=ap?['ap','ALL PERFECT']:fc?['fc','FULL COMBO']:['','']; // LIVE CLEARは出さない(空欄のまま)
+  const adv=(()=>{ // おすすめ判定調整: 打鍵のずれの中央値だけ「タイミング調整」を足す
+    const a=DT.filter(x=>Math.abs(x)<.12).sort((x,y)=>x-y),n=a.length;
+    if(n<20)return ''; // 測れないときは何も出さない
+    const med=a.length%2?a[(n-1)/2]:(a[n/2-1]+a[n/2])/2,ms=Math.round(med*1000),cu=Math.round(CFG.offset*1000),nw=Math.max(-500,Math.min(500,cu+ms));
+    if(Math.abs(ms)<4)return `<p class="adv">今の判定調整<b>${cu}ms</b><small>ずれの中央値 ${ms>0?'+':''}${ms}ms(ほぼぴったり / ${n}回)</small></p>`;
+    return `<p class="adv">おすすめ判定調整<b>${ms>0?'+':''}${ms}ms</b><small>押すのが${ms>0?'遅め':'早め'}(中央値 ${ms>0?'+':''}${ms}ms / ${n}回)<br>今の判定調整 ${cu}ms → ${nw}ms</small><button class="sm" id="advap">適用する</button></p>`;
+  })();
+  const sg=cur&&cur.song,rjk=sg&&!sg.custom?`<div class="rjk" id="rjk">${sg.jacket?`<img src="${sg.jacket}" alt="" draggable="false" style="object-position:${50+(sg.jx||0)}% ${50+(sg.jy||0)}%;transform:scale(${sg.jz||1})">`:`<div style="width:100%;height:100%;background:linear-gradient(135deg,hsl(${sg.hue[0]} 85% 68%),hsl(${sg.hue[1]} 85% 74%))"></div>`}</div>`:'';
+  const bn=ap?['ap','ALL PERFECT']:ag?['ag','ALL GREAT']:fc?['fc','FULL COMBO']:['','']; // LIVE CLEARは出さない(空欄のまま)
   ov.innerHTML='<div class="frame"></div><div id="rfit"><div id="rin"><div class="res">'
-    +`<div class="hd"><div><b>${esc(cur?cur.song.title:(custom&&custom.title)||'デモ')}</b><br>${tags}</div>`
+    +`<div class="hd">${rjk}<div><b>${esc(cur?cur.song.title:(custom&&custom.title)||'デモ')}</b><br>${tags}</div>`
     +`<div class="rb"><s style="width:${Math.min(100,ratio*100)}%"></s>${[[50,'C'],[70,'B'],[85,'A'],[95,'S']].map(([p,l])=>`<u style="left:${p}%"><em>${l}</em></u>`).join('')}</div><div class="md">${rk}</div></div>`
     +`<div class="sc"><span class="l">スコア</span><span class="n">${String(total).padStart(7,'0')}</span></div>`
     +(best!==null?`<div class="sc hs"><span class="l">ハイスコア</span><span class="n">${String(best).padStart(7,'0')}${nr?' NEW!':''}</span></div>`:'')+((rec||skipWhy())?'<div id="rsv" style="grid-column:1/-1;min-height:20px;margin:-6px 0;font:700 15px/20px system-ui;text-align:center;color:#2a3a8a">'+(rec?'':esc(skipWhy()))+'</div>':'')
-    +(autoRun?'<div class="pn" style="display:flex;align-items:center;justify-content:center;text-align:center;font:700 clamp(14px,2.4vw,20px)/1.5 system-ui;color:#2a3a8a">AUTO使用のため<br>判定されませんでした</div>':'<div class="pn">'+NAMES.map(k=>`<div><span style="color:${col[k]}">${k}</span><span style="color:${col[k]}">${cnt[k]||0}</span></div>`).join('')+'</div>')
+    +(autoRun?'<div class="pn" style="display:flex;align-items:center;justify-content:center;text-align:center;font:700 clamp(14px,2.4vw,20px)/1.5 system-ui;color:#2a3a8a">AUTO使用のため<br>判定されませんでした</div>':'<div class="pn">'+NAMES.map(k=>`<div><span style="color:${col[k]}">${k}</span><span style="color:${col[k]}">${cnt[k]||0}</span></div>`).join('')+adv+'</div>')
     +`<div class="rc"><div class="bnr">${bn[0]?`<span class="bt ${bn[0]}">${bn[1]}</span>${bonus?`<small>BONUS +${bonus}</small>`:''}`:''}</div><div class="wh" style="background:#ffd8c0;border-radius:99px;display:flex;justify-content:space-between;font-family:Georgia,serif"><span style="color:#08d0e8">COMBO</span><span style="color:#08c8ff">${maxCombo}</span></div>`
     +`<div class="wh fls" style="${CFG.flDisp?'':'visibility:hidden;'}font-family:Georgia,serif;display:grid;grid-template-columns:1fr 1fr;color:#e0e"><span>${late}</span><span style="text-align:right;color:#08c8ff">${fast}</span><span style="grid-column:1/-1"><div class="fl"><s style="width:${lp}%"></s></div></span><span style="color:red">late</span><span style="text-align:right;color:#2255ff">fast</span></div>`+'</div>'
     +'</div><div class="row" style="margin-top:14px"><button class="sm rbtn" id="rt2">リトライ</button><button class="sm rbtn" id="tt" style="background:#ffd8f4;border-color:#ff8a8a;color:#2255ff">タイトルへ</button><button class="sm rbtn" id="sl2" style="background:#d8f0ff;border-color:#8ad0ff;color:#2255ff">選曲へ</button></div></div></div>';
+  {const jk=$('rjk'),hd=ov.querySelector('.hd');if(jk&&hd){ // ジャケットはタイトル枠より少しだけ小さい正方形にして、枠の左端に置く
+    const fitJ=()=>{jk.style.display='none';hd.style.paddingLeft='';const H=hd.offsetHeight,z=H-16;jk.style.display='';jk.style.width=jk.style.height=z+'px';hd.style.paddingLeft=(z+8+14+4)+'px'};
+    fitJ();fitJ()}}
+  if($('advap'))$('advap').onclick=()=>{const m=DT.filter(x=>Math.abs(x)<.12).sort((x,y)=>x-y),n=m.length,med=n%2?m[(n-1)/2]:(m[n/2-1]+m[n/2])/2;CFG.offset=Math.max(-.5,Math.min(.5,CFG.offset+Math.round(med*1000)/1000));savePrefs();$('advap').textContent='適用しました';$('advap').disabled=true};
   fitResult();requestAnimationFrame(fitResult);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitResult); // 文字の読み込み後にも測り直す
   if(rec)scoreStatus(rec);
+  if(cur&&!autoRun&&!PRAC&&!testMode)udSoon();
   $('rt2').onclick=start;$('tt').onclick=()=>show(false);$('sl2').onclick=showSelect;
   if(testMode){$('sl2').textContent='テスト画面へ';$('sl2').onclick=showTest}
 }
@@ -1065,7 +1124,7 @@ function start(){
   let c=cur?songChart(cur.song,cur.diff):(custom||demoChart(L));
   if(CFG.mirror)c=mirrorChart(c);
   pvStop(true);L=c.lanes;notes=compile(c);autoRun=CFG.auto;const pr=!!(PRAC&&cur);PR=pr?PRAC.rate:1;
-  held=Array(L).fill(0);ptr.clear();pp.clear();combo=maxCombo=score=late=fast=brk=nonP=0;lastFL=null;cnt={};last='';lastT=-9;
+  held=Array(L).fill(0);ptr.clear();pp.clear();combo=maxCombo=score=late=fast=brk=nonP=0;DT=[];lastFL=null;cnt={};last='';lastT=-9;
   off=c.offset||0; // 曲の何秒目が譜面の0拍目か
   let tS=0;const tm=testMode&&!cur; // tS=譜面テストの開始位置(秒)
   if(tm||pr){
@@ -1177,7 +1236,7 @@ function showSE(from){ // from: 'set'=設定画面から / それ以外=選曲�
 
 // ===== 全画面 =====
 const fsOn=()=>!!(document.fullscreenElement||document.webkitFullscreenElement);
-const fsLabel=()=>fsOn()?'⛶ 全画面を解除':'⛶ 全画面';
+const fsLabel=()=>IC('full','d')+(fsOn()?'全画面を解除':'全画面');
 function fsNote(t){ // 非対応・拒否されたときの案内を、いま開いている画面に出す
   if($('tgo')){tMsg=[t];showTest()}else{msg=t;show(false)}
 }
@@ -1190,7 +1249,7 @@ function toggleFS(){
     const r=rq.call(el);if(r&&r.catch)r.catch(()=>fsNote(no));
   }catch(e){fsNote(no)}
 }
-['fullscreenchange','webkitfullscreenchange'].forEach(k=>document.addEventListener(k,()=>{document.querySelectorAll('.fsb').forEach(b=>b.textContent=fsLabel());try{fit()}catch(e){}}));
+['fullscreenchange','webkitfullscreenchange'].forEach(k=>document.addEventListener(k,()=>{document.querySelectorAll('.fsb').forEach(b=>b.innerHTML=fsLabel());try{fit()}catch(e){}}));
 // ===== 譜面テスト(開発用): 楽曲データと譜面JSONを入れるだけでテストプレイ =====
 let testMode=false,tInfo=null,tMsg=[],TC={sb:'',eb:'',off:'',auto:false,metro:false};
 try{const o=JSON.parse(localStorage.getItem('amatTest')||'{}');TC.auto=!!o.auto;TC.metro=!!o.metro}catch(e){}
@@ -1267,7 +1326,7 @@ function showTest(){
   const eo=TC.off!==''&&isFinite(+TC.off)?+TC.off:(c&&c.offset)||0,warn=[];
   if(ok&&A&&I.sec+eo>A.duration+.5)warn.push(`譜面の終わり(${fmtT(I.sec)})が曲の長さ(${fmtT(A.duration)})を超えています。オフセットや曲を確認してください`);
   let h='<div class="frame"></div><button class="bk" id="bk">↩</button><div style="height:34px"></div><div class="lab"><span>譜面テスト</span></div>'
-   +'<label class="drop" id="tdz"><b style="font-size:18px">📂 ファイルを選ぶ</b><br><span style="font-size:12px">楽曲(mp3/m4a/wav/ogg)と譜面JSONを<br>まとめて選択 / ここにドロップ</span><div id="tbusy" style="font-size:12px;min-height:1.2em"></div><input type="file" id="tfi" class="fin" multiple></label>'
+   +'<label class="drop" id="tdz"><b style="font-size:18px">'+IC('fold','d')+'ファイルを選ぶ</b><br><span style="font-size:12px">楽曲(mp3/m4a/wav/ogg)と譜面JSONを<br>まとめて選択 / ここにドロップ</span><div id="tbusy" style="font-size:12px;min-height:1.2em"></div><input type="file" id="tfi" class="fin" multiple></label>'
    +(tMsg.length?'<div class="tbox" style="background:#ffe0e0;color:#c00">'+tMsg.map(m=>`<div>⚠ ${esc(m)}</div>`).join('')+'</div>':'')
    +'<div class="tbox">'+(ok
       ?`<div><b class="ok">✔ 譜面</b> ${esc(c.title||'(無題)')}</div><div class="sd">${c.lanes}レーン / BPM ${I.bpm} / 総ノーツ(最大コンボ) ${I.tot} / 約${fmtT(I.sec)}</div><div class="sd">譜面データ: ${Object.entries(I.cn).map(([k,v])=>(TNAME[k]||k)+' '+v).join(' / ')}${(()=>{const q=c.notes.filter(d=>d.crit||d.headCrit||d.tailCrit).length;return q?' (うちクリティカル指定 '+q+')':''})()}</div><div class="sd">判定 ${I.tot}: ${jbText(I.jb,0)}</div><div class="sd">★クリティカル判定 ${Object.values(I.jb).reduce((a,v)=>a+v[1],0)}: ${jbText(I.jb,1)}</div>`
@@ -1285,7 +1344,7 @@ function showTest(){
    +'<div class="sd" style="text-align:center">空欄=JSONの値。曲の何秒目が0拍目か(+で曲が遅れて始まる譜面)</div>'
    +`<div class="row" style="margin-top:6px"><button class="sm ${CFG.auto?'on':''}" id="tau">オート再生 ${CFG.auto?'ON':'OFF'}</button><button class="sm ${TC.metro?'on':''}" id="tme">メトロノーム ${TC.metro?'ON':'OFF'}</button><button class="sm" id="tcl">位置・オフセットをリセット</button></div></div>`
    +`<div class="row" style="margin:6px 0"><button class="px" id="tgo"${ok?'':' disabled'}>▶ テスト開始</button></div>`
-   +'<div class="row" style="margin-bottom:30px"><button class="sm" id="tse">⚙ 設定(ノーツ速度・タイミング)</button><button class="sm fsb" id="fs2">'+fsLabel()+'</button></div>'
+   +'<div class="row" style="margin-bottom:30px"><button class="sm" id="tse">'+IC('gear','d')+'設定(ノーツ速度・タイミング)</button><button class="sm fsb" id="fs2">'+fsLabel()+'</button></div>'
    ;
   ov.innerHTML=h;ov.scrollTop=0;
   $('bk').onclick=()=>{readTC();show(false)};
@@ -1387,6 +1446,54 @@ async function pingSave(){ // 送信先(Apps Script)への接続確認。シー�
   }catch(e){return '✗ 接続できません(URLが違う/デプロイされていない/オフライン): '+(e.message||e)}
 }
 let flushing=null;
+
+// ---- ユーザーデータの保存・引き継ぎ: ファイル(書き出し/読み込み)と、Apps Script経由のクラウド保存(引き継ぎコード=プレイヤーID)
+const UDK=['amatHS','amatClear','amatPrefs','amatPlayer','amatPrac'];
+function udExport(){const o={app:'amat-userdata',v:1,t:new Date().toISOString(),pid:PL.id,data:{}};for(const k of UDK){try{const v=localStorage.getItem(k);if(v!==null)o.data[k]=v}catch(e){}}return o}
+function udImport(o){ // ハイスコア・クリア状況は高い方を残し、設定とプレイヤーIDは保存データで置き換える
+  if(!o||o.app!=='amat-userdata'||!o.data||typeof o.data!=='object')throw Error('ユーザーデータのファイルではありません');
+  const jp=k=>{const v=o.data[k];if(typeof v!=='string'||v.length>400000)return null;try{const x=JSON.parse(v);return x&&typeof x==='object'?x:null}catch(e){return null}};
+  const mx=(a,b)=>{const r={...a};for(const k in b)if(typeof b[k]==='number'&&b[k]>(r[k]||0))r[k]=b[k];return r};
+  const hs=jp('amatHS'),cl=jp('amatClear'),pf=jp('amatPrefs'),pl=jp('amatPlayer'),pr=jp('amatPrac');
+  if(hs){HS=mx(HS,hs);localStorage.setItem('amatHS',JSON.stringify(HS))}
+  if(cl){CLR=mx(CLR,cl);localStorage.setItem('amatClear',JSON.stringify(CLR))}
+  if(pf)localStorage.setItem(PK,JSON.stringify(pf));
+  if(pr)localStorage.setItem('amatPrac',JSON.stringify(pr));
+  if(pl&&typeof pl.id==='string'&&pl.id.length>=8){PL.id=pl.id.slice(0,64);if(typeof pl.name==='string')PL.name=pl.name.slice(0,16);savePL()}
+}
+let udT=0,UDERR='';
+async function udCloudSave(){
+  const url=saveUrl();if(!url)throw Error('保存先(save.url)が未設定です');
+  const r=await fetch(url,{method:'POST',body:JSON.stringify({userdata:{pid:PL.id,json:JSON.stringify(udExport())}}),redirect:'follow'});
+  let j;try{j=await r.json()}catch(e){throw Error('応答が想定外です(Apps Scriptを最新版に更新して再デプロイしてください)')}
+  if(!j||!j.ok)throw Error((j&&j.error)||'保存できませんでした(Apps Scriptを最新版に更新してください)');
+  if(!j.userdata)throw Error('Apps Scriptが古いままです。最新の scores-apps-script.gs に貼り替えて「デプロイを管理 → 編集 → 新しいバージョン」で再デプロイしてください'); // 古い版は何も保存せず ok だけ返す
+  try{localStorage.setItem('amatUdT',String(Date.now()))}catch(e){}
+}
+async function udCloudLoad(code){
+  const url=saveUrl();if(!url)throw Error('保存先(save.url)が未設定です');
+  const r=await fetch(url+(url.includes('?')?'&':'?')+'userdata='+encodeURIComponent(code),{redirect:'follow'});
+  let j;try{j=await r.json()}catch(e){throw Error('応答が想定外です(Apps Scriptを最新版に更新して再デプロイしてください)')}
+  if(!j||!j.ok)throw Error((j&&j.error)||'見つかりませんでした');
+  if(typeof j.json!=='string')throw Error('Apps Scriptが古いままです(最新版に貼り替えて再デプロイしてください)');
+  udImport(JSON.parse(j.json));
+}
+let udTm=0;const udSoon=()=>{clearTimeout(udTm);if(saveUrl()&&CFG.sendScore)udTm=setTimeout(()=>udCloudSave().then(()=>{UDERR=''}).catch(e=>{UDERR=e.message}),4000)}; // プレイ後に自動でクラウドへ(失敗しても黙って続行)
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){} // ブラウザに端末内データを消されにくくする
+const usec=()=>{let t='';try{t=localStorage.getItem('amatUdT')||''}catch(e){}
+  return `<div class="lab" style="margin-top:18px"><span><b>ユーザーデータ</b></span></div>`
+  +`<p style="font-size:12px;margin:2px 0;max-width:440px;line-height:1.5">ハイスコア・クリア状況・設定・プレイヤー名をまとめて保存/復元します。<br>引き継ぎコード: <b id="ucode" style="font-size:11px;word-break:break-all;user-select:all">${esc(PL.id)}</b></p>`
+  +`<div class="row" style="margin-top:6px"><button class="sm" id="udF">ファイルに保存</button><button class="sm" id="udL">ファイルから読み込む</button><input type="file" id="udI" accept=".json,application/json" style="display:none"></div>`
+  +(saveUrl()?`<div class="row" style="margin-top:6px"><button class="sm" id="udC">クラウドに保存</button><button class="sm" id="udR">クラウドから復元</button></div><div class="wr"><input id="udK" type="text" placeholder="復元する引き継ぎコード(空欄なら自分のコード)" style="width:min(80vw,330px);font-size:13px"></div>`:'')
+  +`<p id="udst" style="font-size:13px;margin:4px 0;max-width:440px;line-height:1.5">${t?'クラウド保存: '+new Date(+t).toLocaleString():''}${UDERR?'<br>自動保存できていません: '+esc(UDERR):''}</p>`};
+function bindUd(){
+  const st=m=>{const o=$('udst');if(o)o.textContent=m};
+  if($('udF'))$('udF').onclick=()=>{saveBlob('amat-userdata_'+new Date().toISOString().slice(0,10)+'.json',new Blob([JSON.stringify(udExport())],{type:'application/json'}));st('保存しました')};
+  if($('udL'))$('udL').onclick=()=>$('udI').click();
+  if($('udI'))$('udI').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{if(f.size>1e6)throw Error('ファイルが大きすぎます');udImport(JSON.parse(await f.text()));st('読み込みました。再読み込みします…');setTimeout(()=>location.reload(),700)}catch(x){st('読み込めませんでした: '+x.message)}};
+  if($('udC'))$('udC').onclick=async()=>{st('保存中…');try{await udCloudSave();UDERR='';st('クラウドに保存しました')}catch(x){st('保存できませんでした: '+x.message)}};
+  if($('udR'))$('udR').onclick=async()=>{const k=($('udK').value||PL.id).trim();st('復元中…');try{await udCloudLoad(k);st('復元しました。再読み込みします…');setTimeout(()=>location.reload(),700)}catch(x){st('復元できませんでした: '+x.message)}};
+}
 function flushScores(){
   const url=saveUrl();
   if(flushing)return flushing;
@@ -1406,8 +1513,8 @@ function flushScores(){
   return flushing;
 }
 function scoreStatus(rec){ // リザルト画面の送信状況表示
-  const e=$('rsv');if(!e)return;e.textContent='📤 送信中…';
-  flushScores().then(()=>{const e2=$('rsv');if(e2&&ov.className==='result')e2.textContent=SQ.some(x=>x.uid===rec.uid)?'📤 送信待ち: '+(SENDERR||'通信できるときに自動で送ります'):'📤 スコアをシートに送信しました'});
+  const e=$('rsv');if(!e)return;e.textContent='送信中…';
+  flushScores().then(()=>{const e2=$('rsv');if(e2&&ov.className==='result')e2.textContent=SQ.some(x=>x.uid===rec.uid)?'送信待ち: '+(SENDERR||'通信できるときに自動で送ります'):'📤 スコアをシートに送信しました'});
 }
 // ===== 設定シート(2枚目)の読み込み =====
 // 列: key, value, value2(判定幅の「後」), memo。value が空の行は既定値のまま。同じキーが複数あれば下の行が優先。#で始まる行はコメント。
@@ -1681,7 +1788,7 @@ function renderUpd(){
   const ds=$('dsst');if(ds)ds.textContent=dataStatus();
   const e=$('upd');if(!e)return;
   let h='';
-  if(UPD.busy)h=`<span>⬇ ダウンロード中 ${esc(UPD.prog)}</span>`;
+  if(UPD.busy)h=`<span>ダウンロード中 ${esc(UPD.prog)}</span>`;
   else if(UPD.pending.length){
     const nn=UPD.pending.filter(q=>!STORE.some(r=>r.id===q.id)).length,nu=UPD.pending.length-nn;
     h=`<span>追加データがあります(${[nn?'新規'+nn+'曲':'',nu?'更新'+nu+'曲':''].filter(Boolean).join('・')})</span><button class="sm on" id="udl">ダウンロード</button>`;
@@ -1701,6 +1808,10 @@ function bindData(){
 }
 const saveSel=()=>{try{localStorage.setItem('amatSel',JSON.stringify({un:SS.un,id:SS.id,diff:SS.diff,sort:SS.sort,asc:SS.asc,tag:SS.tag}))}catch(e){}};
 const hsKey=(s,d)=>(s.custom?'custom:'+s.title:s.id)+'|'+d;
+let CLR={};try{CLR=JSON.parse(localStorage.getItem('amatClear')||'{}')}catch(e){}
+// クリア状況: 1=クリア 2=FC 3=ALL GREAT 4=AP(ハイスコアがある曲は少なくともクリア扱い)
+const clrLv=(s,d)=>Math.max(CLR[hsKey(s,d)]||0,HS[hsKey(s,d)]>0?1:0);
+const LAMP_N=['n','c','fc','ag','ap'],LAMP_T=['未プレイ','クリア','FULL COMBO','ALL GREAT','ALL PERFECT'];
 const allSongs=()=>custom?[{id:'custom',custom:true,title:custom.title||'(無題)',bpm:custom.bpm||custom.tempo[0].bpm,designer:'カスタム譜面',hue:[190,250],lv:{hard:0}},...SONGS]:SONGS;
 function pickDiff(s,d){ // 曲にその難易度が無ければ一番近い難易度にする
   const av=DIFFS.map(x=>x[0]).filter(k=>s.lv[k]!==undefined);
@@ -1798,9 +1909,10 @@ function chartStats(c){
   const by={},bpms=new Set((c.tempo||[{bpm:c.bpm}]).map(x=>x.bpm));
   for(const d of c.notes){const o=by[d.type]||(by[d.type]={n:0,c:0});if(d.crit)o.c++;else o.n++}
   const ns=compile(c),combo=countJudge(ns),len=Math.max(0,end-3),bins=[],B=2;
+  for(const n of ns){if(!n.pts||n.type==='guide')continue;n.ticks.forEach((_,i)=>{const k=n.tsfx[i]?'relay':'tick',o=by[k]||(by[k]={n:0,c:0});if(n.crit)o.c++;else o.n++})} // 中継点と、帯の途中の判定
   for(const n of ns){if(n.type==='guide'||n.type==='damage')continue;const i=Math.max(0,Math.floor(n.t/B));bins[i]=(bins[i]||0)+1}
   const nb=Math.max(1,Math.ceil(len/B)),dens=Array.from({length:nb},(_,i)=>(bins[i]||0)/B);
-  return {by,bpms:[...bpms],combo,len,dens,lanes:c.lanes,soflan:!!((c.scroll&&c.scroll.length>1)||(c.layers&&Object.keys(c.layers).length)),total:c.notes.length};
+  return {by,bpms:[...bpms],combo,len,dens,lanes:c.lanes,soflan:!!((c.scroll&&c.scroll.length>1)||(c.layers&&Object.keys(c.layers).length)),total:c.notes.filter(d=>d.type!=='guide').length};
 }
 
 // 譜面一覧: ゲーム本編と同じ見た目で、小節を下→上に積み列を左→右に並べる。ピンチ/ホイール/ドラッグで拡大縮小・移動できる(枠の大きさは固定)
@@ -1902,12 +2014,18 @@ function scoreView(cv,c,per){
   cv.onpointerup=cv.onpointercancel=e=>{P.delete(e.pointerId)};
   cv.onwheel=e=>{e.preventDefault();const [sx,sy]=rel(e);zoomAt(sx,sy,V.z*Math.exp(-e.deltaY*.0015));redraw()};
   redraw();
-  const save=name=>new Promise(res=>{ // 譜全体を1枚のPNGにして保存(大きすぎるときは縮小)
-    const z=Math.min(2,14000/M.W,14000/M.H,Math.sqrt(60e6/(M.W*M.H))),o=document.createElement('canvas');
-    o.width=Math.ceil(M.W*z);o.height=Math.ceil(M.H*z);
-    scoreDraw(M,o.getContext('2d'),o.width,o.height,1,{z,x:0,y:0});
-    o.toBlob(b=>{if(!b)return res(false);const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);res(true)},'image/png');
-  });
+  const save=async name=>{ // 譜全体を1枚のPNGにして保存。端末が作れない大きさなら自動で小さくして作り直す
+    let z=Math.min(2,14000/M.W,14000/M.H,Math.sqrt(16e6/(M.W*M.H))); // iPhoneなどの上限(約1677万ピクセル)に収める
+    for(let k=0;k<4;k++,z*=.7){
+      try{
+        const o=document.createElement('canvas');o.width=Math.max(1,Math.ceil(M.W*z));o.height=Math.max(1,Math.ceil(M.H*z));
+        scoreDraw(M,o.getContext('2d'),o.width,o.height,1,{z,x:0,y:0});
+        const b=await new Promise(r=>o.toBlob(r,'image/png'));
+        if(b&&b.size>1000){saveBlob(name,b);return true}
+      }catch(e){}
+    }
+    return false;
+  };
   return {save,fit:()=>{V.z=fitZ;V.x=0;V.y=0;redraw()},zoom:f=>{zoomAt(vw/2,vh/2,V.z*f);redraw()}};
 }
 function showArchive(){
@@ -1932,9 +2050,9 @@ function showArchive(){
       let ticks='';for(let t=0;t<=st.len+.01;t+=10){const x=Math.min(W-1,t/2*bw);ticks+=`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="0" y2="${H+3}" stroke="#9aa6d8" stroke-width="1" stroke-dasharray="2 3"/><text x="${Math.max(14,Math.min(W-14,x)).toFixed(1)}" y="${H+15}" font-size="11" text-anchor="middle" fill="#557">${mm(t)}</text>`}
       const rows=[['難易度 / 定数',`${DNAME[AR.diff]} / ${s.lv[AR.diff]}`],['BPM',st.bpms.join(' → ')],['レーン数',st.lanes],['長さ',mm(st.len)],['総コンボ(判定数)',st.combo],['ノーツ定義数',st.total],['ソフラン',st.soflan?'あり':'なし'],['最大密度',mx.toFixed(1)+' 個/秒'],['平均密度',(st.combo/Math.max(1,st.len)).toFixed(2)+' 個/秒']];
       h+='<table style="width:100%;border-collapse:collapse;font-size:15px">'+rows.map(r=>`<tr><td style="padding:3px 8px;border-bottom:1px solid #ccd;color:#557">${r[0]}</td><td style="padding:3px 8px;border-bottom:1px solid #ccd;text-align:right;font-weight:700">${esc(r[1])}</td></tr>`).join('')+'</table>'
-        +'<div style="margin:12px 0 4px;font-size:13px;color:#557">種類別ノーツ数</div><table style="width:100%;border-collapse:collapse;font-size:15px;text-align:right"><tr style="color:#557;font-size:13px"><th style="text-align:left;padding:3px 8px">種類</th><th>通常</th><th>クリティカル</th><th>計</th></tr>'+['tap','flick','trace','long','slide','guide','damage'].filter(k=>st.by[k]).map(k=>{const o=st.by[k];return `<tr><td style="text-align:left;padding:3px 8px;border-top:1px solid #ccd">${TNAME[k]}</td><td style="border-top:1px solid #ccd">${o.n}</td><td style="border-top:1px solid #ccd">${o.c}</td><td style="border-top:1px solid #ccd;font-weight:700;padding-right:8px">${o.n+o.c}</td></tr>`}).join('')+'</table>'
+        +'<div style="margin:12px 0 4px;font-size:13px;color:#557">種類別ノーツ数</div><table style="width:100%;border-collapse:collapse;font-size:15px;text-align:right"><tr style="color:#557;font-size:13px"><th style="text-align:left;padding:3px 8px">種類</th><th>通常</th><th>クリティカル</th><th>計</th></tr>'+['tap','flick','trace','long','slide','relay','tick','damage'].filter(k=>st.by[k]).map(k=>{const o=st.by[k];return `<tr><td style="text-align:left;padding:3px 8px;border-top:1px solid #ccd">${k==='relay'?'中継点':k==='tick'?'中間判定':TNAME[k]}</td><td style="border-top:1px solid #ccd">${o.n}</td><td style="border-top:1px solid #ccd">${o.c}</td><td style="border-top:1px solid #ccd;font-weight:700;padding-right:8px">${o.n+o.c}</td></tr>`}).join('')+'</table>'
         +`<div style="margin:10px 0 2px;font-size:13px;color:#557">ノーツ密度(2秒ごと)</div><svg viewBox="0 0 ${W} ${H+18}" style="width:100%;height:98px;background:#eef2ff;border-radius:6px">${bars}${ticks}</svg>`
-        +'<div class="row" style="margin-top:10px"><button class="sm" id="arJ">JSONを'+(AR.json?'隠す':'見る')+'</button><button class="sm" id="arC">JSONをコピー</button></div>'
+        +'<div class="row" style="margin-top:10px"><button class="sm" id="arJ">JSONを'+(AR.json?'隠す':'見る')+'</button><button class="sm" id="arC">JSONをコピー</button><button class="sm" id="arD">JSONをダウンロード</button></div>'
         +(AR.json?`<pre style="text-align:left;max-height:260px;overflow:auto;background:#fff;border:1px solid #ccd;padding:8px;font-size:12px;white-space:pre-wrap;word-break:break-all">${esc(JSON.stringify(c).slice(0,20000))}${JSON.stringify(c).length>20000?'\n…(長いので先頭のみ表示。全体はコピーで)':''}</pre>`:'');
     }
     h+='</div>';
@@ -1947,6 +2065,7 @@ function showArchive(){
   if($('arS'))$('arS').onchange=e=>{AR.id=e.target.value;AR.diff=null;showArchive()};
   ov.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{AR.diff=b.dataset.d;showArchive()});
   if($('arJ'))$('arJ').onclick=()=>{AR.json=!AR.json;const k=ov.scrollTop;showArchive();ov.scrollTop=k};
+  if($('arD'))$('arD').onclick=()=>{const t=JSON.stringify(s.data.charts[AR.diff],null,1);saveBlob((s.title+'_'+DNAME[AR.diff]).replace(/[\\/:*?"<>|\s]+/g,'_')+'.json',new Blob([t],{type:'application/json'}));$('arD').textContent='ダウンロードしました'};
   if($('arC'))$('arC').onclick=async()=>{const t=JSON.stringify(s.data.charts[AR.diff],null,1);try{await navigator.clipboard.writeText(t);$('arC').textContent='コピーしました'}catch(e){$('arC').textContent='コピーできませんでした'}};
 }
 
@@ -2007,8 +2126,9 @@ function ringInit(){ // 右パネルは1度だけ作って、選曲のたびに�
 function updateRing(s){
   const zr=$('zr'),dsel=s?pickDiff(s,SS.diff):SS.diff,lv=s?s.lv[dsel]:0;
   zr.style.setProperty('--dc',DCOL[dsel]);
-  const jk=$('zjk');jk.style.display=$('zar').style.display=s?'':'none';
+  const jk=$('zjk');jk.style.display=$('zar').style.display=s?'':'none';jk.style.cursor='pointer';jk.onclick=()=>$('zst').click(); // ジャケットをタップしてもStart
   if(s){const [h0,h1]=s.hue;jk.style.background=`linear-gradient(135deg,hsl(${h0} 85% 68%),hsl(${h1} 85% 74%))`;jk.innerHTML=s.jacket?`<img class="jimg" src="${s.jacket}" alt="" draggable="false" style="object-position:${50+(s.jx||0)}% ${50+(s.jy||0)}%;transform:scale(${s.jz||1})">`:`<i>♪</i><span>${esc(s.title)}</span>`}
+  jk.insertAdjacentHTML('beforeend','<div class="lamps">'+DIFFS.map(([k,nm])=>{const L=!hasChart(s,k)?'x':LAMP_N[clrLv(s,k)];return `<i class="lp lp-${L}" title="${nm}: ${L==='x'?'未実装':LAMP_T[clrLv(s,k)]}"></i>`}).join('')+'</div>');
   let rot=-90-DANG[dsel];
   if(ringRot!==null)rot+=360*Math.round((ringRot-rot)/360); // 近い方向へ回す
   ringRot=rot;
@@ -2058,13 +2178,13 @@ function showSelect(){
   ov.innerHTML='<div id="zs">'
    +'<label class="zck" style="left:6px;top:14px"><input type="checkbox" id="zun"><span>未実装<br>非表示</span></label>'
    +'<input id="zq" placeholder="楽曲を検索します🔎" style="left:124px;top:16px;width:346px;height:30px">'
-   +'<button class="tb" id="zsb" style="left:484px;width:44px;background:#8c8c98">🔍</button>'
+   +'<button class="tb ib" id="zsb" style="left:484px;width:46px;background:linear-gradient(#b4b4c0,#8c8c98)">🔍</button>'
    +'<button class="tb" id="zlv" style="left:551px;width:85px;background:#b9f5a4;color:#14166e"></button>'
    +'<button class="tb" id="zall" style="left:648px;width:82px;background:#ff9fe8"></button>'
-   +'<button class="tb" id="zhm" style="left:743px;width:44px;background:#3ad63a">⌂</button>'
-   +'<button class="tb" id="zsn" style="left:800px;width:45px;background:#9a9aa4">🔊</button>'
-   +'<button class="tb" id="zge" style="left:858px;width:46px;background:#8a8a96">⚙</button>'
-   +'<button class="tb" id="zar" style="left:690px;top:62px;width:214px;height:28px;background:#7a8cff;font-size:14px">譜面データを見る</button>'
+   +'<button class="tb ib" id="zhm" aria-label="ホーム" style="left:743px;width:46px;background:linear-gradient(#69e8a0,#2fbf6e)">'+IC('home')+'</button>'
+   +'<button class="tb ib" id="zsn" aria-label="効果音" style="left:800px;width:46px;background:linear-gradient(#ffd56a,#ff9e3d)">'+IC('spk')+'</button>'
+   +'<button class="tb ib" id="zge" aria-label="設定" style="left:858px;width:46px;background:linear-gradient(#b6c0d0,#8590a6)">'+IC('gear')+'</button>'
+   +'<button class="tb" id="zar" style="left:690px;top:68px;width:214px;height:28px;background:#7a8cff;font-size:14px">譜面データを見る</button>'
    +'<div id="zm" class="a"></div><div id="zf" class="a"></div>'
    +'<div id="zl" class="a" style="left:0;top:0;width:620px;height:690px"></div>'
    +'<div id="zk" class="a" style="left:598px;top:68px;width:40px;height:610px"><i class="trk"></i><i class="knb" id="zkn"></i></div>'
@@ -2140,7 +2260,7 @@ function showSelect(){
   zk.addEventListener('pointerup',()=>{zk.onpointermove=null});
   ringInit();fitSel();refreshVis();renderSel();
 }
-{const b=document.createElement('button');b.id='tshow';b.textContent='🎨 調整パネル';b.onclick=()=>{$('tp').style.display='block';b.style.display='none'};document.body.append(b)}
+{const b=document.createElement('button');b.id='tshow';b.textContent='調整パネル';b.onclick=()=>{$('tp').style.display='block';b.style.display='none'};document.body.append(b)}
 show(false);
 loadSE();
 addEventListener('online',()=>flushScores());document.addEventListener('visibilitychange',()=>{if(!document.hidden)flushScores()});setTimeout(flushScores,4000);
