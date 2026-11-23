@@ -265,6 +265,14 @@ button{font:inherit;cursor:pointer}
 .btrk{flex:none;width:34px;height:34px;border-radius:50%;background:#18e818;border:3px solid #f8b8ff;box-sizing:border-box;color:#fff;font:italic 700 19px Georgia;display:flex;align-items:center;justify-content:center}
 .btpt{background:#b0ffff;border-radius:14px;margin:8px 0;padding:6px 8px;font:500 30px Georgia,serif;color:#09f;text-align:right}.btpt small{font-size:15px}
 .btjd{background:#c8c8c8;border-radius:14px;padding:6px 12px;font:15px/1.4 Georgia,serif;text-align:left}.btjd div{display:flex;justify-content:space-between}.btmc{font:700 11px system-ui;margin-top:6px}
+
+.btw{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:560px;transform-origin:center center}
+#ov.btrlbg .btw{position:static;transform:none;width:100%}
+.gl.dfc{color:#222;text-shadow:none;border:2px solid #666;opacity:.55;padding:6px 10px;font-size:14px;white-space:nowrap}
+.gl.dfc.on{opacity:1;border:4px solid #fff;box-shadow:0 0 0 3px #f2d200,0 0 12px #fff}
+#btdf{flex-wrap:nowrap;max-width:none;gap:8px}
+.gl.dfc::before{height:28%;background:rgba(255,255,255,.3)}
+.btsides{width:100%}
 </style></head><body>
 <canvas id="c"></canvas>
 <div id="ov"></div><button id="rt" class="pb">リトライ</button><button id="hm" class="pb">選曲へ</button>
@@ -1235,12 +1243,23 @@ const btName=()=>(PL.name||'').trim()||('P'+(PL.id||'0000').slice(-4));
 const btJk=(sg,sz)=>`<div class="btjk" style="width:${sz}px;height:${sz}px">${sg&&sg.jacket?`<img src="${sg.jacket}" alt="" draggable="false" style="object-position:${50+(sg.jx||0)}% ${50+(sg.jy||0)}%;transform:scale(${sg.jz||1})">`:`<div style="width:100%;height:100%;background:linear-gradient(135deg,hsl(${sg?sg.hue[0]:200} 85% 68%),hsl(${sg?sg.hue[1]:300} 85% 74%))"></div>`}</div>`;
 function btScr(html,back,cls){
   playUI(false);$('sk1').style.display=$('sk2').style.display='none';
+  if(cls!=='room'){PV.keep=false;if(PV.id)pvStop(true)} // 対戦ルーム以外では試聴を止める
   ov.style.display='flex';ov.className='set btv '+(cls||'');
   ov.innerHTML='<div class="frame"></div>'+(back?'<button class="bk" id="bk">'+IC('back')+'</button>':'')+'<div class="btw">'+html+'</div>';
   if(back)$('bk').onclick=back;
+  btFit();
 }
+function btFit(){ // 画面の大きさに合わせて、できるだけ大きく表示する
+  const w=ov.querySelector('.btw');if(!w||ov.classList.contains('btrlbg'))return;
+  w.style.transform='translate(-50%,-50%)';
+  const nw=w.offsetWidth,nh=w.offsetHeight,vw=ov.clientWidth||innerWidth,vh=ov.clientHeight||innerHeight;
+  if(!nw||!nh)return;
+  const k=Math.max(.4,Math.min(vw*.9/nw,vh*.86/nh,2.8));
+  w.style.transform=`translate(-50%,-50%) scale(${k})`;
+}
+addEventListener('resize',()=>{if(BT)btFit()});
 function btLeave(){
-  const b=BT;BT=null;run=false;try{stopAudio()}catch(e){}playUI(false);pvStop&&pvStop(true);
+  PV.keep=false;const b=BT;BT=null;run=false;try{stopAudio()}catch(e){}playUI(false);pvStop&&pvStop(true);
   if(b){try{const url=saveUrl();fetch(url+(url.includes('?')?'&':'?')+'battle='+encodeURIComponent(JSON.stringify({room:b.room,pid:PL.id,leave:1})),{redirect:'follow',keepalive:true}).catch(()=>{})}catch(e){}}
   if(b&&b.prevDiff)SS.diff=b.prevDiff;
   show(false);
@@ -1271,7 +1290,7 @@ async function btJoin(room){
 async function btLoop(){
   const b=BT;
   while(BT===b&&b.alive){
-    await Promise.race([sleep(b.play?900:700),new Promise(r=>{b.wake=r})]);b.wake=null;
+    await Promise.race([sleep(b.play?300:600),new Promise(r=>{b.wake=r})]);b.wake=null;
     if(BT!==b)break;
     try{await btSync()}catch(e){
       if(BT!==b)break;b.fail++;
@@ -1296,7 +1315,7 @@ async function btSync(){
     b.out={...out,...b.out};throw Error((j&&j.error)||'エラー');
   }
   if(BT!==b)return;
-  b.off=j.now-(t0+t1)/2;b.st=j;b.fail=0;btOnState();
+  const rtt=t1-t0;b.rtt=(b.rtt||1e9)*1.02;if(rtt<=b.rtt){b.rtt=rtt;b.off=j.now-(t0+t1)/2}else if(b.off===0)b.off=j.now-(t0+t1)/2;b.st=j;b.fail=0;btOnState();
 }
 const btNowS=()=>Date.now()+(BT?BT.off:0); // サーバー時刻
 function btOnState(){
@@ -1344,10 +1363,10 @@ const btCard=(p,lab,host)=>`<div class="btpc">${host?'<i>親</i>':'<div style="h
 // --- 親の対戦設定 ---
 function btCfgScr(){
   const d=BT.draft;
-  btScr(`<div class="bth">対戦設定</div><div class="btlab">難易度</div><div class="btch" id="btdf">${DIFFS.map(x=>`<button class="gl ${d.diff===x[0]?'cy':'off'}" data-v="${x[0]}">${x[1]}</button>`).join('')}</div>
+  btScr(`<div class="bth">対戦設定</div><div class="btlab">難易度</div><div class="btch" id="btdf">${DIFFS.map(x=>`<button class="gl dfc${d.diff===x[0]?' on':''}" data-v="${x[0]}" style="background:${DCOL[x[0]]}">${x[1]}</button>`).join('')}</div>
   <div class="btlab">曲の選び方</div><div class="btch" id="btmd"><button class="gl ${d.mode==='select'?'or':'off'}" data-v="select">選曲</button><button class="gl ${d.mode==='random'?'or':'off'}" data-v="random">ランダム</button></div>
   <button class="gl gr btbig" id="btok">決定</button><div class="btmsg" id="btmsg"></div>`,btLeave);
-  $('btdf').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;d.diff=b.dataset.v;$('btdf').querySelectorAll('button').forEach(x=>x.className='gl '+(x.dataset.v===d.diff?'cy':'off'))};
+  $('btdf').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;d.diff=b.dataset.v;$('btdf').querySelectorAll('button').forEach(x=>x.className='gl dfc'+(x.dataset.v===d.diff?' on':''))};
   $('btmd').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;d.mode=b.dataset.v;$('btmd').querySelectorAll('button').forEach(x=>x.className='gl '+(x.dataset.v===d.mode?'or':'off'))};
   $('btok').onclick=()=>{
     const cfg={diff:d.diff,mode:d.mode};
@@ -1377,16 +1396,28 @@ function btRoulette(cfg){
   const tx=-(tgi*(W+G)+W/2)+vw/2;strip.style.transform='translateX(0)';
   requestAnimationFrame(()=>requestAnimationFrame(()=>{strip.style.transition='transform 4s cubic-bezier(.12,.6,.1,1)';strip.style.transform=`translateX(${tx}px)`}));
   const rb=BT;
-  setTimeout(()=>{if(BT!==rb)return;const t=$('btrlt');if(t)t.textContent=(tg?tg.title:'')+' に決定!';const it=strip.querySelector(`[data-i="${tgi}"]`);if(it)it.classList.add('hit');uiSE('ok')},4100);
+  // カラカラ音: ジャケットが中央を通るたびに鳴らす(減速に合わせて間隔が伸びる)
+  {const bz=(x1,y1,x2,y2)=>x=>{let lo=0,hi=1;for(let i=0;i<30;i++){const t=(lo+hi)/2,X=3*(1-t)*(1-t)*t*x1+3*(1-t)*t*t*x2+t*t*t;X<x?lo=t:hi=t}const t=(lo+hi)/2;return 3*(1-t)*(1-t)*t*y1+3*(1-t)*t*t*y2+t*t*t};
+   const ease=bz(.12,.6,.1,1),total=-tx;let prev=Math.floor((vw/2)/(W+G));
+   for(let ms=0;ms<=4000;ms+=16){const idx=Math.floor((ease(ms/4000)*total+vw/2)/(W+G));if(idx!==prev){prev=idx;setTimeout(()=>{if(BT===rb&&BT.scr==='roulette')btTick()},ms+60)}}}
+  setTimeout(()=>{if(BT!==rb)return;const t=$('btrlt');if(t)t.textContent=(tg?tg.title:'')+' に決定!';const it=strip.querySelector(`[data-i="${tgi}"]`);if(it)it.classList.add('hit');uiSE('ok');
+    if(tg&&tg.store){PV.keep=true;pvStop(true);PV.id=tg.id;pvPlay(tg,PV.gen)}},4100);
   setTimeout(()=>{if(BT!==rb)return;BT.rlBusy=false;if(BT.isHost){BT.out.top={phase:'room',cfg};BT.out.reset=1;btPush()}},5300);
+}
+function btTick(){ // カラカラ抽選の1音
+  try{const c=getCtx();if(c.state==='suspended')c.resume();const t=c.currentTime,o=c.createOscillator(),g=c.createGain(),f=c.createBiquadFilter();
+    o.type='square';o.frequency.value=1500+Math.random()*500;f.type='bandpass';f.frequency.value=2200;f.Q.value=2;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime((CFG.seVol/100)*.35,t+.002);g.gain.exponentialRampToValueAtTime(.001,t+.045);
+    o.connect(f);f.connect(g);g.connect(c.destination);o.start(t);o.stop(t+.06)}catch(e){}
 }
 // --- 対戦ルーム ---
 function btRoom(me,opp,cfg){
   const sg=SONGS.find(s=>s.id===cfg.song);
+  if(sg&&sg.store&&PV.id!==sg.id){PV.keep=true;pvStop(true);PV.id=sg.id;pvPlay(sg,PV.gen)} // 決まった曲の試聴
   btScr(`<div class="btsong">${btJk(sg,110)}<div><div class="btsn">${esc(sg?sg.title:'(曲が見つかりません)')}</div><span class="bdg">${esc(DNAME[cfg.diff]||cfg.diff||'')}</span></div></div>
   <button class="gl cy" id="btset" style="padding:7px 26px;font-size:15px">ゲーム設定(速度・判定調整など)</button>
   <div class="btcards">${btCard(me,'あなた',BT.isHost)}<div class="btvs">VS</div>${opp?btCard(opp,'相手',!BT.isHost):'<div class="btpc"><b>相手が退出しました</b></div>'}</div>
-  <div class="btrow"><button class="gl ${me.ready?'or':'gr'} btbig" id="btrd">${me.ready?'準備完了を取り消す':'準備完了'}</button><button class="gl ${CFG.btPts?'cy':'off'}" id="btpt">対戦中のポイント表示 ${CFG.btPts?'ON':'OFF'}</button></div>`,btLeave);
+  <div class="btrow"><button class="gl ${me.ready?'or':'gr'} btbig" id="btrd">${me.ready?'準備完了を取り消す':'準備完了'}</button><button class="gl ${CFG.btPts?'cy':'off'}" id="btpt">対戦中のポイント表示 ${CFG.btPts?'ON':'OFF'}</button></div>`,btLeave,'room');
   $('btset').onclick=()=>{BT.inSet=true;setBack=()=>{BT.inSet=false;BT.sig='';BT.scr='';btOnState()};showSet()};
   $('btrd').onclick=async()=>{const sg2=SONGS.find(s=>s.id===cfg.song);if(!me.ready&&sg2&&sg2.store){const b=$('btrd');b.textContent='曲を読み込み中…';try{await prepSong(sg2)}catch(e){b.textContent='曲を読み込めません';return}}BT.out.me={ready:me.ready?0:1};btPush()};
   $('btpt').onclick=()=>{CFG.btPts=!CFG.btPts;savePrefs();BT.sig='';btOnState()};
@@ -1402,14 +1433,14 @@ function btSetBar(){
 }
 // --- 開始 ---
 function btCountdown(cfg,startAt){
-  const rb=BT;
+  const rb=BT;PV.keep=false;pvStop(true);
   btScr('<div class="bth">対戦開始まで</div><div class="btcd" id="btcd">3</div>',null);
   const iv=setInterval(()=>{
     if(BT!==rb){clearInterval(iv);return}
     const ms=startAt-btNowS(),e=$('btcd');
     if(e)e.textContent=ms>0?Math.ceil(ms/1000):'GO!';
     if(ms<=0){clearInterval(iv);btBegin(cfg)}
-  },80);
+  },20);
 }
 async function btBegin(cfg){
   if(!BT)return;const rb=BT;
@@ -1432,6 +1463,9 @@ function btRenderResult(){
   const me=BT.myRes,o=BT.cur||BT.opp,gone=!BT.cur;
   const oRes=o&&o.fin&&o.res?o.res:null,done=!!oRes||(gone&&!(BT.opp&&BT.opp.fin));
   const g=JSON.stringify([me,o&&[o.n,o.fin,o.pt,o.res],gone]);if(BT.sig===g&&$('btres'))return;BT.sig=g;
+  if(!done){ // 両方が終わるまで結果は出さず、同時に表示する
+    ov.innerHTML=`<div class="frame"></div><button class="bk" id="bk">${IC('back')}</button><div class="btw" id="btres"><div class="btwin">プレイ終了!</div><div class="btmsg" style="font-size:16px">相手の終了を待っています…</div><div class="btcards"><div class="btpc"><b>あなた</b><span class="btpt" style="margin:0">${me.pt} <small>pt</small></span></div><div class="btvs">VS</div><div class="btpc"><b>${esc((o&&o.n)||'相手')}</b><span class="btpt" style="margin:0">${o?o.pt:0} <small>pt</small></span></div></div></div>`;
+    $('bk').onclick=btLeave;btFit();return}
   const col={perfect:'#8aa8ff',great:'#6a2cff',good:'#ff5a10',bad:'#1aa81a',miss:'#10105a'};
   const side=(name,r,pt,win,live)=>`<div class="btside${win?' win':''}">${win?'<div class="crown">WIN</div>':''}<div class="bthd"><b>${esc(name)}</b>${r?`<span class="btrk">${r.rk}</span>`:''}</div>
    <div class="btpt">${r?r.pt:pt} <small>pt</small></div>
@@ -1446,7 +1480,7 @@ function btRenderResult(){
    <div class="btsong2">${btJk(sg,38)}<b>${esc(me.ti)}</b><span class="bdg">${esc(DNAME[me.d]||me.d)}</span></div>
    <div class="btsides">${side('あなた',me,me.pt,win===1,'')}${side(o&&o.n||(BT.opp&&BT.opp.n)||'相手',oRes,o?o.pt:0,win===-1,gone?'切断しました':'プレイ中… (現在 '+(o?o.pt:0)+' pt)')}</div>
    <div class="btrow"><button class="gl gr" id="btag" ${done?'':'disabled style="opacity:.5"'}>もう一度(→対戦ルーム)</button><button class="gl pi" id="btex">タイトルへ</button></div></div>`;
-  $('bk').onclick=btLeave;$('btex').onclick=btLeave;
+  $('bk').onclick=btLeave;$('btex').onclick=btLeave;btFit();
   $('btag').onclick=()=>{if(!done)return;BT.out.top={phase:'room'};BT.out.reset=1;BT.scr='';BT.sig='';btPush()};
 }
 // --- プレイ中のポイント表示(判定線の少し上の左右) ---
@@ -2251,7 +2285,7 @@ function pvSchedule(force){
   PV.tm=setTimeout(()=>pvPlay(s,gen),350); // 曲を素早く送っている間は鳴らさない
 }
 addEventListener('pointerdown',()=>{if(PV.wait){PV.wait=false;if(ov.className==='sel')pvSchedule(true)}},true);
-setInterval(()=>{if(PV.id&&(ov.className!=='sel'||ov.style.display==='none'||document.hidden))pvStop()},400);
+setInterval(()=>{if(PV.id&&((ov.className!=='sel'&&!PV.keep)||ov.style.display==='none'||document.hidden))pvStop()},400);
 
 // ---- 譜面データ: ダウンロード済みの曲・難易度ごとに譜面データの中身を見る
 const AR={id:null,diff:null,json:false,view:'data',per:4};
