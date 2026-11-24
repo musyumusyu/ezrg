@@ -9,7 +9,7 @@ const SHELL = [
   './index.html',
   './version.js',
   './manifest.webmanifest',
-  './fonts/amat-sans-400.woff',
+  './fonts/amat-sans-300.woff',
   './fonts/amat-sans-700.woff',
   './fonts/amat-serif.woff',
   './fonts/amat-mono.woff',
