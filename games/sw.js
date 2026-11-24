@@ -9,6 +9,10 @@ const SHELL = [
   './index.html',
   './version.js',
   './manifest.webmanifest',
+  './fonts/amat-sans-400.woff',
+  './fonts/amat-sans-700.woff',
+  './fonts/amat-serif.woff',
+  './fonts/amat-mono.woff',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/maskable-512.png',
@@ -46,6 +50,12 @@ self.addEventListener('fetch', e => {
         return r;
       }).catch(() => caches.match(req, { ignoreSearch: true }).then(r => r || caches.match('./index.html')).then(r => r || caches.match('./')))
     );
+    return;
+  }
+
+  // フォント(変わらない大きなファイル): キャッシュ優先、無ければ取得して保存(裏での再取得はしない)
+  if (url.pathname.includes('/fonts/')) {
+    e.respondWith(caches.match(req).then(hit => hit || fetch(req).then(r => { if (r && r.ok) { const copy = r.clone(); caches.open(CACHE).then(c => c.put(req, copy)); } return r; })));
     return;
   }
 
