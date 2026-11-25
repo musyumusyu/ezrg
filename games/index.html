@@ -849,7 +849,7 @@ function visList(t,Y,h,ph,scr){ // 画面の近くにあるノーツだけを数
 const SIM={src:null,g:[]},FP={n:0,t0:0,v:0,last:0};
 const comboGrad=(k,y0,y1)=>{const q=g.createLinearGradient(0,y0,0,y1),c=k==='ap'?['#8fd2ff','#9fa8ff','#b88cf2']:['#f070c0','#f08aa0','#f2a070'];q.addColorStop(0,c[0]);q.addColorStop(.5,c[1]);q.addColorStop(1,c[2]);return q};
 function draw(){
-  const w=cv.clientWidth,h=cv.clientHeight,jy=h*CFG.judgeY,GM=geom(w),lw=GM.lp,ox=GM.ox,rp=GM.rp,lw0=w/L,t=T(),IN=GM.IN,PX=GM.PX,BX=GM.BX,ph=Math.max(10,Math.min(rp*ST.nh,70)),LC=[ST.lc0,ST.lc1,ST.lc2,ST.lc3];
+  const w=cv.clientWidth,h=cv.clientHeight,jy=h*CFG.judgeY,GM=geom(w),lw=GM.lp,ox=GM.ox,rp=GM.rp,lw0=w/L,K=w/400,t=T(),IN=GM.IN,PX=GM.PX,BX=GM.BX,ph=Math.max(10,Math.min(rp*ST.nh,70)),LC=[ST.lc0,ST.lc1,ST.lc2,ST.lc3];
   const scr=CFG.scroll*(PRAC&&PRAC.keep&&cur?PR:1); // 練習で「落下速度を変えない」のとき、曲の速度に合わせて見える範囲を伸縮
   const sn=new Map(),Y=(n,x)=>{const k=n.sc;if(!sn.has(k))sn.set(k,spos(k,t));return jy-(spos(k,x)-sn.get(k))/scr*jy};
   g.fillStyle=ST.bg;g.fillRect(0,0,w,h);
@@ -927,20 +927,20 @@ function draw(){
   }
   g.textAlign='center';
   const cy=h*.6,age=t-lastT;
-  if(age<.7&&last){const k=Math.max(0,1-age/.25),sz=ST.jt*.5+ST.jt*.5*k;g.font=`${sz}px AmatSans,system-ui`;g.fillStyle='#fff';g.fillText(last.replace(' ★',''),w/2,cy);
+  if(age<.7&&last){const k=Math.max(0,1-age/.25),sz=ST.jt*K*(.5+.5*k);g.font=`${sz}px AmatSans,system-ui`;g.fillStyle='#fff';g.fillText(last.replace(' ★',''),w/2,cy);
     if(CFG.flDisp&&lastFL){ // perfect以外: 判定名の上に fast/late(リザルトと同じ色・書体。暗い背景でも読めるよう白フチ付き)
-      g.save();g.font=`${Math.max(16,sz*.42)}px AmatSerif,Georgia,serif`;g.lineJoin='round';g.lineWidth=4;g.strokeStyle='#fff';g.fillStyle=lastFL==='late'?'red':'#2255ff';
+      g.save();g.font=`${Math.max(16*K,sz*.42)}px AmatSerif,Georgia,serif`;g.lineJoin='round';g.lineWidth=4*K;g.strokeStyle='#fff';g.fillStyle=lastFL==='late'?'red':'#2255ff';
       g.strokeText(lastFL,w/2,cy-sz*.95);g.fillText(lastFL,w/2,cy-sz*.95);g.restore()}}
-  const ls=Math.max(14,lw0*.11),ns=Math.max(28,lw0*ST.cs);
+  const ls=Math.max(14*K,lw0*.11),ns=Math.max(28*K,lw0*ST.cs);
   g.font=`${ls}px AmatSerif,Georgia,serif`;g.fillStyle=ST.cl;g.fillText('COMBO',w/2,cy+ls*1.8);
   const fx=CFG.comboFx&&!pv&&brk===0?(nonP===0?'ap':'fc'):null,by=cy+ls*1.8+ns*.95; // AP継続=青紫 / フルコン継続=ピンク〜オレンジ
   g.font=`${ns}px AmatSerif,Georgia,serif`;g.fillStyle=fx?comboGrad(fx,by-ns*.75,by):ST.cn;g.fillText(combo,w/2,by);g.fillStyle=ST.cn;
-  if(CFG.showScore){g.font='14px AmatSans,system-ui';g.fillText('SCORE '+(CFG.scoreMode==='sub'?Math.max(0,Math.round(1e6-lostS+bonusNow())):Math.floor(score)),w/2,22)}
+  if(CFG.showScore){g.font=`${14*K}px AmatSans,system-ui`;g.fillText('SCORE '+(CFG.scoreMode==='sub'?Math.max(0,Math.round(1e6-lostS+bonusNow())):Math.floor(score)),w/2,22*K)}
   if(BT&&BT.play&&CFG.btPts)btHud(w,h);
   if(CFG.fps){g.font='12px AmatSans,system-ui';g.textAlign='left';g.fillStyle='#fff';g.fillText(FP.v+' fps / '+Math.round(FP.ms||0)+' ms',6,h-8);g.textAlign='center'}
   if(t>end-2){ // 終了演出: ALL PERFECT / FULL COMBO / Live Clear
     const fc=brk===0,ap=fc&&nonP===0,yy=h*.45;g.globalAlpha=Math.min(1,(t-(end-2))/.5);
-    g.font=`${ap||fc?'italic 800 ':''}${Math.min(w*(ap||fc?.1:.14),ap||fc?64:90)}px AmatSans,system-ui`;
+    g.font=`${ap||fc?'italic 800 ':''}${Math.min(w*(ap||fc?.1:.14),(ap||fc?64:90)*K)}px AmatSans,system-ui`;
     g.fillStyle=ap||fc?comboGrad(ap?'ap':'fc',yy-50,yy+6):'#fff';g.fillText(ap?'ALL PERFECT':fc?'FULL COMBO':'Live Clear',w/2,yy);g.globalAlpha=1}
 }
 const seekBtn=(id,txt,dt,side)=>{const b=document.createElement('button');b.id=id;b.textContent=txt;b.style.cssText=`position:fixed;top:50%;${side}:max(6px,env(safe-area-inset-${side}));transform:translateY(-50%);width:58px;height:58px;border-radius:50%;border:2px solid #fff;background:rgba(40,80,160,.55);color:#fff;font:700 15px AmatSans,system-ui;z-index:6;display:none;touch-action:manipulation`;
@@ -1593,7 +1593,7 @@ function btRenderResult(){
 }
 // --- プレイ中のポイント表示(判定線の少し上の左右) ---
 function btHud(w,h){
-  const o=btOpp(),hide=btCfg().hide,jy=h*CFG.judgeY,bw=Math.min(132,w*.22),bh=bw*.8,y=jy-bh-14;
+  const o=btOpp(),hide=btCfg().hide,jy=h*CFG.judgeY,bw=w*.22,bh=bw*.8,y=jy-bh-14*(w/400);
   const gone=!o,oc=o?o.combo:0,hidden=o&&BT.total&&oc>BT.total*hide;
   const box=(x,col,name,cb,pt)=>{
     g.save();g.fillStyle='rgba(0,0,0,.55)';g.strokeStyle=col;g.lineWidth=2;g.beginPath();(g.roundRect||g.rect).call(g,x,y,bw,bh,10);g.fill();g.stroke();
