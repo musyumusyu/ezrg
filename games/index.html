@@ -893,6 +893,7 @@ function draw(){
   g.restore();
   { // 縁どり(左半分=いちばん左のレーンの縁の色 / 右半分=いちばん右のレーンの縁の色)
     const cl=LC[0],cr=LC[(L-1)%4];g.save();g.lineWidth=ST.bw;
+    g.beginPath();g.rect(-9,-99,w+18,h+198);for(let i=0;i<L;i++){const x0=ox+i*lw+IN;g.rect(x0-ST.bw/2,-99,lw-2*IN+ST.bw,h+198)}g.clip('evenodd'); // レーンの上には枠を重ねない(レーンの無い部分だけ)
     for(const q of PNL){const gr=g.createLinearGradient(q[0],0,q[0]+q[2],0);gr.addColorStop(0,cl);gr.addColorStop(.5,cl);gr.addColorStop(.5,cr);gr.addColorStop(1,cr);g.strokeStyle=gr;g.beginPath();pnPath([q]);g.stroke()}
     g.restore()}
   g.strokeStyle='rgba(255,255,255,.14)';g.lineWidth=1;
