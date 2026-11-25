@@ -2331,8 +2331,8 @@ function songInfo(s,d){ // 総ノーツ数・演奏時間
 }
 const toRoman=n=>{const m=[[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];let r='';for(const [v,t] of m)while(n>=v){r+=t;n-=v}return r};
 const isUlt=d=>d==='ultimate'; // アルティメイトのレベルはローマ数字で表示(シートの値は普通の数字でOK。小数部分は表示しない)
-const lvInt=(v,d)=>v?(isUlt(d)&&v>=1&&v<4000?toRoman(Math.floor(v)):Math.floor(v)):'-',lvDec=(v,d)=>v&&!isUlt(d)?v.toFixed(1):'';
-const lvTxt=(v,d)=>{const t=lvInt(v,d),n=String(t).length,k=n<=2?1:n===3?.8:n===4?.66:.52; // ローマ数字は長いとき縮小して円に収める
+const lvInt=(v,d)=>v?(isUlt(d)&&v>=1&&v<4000?toRoman(Math.floor(v)):(v>=10&&!isUlt(d)&&v-Math.floor(v)>=.5-1e-9?Math.floor(v)+'+':Math.floor(v))):'-',lvDec=(v,d)=>v&&!isUlt(d)?v.toFixed(1):'';
+const lvTxt=(v,d)=>{const t=lvInt(v,d),n=String(t).length,k=/\+$/.test(t)?.82:n<=2?1:n===3?.8:n===4?.66:.52; // ローマ数字は長いとき縮小して円に収める
   return k<1?`<span style="display:inline-block;transform:scale(${k});white-space:nowrap">${t}</span>`:t};
 const hasChart=(s,d)=>s.custom||(s.impl!==false&&s.lv[d]>0); // その難易度の譜面があるか(譜面定数0=実装待ちは無し扱い)
 function sortCmp(a,b){
