@@ -849,10 +849,17 @@ function visList(t,Y,h,ph,scr){ // 画面の近くにあるノーツだけを数
 const SIM={src:null,g:[]},FP={n:0,t0:0,v:0,last:0};
 const comboGrad=(k,y0,y1)=>{const q=g.createLinearGradient(0,y0,0,y1),c=k==='ap'?['#8fd2ff','#9fa8ff','#b88cf2']:['#f070c0','#f08aa0','#f2a070'];q.addColorStop(0,c[0]);q.addColorStop(.5,c[1]);q.addColorStop(1,c[2]);return q};
 function draw(){
-  const w=cv.clientWidth,h=cv.clientHeight,jy=h*CFG.judgeY,GM=geom(w),lw=GM.lp,ox=GM.ox,rp=GM.rp,lw0=w/L,K=w/400,t=T(),IN=GM.IN,PX=GM.PX,BX=GM.BX,ph=Math.max(10,Math.min(rp*ST.nh,70)),LC=[ST.lc0,ST.lc1,ST.lc2,ST.lc3];
+  const w=cv.clientWidth,h=cv.clientHeight,jy=h*CFG.judgeY,GM=geom(w),lw=GM.lp,ox=GM.ox,rp=GM.rp,lw0=w/L,K=Math.min(w/400,h/640),t=T(),IN=GM.IN,PX=GM.PX,BX=GM.BX,ph=Math.max(10,Math.min(rp*ST.nh,70)),LC=[ST.lc0,ST.lc1,ST.lc2,ST.lc3];
   const scr=CFG.scroll*(PRAC&&PRAC.keep&&cur?PR:1); // 練習で「落下速度を変えない」のとき、曲の速度に合わせて見える範囲を伸縮
   const sn=new Map(),Y=(n,x)=>{const k=n.sc;if(!sn.has(k))sn.set(k,spos(k,t));return jy-(spos(k,x)-sn.get(k))/scr*jy};
   g.fillStyle=ST.bg;g.fillRect(0,0,w,h);
+  { // コンボ・判定・スコアの文字の裏: レーンと同じグレーを敷いて、レーン間の黒に埋もれないようにする(ふちはぼかす)
+    const cy0=h*.6,ls0=Math.max(14*K,lw0*.11),ns0=Math.max(28*K,lw0*ST.cs),jt0=ST.jt*K;
+    const top=cy0-jt0*(CFG.flDisp?1.5:1.05),bot=cy0+ls0*1.8+ns0*.95+ns0*.22,pw=Math.min(w*.94,Math.max(jt0*4.2,ns0*3.2)),r=16*K;
+    g.save();g.fillStyle=ST.lane;g.shadowColor=ST.lane;g.shadowBlur=18*K;
+    g.beginPath();(g.roundRect||g.rect).call(g,(w-pw)/2,top,pw,bot-top,r);g.fill();
+    if(CFG.showScore){const sw=Math.min(w*.8,270*K);g.beginPath();(g.roundRect||g.rect).call(g,(w-sw)/2,-r,sw,r+34*K,r);g.fill()}
+    g.restore()}
   for(let i=0;i<L;i++){
     const x0=ox+i*lw+IN,bw=lw-2*IN;g.fillStyle=ST.lane;g.fillRect(x0,0,bw,h);
     if(held[i]>0){g.fillStyle='rgba(255,255,255,.16)';g.fillRect(x0,0,bw,h)}
