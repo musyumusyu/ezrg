@@ -309,6 +309,7 @@ const CFG={
   se:true,simul:true,showScore:true,keys:false,sendScore:true, // 設定画面で切替(sendScore=スコアをシートへ送信)
   mirror:false,auto:false,constSpeed:false,comboFx:true,flDisp:true,lite:false,fps:false,fpsCap:120,uiSe:true,scoreMode:'add',btPts:true, // ミラー譜面 / オート / 等速(ソフランなし) / AP・FC継続中のコンボ演出
   scoreCfg:null,         // スコア配分(開発者のみ反映。SCD参照)
+  relFlick:true, // 押している指を離すだけでフリックを取る
   bgmVol:100,autoVol:true, // 曲の音量(0-100) / 楽曲ごとの音量を自動で揃える
   seVol:80,seCfg:null // ノーツSE: 全体音量(0-100) / 種別ごとの {tone,vol,name}
 };
@@ -333,7 +334,7 @@ function normSE(){ // 壊れた値・未知の音色は既定(埋め込みがあ
   CFG.seVol=Number.isFinite(CFG.seVol)?Math.min(100,Math.max(0,Math.round(CFG.seVol))):80;
 }
 const PK='amatPrefs';
-function savePrefs(){try{localStorage.setItem(PK,JSON.stringify({scroll:CFG.scroll,offset:CFG.offset,se:CFG.se,simul:CFG.simul,showScore:CFG.showScore,keys:CFG.keys,wins:CFG.wins,seVol:CFG.seVol,bgmVol:CFG.bgmVol,autoVol:CFG.autoVol,seCfg:CFG.seCfg,seSig:CFG.seSig,mirror:CFG.mirror,auto:CFG.auto,sendScore:CFG.sendScore,constSpeed:CFG.constSpeed,comboFx:CFG.comboFx,flDisp:CFG.flDisp,lite:CFG.lite,fps:CFG.fps,fpsCap:CFG.fpsCap,uiSe:CFG.uiSe,scoreMode:CFG.scoreMode,btPts:CFG.btPts,scoreCfg:CFG.scoreCfg}))}catch(e){}}
+function savePrefs(){try{localStorage.setItem(PK,JSON.stringify({scroll:CFG.scroll,offset:CFG.offset,se:CFG.se,simul:CFG.simul,showScore:CFG.showScore,keys:CFG.keys,wins:CFG.wins,seVol:CFG.seVol,bgmVol:CFG.bgmVol,autoVol:CFG.autoVol,relFlick:CFG.relFlick,seCfg:CFG.seCfg,seSig:CFG.seSig,mirror:CFG.mirror,auto:CFG.auto,sendScore:CFG.sendScore,constSpeed:CFG.constSpeed,comboFx:CFG.comboFx,flDisp:CFG.flDisp,lite:CFG.lite,fps:CFG.fps,fpsCap:CFG.fpsCap,uiSe:CFG.uiSe,scoreMode:CFG.scoreMode,btPts:CFG.btPts,scoreCfg:CFG.scoreCfg}))}catch(e){}}
 try{Object.assign(CFG,JSON.parse(localStorage.getItem(PK)||'{}'))}catch(e){}
 normSE();
 function normWins(){ // 既定値に設定シートの値を重ねる(壊れた値は既定に戻す)
@@ -826,7 +827,8 @@ cv.addEventListener('pointermove',e=>{
   const p=pp.get(e.pointerId);
   if(p&&Math.hypot(e.clientX-p[0],e.clientY-p[1])>=3){pp.set(e.pointerId,[e.clientX,e.clientY]);scrub(l,e.pointerId)}
 });
-['pointerup','pointercancel'].forEach(k=>cv.addEventListener(k,e=>{if(run)relPend(e.pointerId);pp.delete(e.pointerId);setP(e.pointerId)}));
+['pointerup','pointercancel'].forEach(k=>cv.addEventListener(k,e=>{if(run){relPend(e.pointerId);if(k==='pointerup'&&CFG.relFlick&&!autoRun&&ptr.has(e.pointerId))scrub(ptr.get(e.pointerId),e.pointerId)} // 指を離すだけでもフリックが取れる(設定でON/OFF)
+  pp.delete(e.pointerId);setP(e.pointerId)}));
 
 // ===== 描画（元ゲーム風）=====
 const $=id=>document.getElementById(id);
@@ -1021,7 +1023,7 @@ const SETS=[
   {n:'曲の音量',st:[10,5,1],get:()=>CFG.bgmVol,set:v=>CFG.bgmVol=Math.round(v),min:0,max:100,def:100},
   {n:'SEの音量(全体)',st:[10,5,1],get:()=>CFG.seVol,set:v=>CFG.seVol=Math.round(v),min:0,max:100,def:80}
 ];
-const TOGS=[['楽曲ごとの音量を自動調整','autoVol'],['ミラー譜面','mirror'],['スコア表示','showScore'],['等速','constSpeed'],['オート','auto'],['コンボ演出','comboFx'],['FAST/LATE表示','flDisp'],['軽量描画(解像度を下げる)','lite'],['FPS表示','fps'],['操作音','uiSe'],['SE','se'],['同時押しライン','simul'],['キー表示','keys'],['スコア送信','sendScore']];
+const TOGS=[['楽曲ごとの音量を自動調整','autoVol'],['フリックを指離しで判定','relFlick'],['ミラー譜面','mirror'],['スコア表示','showScore'],['等速','constSpeed'],['オート','auto'],['コンボ演出','comboFx'],['FAST/LATE表示','flDisp'],['軽量描画(解像度を下げる)','lite'],['FPS表示','fps'],['操作音','uiSe'],['SE','se'],['同時押しライン','simul'],['キー表示','keys'],['スコア送信','sendScore']];
 const rnd=v=>+(+v).toFixed(2);
 function showSet(){
   const keep=ov.className==='set'?ov.scrollTop:0;
