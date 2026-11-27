@@ -1,7 +1,7 @@
 {
-  "name": "音ゲー プロトタイプ",
-  "short_name": "音ゲー",
-  "description": "ブラウザで遊べる音ゲー",
+  "name": "AmateLus",
+  "short_name": "AmateLus",
+  "description": "AmateLus - ブラウザで遊べるリズムゲーム",
   "lang": "ja",
   "start_url": "./",
   "scope": "./",
