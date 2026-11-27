@@ -37,7 +37,7 @@ button{font:inherit;cursor:pointer}
 .logo{position:relative;width:min(100%,640px);height:min(38vw,250px);margin:0 0 6px}
 .bw{position:absolute;inset:0;filter:drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff)}
 .blade{position:absolute;inset:0;background:linear-gradient(160deg,#6ab7ff,#7fd0e8 45%,#ff7dff);clip-path:polygon(0 94%,17% 36%,27% 22%,24% 56%,100% 0,24% 100%)}
-.logo b{position:absolute;left:15%;top:50%;font:italic 700 min(9.4vw,58px)/1 AmatSans,system-ui;letter-spacing:1px;filter:drop-shadow(1.5px 1.5px 0 #1b1f8a);transform:rotate(-22.5deg);background:linear-gradient(#f4ffa0,#6aff9a);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.logo b{position:absolute;left:12%;top:46%;font-size:min(12.2vw,76px);line-height:1;filter:drop-shadow(1.5px 1.5px 0 #1b1f8a);transform:rotate(-22.5deg);background:linear-gradient(#f4ffa0,#6aff9a);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .logo i{position:absolute;left:41%;top:37%;font:italic 700 min(4.2vw,26px) AmatSans,system-ui;transform:rotate(-22.5deg);color:#b8ff90}
 .sub{font-weight:700;font-size:19px;color:#000;display:flex;align-items:center;gap:8px}
 .sub::before,.sub::after{content:'';width:46px;height:2px;background:linear-gradient(90deg,transparent,#000)}.sub::after{transform:scaleX(-1)}
@@ -275,7 +275,7 @@ button{font:inherit;cursor:pointer}
 .btjd{background:#c8c8c8;border-radius:14px;padding:6px 12px;font:15px/1.4 AmatSerif,Georgia,serif;text-align:left}.btjd div{display:flex;justify-content:space-between}.btmc{font:700 11px AmatSans,system-ui;margin-top:6px}
 
 .ttw{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:560px;display:flex;flex-direction:column;align-items:center;gap:12px;transform-origin:center center}
-.ttw .logo{width:560px;height:230px}.ttw .logo b{font-size:58px}.ttw .logo i{font-size:26px}
+.ttw .logo{width:560px;height:230px}.ttw .logo b{font-size:76px}.ttw .logo i{font-size:26px}
 .btnet{position:absolute;right:12px;top:10px;font-size:12px;padding:3px 10px;border-radius:99px;background:rgba(0,0,0,.5);color:#ffd37a;z-index:5;pointer-events:none}.btnet.on{color:#7dff9a}
 .btw{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:560px;transform-origin:center center}
 #ov.btrlbg .btw{position:static;transform:none;width:100%}
@@ -1046,7 +1046,7 @@ function show(fin){
   const sel=custom
     ?`<p style="font-size:17px">譜面: ${esc(custom.title||'(無題)')} / ${custom.lanes}レーン / BPM ${custom.bpm||custom.tempo[0].bpm}</p><button class="sm" id="demo">デモ譜面に戻す</button>`
     :'';
-  ov.innerHTML='<div class="frame"></div>'+DECO+'<div class="ttw"><div class="logo"><div class="bw"><div class="blade"></div></div><b>AmateLus</b></div><div class="sub">簡単!?リズムゲーム</div><div id="upd" class="upd"></div><button class="px" id="go">PLAY</button><button class="px btb" id="btl">BATTLE</button><button class="sm on" id="tst" style="font-size:16px;padding:8px 22px">🛠 譜面テスト</button>'+sel
+  ov.innerHTML='<div class="frame"></div>'+DECO+'<div class="ttw"><div class="logo"><div class="bw"><div class="blade"></div></div><b>天照</b><i>AmateLus</i></div><div class="sub">簡単!?リズムゲーム</div><div id="upd" class="upd"></div><button class="px" id="go">PLAY</button><button class="px btb" id="btl">BATTLE</button><button class="sm on" id="tst" style="font-size:16px;padding:8px 22px">🛠 譜面テスト</button>'+sel
     +'<button class="sm" id="hist" style="margin-top:6px">過去のリザルト</button><div class="row"><button class="sm" id="set">設定</button><button class="sm fsb" id="fs">'+fsLabel()+'</button>'+(DEV?'<button class="sm" id="tune">見た目調整</button>':'')+'</div>'
     +(audioName?`<p style="font-size:16px">曲: ${esc(audioName)}</p>`:'')
     +(msg?`<p style="color:var(--dm);font-weight:700">${esc(msg)}</p>`:'')+'</div><div class="ver">ver.'+(self.APP_VERSION||'proto')+(DEV?' [DEV]':'')+'</div>';
