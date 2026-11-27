@@ -124,7 +124,7 @@ button{font:inherit;cursor:pointer}
 #tshow{position:fixed;top:calc(6px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);display:none;z-index:9;padding:3px 12px;border-radius:99px;border:0;background:#fff;color:#14166e;font-size:13px}
 /* ノーツSE設定 */
 .rg{width:min(56vw,230px);accent-color:#18b0e8}
-.ctl select{max-width:min(60vw,250px);padding:7px 6px;border:2px solid #000;border-radius:6px;background:#fff;color:#14166e;font-size:15px}
+.ctl select{max-width:min(60vw,250px);padding:8px 10px;border:2px solid #fff;border-radius:12px;background:linear-gradient(#fff,#dcecff);color:#14166e;font-size:15px;font-weight:700;box-shadow:0 2px 0 rgba(0,0,0,.2)}
 .sec{width:min(92vw,440px);background:rgba(255,255,255,.38);border-radius:18px;padding:4px 10px 10px;margin:6px 0}
 .sec .ctl{margin-top:6px}.ctl .val.sv{min-width:44px;font-size:16px;padding:5px 4px}
 /* 選曲画面: 920x690 の固定ステージを画面に合わせて拡縮 */
@@ -1734,33 +1734,36 @@ function showSE(from){ // from: 'set'=設定画面から / それ以外=選曲�
   ov.style.display='flex';ov.className='set';
   const back=()=>from==='set'?showSet():setBack();
   const rer=()=>{const k=ov.scrollTop;showSE(from);ov.scrollTop=k};
+  const tgb=(n,id,on)=>`<div class="tgi"><div class="lab"><span><b>${n}</b></span></div><div class="rdg"><button class="rdb ${on?'sel':''}" data-tg="${id}" data-v="1">on<i></i></button><button class="rdb ${on?'':'sel'}" data-tg="${id}" data-v="0"><i></i>off</button></div></div>`;
+  const stp=(n,id,v)=>`<div class="lab"><span><b>${n}</b></span></div><div class="ctl">`+[-10,-5,-1].map(d=>`<button data-sid="${id}" data-d="${d}">${d}</button>`).join('')+`<span class="val" id="sv_${id}">${v}</span>`+[1,5,10].map(d=>`<button data-sid="${id}" data-d="${d}">+${d}</button>`).join('')+`<button data-sid="${id}" data-r="1" style="color:#c0206a">RESET</button></div>`;
   let h='<div class="frame"></div><button class="bk" id="bk">'+IC("back")+'</button><div style="height:40px"></div>'
    +(seMsg?`<p style="color:#d00;font-weight:700;max-width:420px">${esc(seMsg)}</p>`:'')
-   +`<div class="lab"><span>ノーツSE</span></div><button class="tg" id="seon">${CFG.se?'☑ ON':'☐ OFF'}</button>`
-   +`<div class="lab"><span>曲の音量</span></div><div class="ctl"><input type="range" class="rg" id="bgv" min="0" max="100" step="1" value="${CFG.bgmVol}"><span class="val sv" id="bgvv">${CFG.bgmVol}</span></div>`
-   +`<div class="lab"><span>操作音</span></div><button class="tg" id="uiseon">${CFG.uiSe?'☑ ON':'☐ OFF'}</button>`
-   +`<div class="lab"><span>SEの音量(全体)</span></div><div class="ctl"><input type="range" class="rg" id="sev" min="0" max="100" step="1" value="${CFG.seVol}"><span class="val sv" id="sevv">${CFG.seVol}</span></div>`;
+   +'<div class="tgrid" style="margin-top:12px">'+tgb('ノーツSE','se',CFG.se)+tgb('操作音','ui',CFG.uiSe)+'</div>'
+   +stp('曲の音量','bgm',CFG.bgmVol)+stp('SEの音量(全体)','sev',CFG.seVol);
   for(const [k,n] of SEK){
     const c=CFG.seCfg[k],has=DEV&&!!SEBUF[k],em=!!SEEMB[k],tone=c.tone==='custom'&&!has?seDef(k):c.tone==='embed'&&!em?'beep':c.tone;
     const opts=SETONE.map(([v,l])=>`<option value="${v}"${tone===v?' selected':''}>${l}</option>`).join('')
       +(em?`<option value="embed"${tone==='embed'?' selected':''}>★ ${esc((SE_EMBED[k]&&SE_EMBED[k].name)||'内蔵音声')}</option>`:'')
       +(has?`<option value="custom"${tone==='custom'?' selected':''}>♪ ${esc(c.name||'読み込んだ音声')}</option>`:'');
-    h+=`<div class="sec"><div class="lab"><span>${n}</span></div>`
+    h+=`<div class="sec"><div class="lab"><span><b>${n}</b></span></div>`
      +`<div class="ctl"><select data-t="${k}">${opts}</select><button class="sm" data-p="${k}">▶ 試聴</button></div>`
-     +`<div class="ctl"><span style="font-size:14px">音量</span><input type="range" class="rg" data-v="${k}" min="0" max="100" step="1" value="${c.vol}"><span class="val sv" id="vv_${k}">${c.vol}</span></div>`
+     +stp('音量','k_'+k,c.vol)
      +(DEV?`<div class="ctl"><button class="sm" data-f="${k}">【開発者】音声ファイルを読み込む</button>${has?`<button class="sm" data-x="${k}">読込音声を削除</button>`:''}</div>`:'')+'</div>';
   }
   h+='<div class="row" style="margin:10px 0 30px"><button class="sm" id="serst">すべて初期値に戻す</button></div><input type="file" id="sef" accept="audio/*" hidden>'
    +(DEV?'<div class="row" style="margin:0 0 6px"><button class="sm on" id="seex">【開発者】埋め込み用に書き出し</button></div><textarea id="setx" rows="5" readonly style="width:min(88vw,420px);font-size:11px;margin-bottom:30px" placeholder="押すと const SE_EMBED=... が出力されます(コピーされます)。HTML内の const SE_EMBED={}; と差し替えてください"></textarea>':'');
   ov.innerHTML=h;
   $('bk').onclick=back;
-  $('seon').onclick=()=>{CFG.se=!CFG.se;savePrefs();rer()};
-  $('uiseon').onclick=()=>{CFG.uiSe=!CFG.uiSe;savePrefs();rer()};
-  $('bgv').oninput=e=>{CFG.bgmVol=+e.target.value;$('bgvv').textContent=CFG.bgmVol;savePrefs()};
-  $('sev').oninput=e=>{CFG.seVol=+e.target.value;$('sevv').textContent=CFG.seVol;savePrefs()};
-  $('sev').onchange=()=>seTest('tap');
   ov.querySelectorAll('[data-t]').forEach(el=>el.onchange=()=>{CFG.seCfg[el.dataset.t].tone=el.value;savePrefs();seTest(el.dataset.t)});
-  ov.querySelectorAll('[data-v]').forEach(el=>{el.oninput=()=>{CFG.seCfg[el.dataset.v].vol=+el.value;$('vv_'+el.dataset.v).textContent=el.value;savePrefs()};el.onchange=()=>seTest(el.dataset.v)});
+  ov.querySelectorAll('[data-tg]').forEach(b=>b.onclick=()=>{const on=b.dataset.v==='1';if(b.dataset.tg==='se')CFG.se=on;else CFG.uiSe=on;savePrefs();rer()});
+  ov.querySelectorAll('[data-sid]').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.sid,kk=id.startsWith('k_')?id.slice(2):'';
+    const get=()=>id==='bgm'?CFG.bgmVol:id==='sev'?CFG.seVol:CFG.seCfg[kk].vol,def=id==='bgm'?100:id==='sev'?80:100;
+    const v=Math.min(100,Math.max(0,b.dataset.r?def:get()+ +b.dataset.d));
+    if(id==='bgm')CFG.bgmVol=v;else if(id==='sev')CFG.seVol=v;else CFG.seCfg[kk].vol=v;
+    $('sv_'+id).textContent=v;savePrefs();
+    if(id!=='bgm')seTest(kk||'tap');
+  });
   ov.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>seTest(b.dataset.p));
   const fi=$('sef');let fk='';
   ov.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{fk=b.dataset.f;fi.click()});
@@ -2352,7 +2355,7 @@ async function playGate(next){
   if(gateBusy)return;gateBusy=true;
   try{
     if(navigator.onLine!==false&&dataUrl()&&!UPD.busy&&Date.now()-UPD.checked>20000){
-      const b=$('go');const t0=b&&b.textContent;if(b){b.textContent='確認中…';b.disabled=true}
+      const b=$('go');const t0=b&&b.textContent;if(b){b.textContent='読み込み中…';b.disabled=true}
       await Promise.race([checkUpdates(false),new Promise(r=>setTimeout(r,5000))]);
       if(b&&b.isConnected){b.textContent=t0;b.disabled=false}
     }
