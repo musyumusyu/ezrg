@@ -98,6 +98,7 @@ button{font:inherit;cursor:pointer}
 .rdb.sel i{background:#7ee8ff;border:5px solid #fff;box-shadow:0 0 0 1px #8adfee}
 /* ダウンロードデータ */
 .upd{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;font-size:15px;font-weight:700;color:#fff;text-shadow:0 1px 3px #0008}
+.dlg{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:20px}.dlc{background:#fff;color:#223;border-radius:22px;padding:22px 26px;text-align:center;max-width:340px;width:100%;box-shadow:0 8px 30px #0006}.dlc b{font-size:19px}.dlc p{margin:8px 0;font-size:15px;line-height:1.5}.dlc .row{margin-top:12px}
 .upd:empty{display:none}.upd .ue{width:100%;font-size:12px;color:#ffd6d6}
 #ov.set input[type=text]{user-select:text;-webkit-user-select:text}
 /* 設定: 速度確認(右側の1レーン) / 音に合わせた調整 */
@@ -336,6 +337,7 @@ function normSE(){ // 壊れた値・未知の音色は既定(埋め込みがあ
 const PK='amatPrefs';
 function savePrefs(){try{localStorage.setItem(PK,JSON.stringify({scroll:CFG.scroll,offset:CFG.offset,se:CFG.se,simul:CFG.simul,showScore:CFG.showScore,keys:CFG.keys,wins:CFG.wins,seVol:CFG.seVol,bgmVol:CFG.bgmVol,autoVol:CFG.autoVol,relFlick:CFG.relFlick,seCfg:CFG.seCfg,seSig:CFG.seSig,mirror:CFG.mirror,auto:CFG.auto,sendScore:CFG.sendScore,constSpeed:CFG.constSpeed,comboFx:CFG.comboFx,flDisp:CFG.flDisp,lite:CFG.lite,fps:CFG.fps,fpsCap:CFG.fpsCap,uiSe:CFG.uiSe,scoreMode:CFG.scoreMode,btPts:CFG.btPts,scoreCfg:CFG.scoreCfg}))}catch(e){}}
 try{Object.assign(CFG,JSON.parse(localStorage.getItem(PK)||'{}'))}catch(e){}
+if(!DEV){CFG.autoVol=true;CFG.sendScore=true;CFG.keys=false} // 開発者モード以外は固定(設定には出さない)
 normSE();
 function normWins(){ // 既定値に設定シートの値を重ねる(壊れた値は既定に戻す)
   const o={};
@@ -592,7 +594,7 @@ const b64=ab=>{const u=new Uint8Array(ab);let t='';for(let i=0;i<u.length;i+=819
 const unb64=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0)).buffer;
 async function loadSE(){
   for(const [k] of SEK){const e=SE_EMBED[k];if(!e||!e.data)continue;try{getCtx();SEEMB[k]=await ctx.decodeAudioData(unb64(e.data))}catch(x){}}
-  if(OLD_DEV_TOOLS)try{for(const [k] of SEK){const r=await idbGet(k);if(!r)continue;getCtx();try{SEBUF[k]=await ctx.decodeAudioData(r.data.slice(0));SERAW[k]={name:r.name||'',data:r.data};if(r.name)CFG.seCfg[k].name=r.name}catch(e){}}}catch(e){}
+  if(DEV)try{for(const [k] of SEK){const r=await idbGet(k);if(!r)continue;getCtx();try{SEBUF[k]=await ctx.decodeAudioData(r.data.slice(0));SERAW[k]={name:r.name||'',data:r.data};if(r.name)CFG.seCfg[k].name=r.name}catch(e){}}}catch(e){}
   {const ok=await syncSheetSE(false);applySheetSE(ok)} // 設定シートのSE(前回保存分)
   for(const k of CRITK){const c=CFG.seCfg[k]; // 専用の音声が無ければクリティカルの音声を共用
     if(c.tone==='custom'&&!SEBUF[k]&&SEBUF.crit){SEBUF[k]=SEBUF.crit;SERAW[k]=SERAW.crit}
@@ -1014,31 +1016,35 @@ function show(fin){
   renderUpd();ttFit();
   ov.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{L=+b.dataset.n;show(false)});
   const d=$('demo');if(d)d.onclick=()=>{custom=null;msg='';show(false)};
-  $('hist').onclick=showHist;$('set').onclick=()=>{setBack=()=>show(false);showSet()};if(DEV)$('tune').onclick=startTune;$('go').onclick=showSelect;$('btl').onclick=()=>showBtEntry();$('tst').onclick=showTest;$('fs').onclick=toggleFS;
+  $('hist').onclick=showHist;$('set').onclick=()=>{setBack=()=>show(false);showSet()};if(DEV)$('tune').onclick=startTune;$('go').onclick=()=>playGate(showSelect);$('btl').onclick=()=>showBtEntry();$('tst').onclick=showTest;$('fs').onclick=toggleFS;
   {let c=0,t0=0;ov.querySelector('.ver').onclick=()=>{const n=Date.now();c=n-t0<1500?c+1:1;t0=n;if(c>=7){c=0;try{localStorage.setItem('amatDev',DEV?'':'1')}catch(e){}location.reload()}}}
 }
 const SETS=[
   {n:'ノーツ速度',st:[1,.1,.01],get:()=>1.65/CFG.scroll,set:v=>CFG.scroll=1.65/v,min:.5,max:12,def:1.5},
   {n:'タイミング調整(ms)',st:[10,1,.1],get:()=>CFG.offset*1000,set:v=>CFG.offset=v/1000,min:-500,max:500,def:0},
-  {n:'曲の音量',st:[10,5,1],get:()=>CFG.bgmVol,set:v=>CFG.bgmVol=Math.round(v),min:0,max:100,def:100},
-  {n:'SEの音量(全体)',st:[10,5,1],get:()=>CFG.seVol,set:v=>CFG.seVol=Math.round(v),min:0,max:100,def:80}
+
 ];
-const TOGS=[['楽曲ごとの音量を自動調整','autoVol'],['フリックを指離しで判定','relFlick'],['ミラー譜面','mirror'],['スコア表示','showScore'],['等速','constSpeed'],['オート','auto'],['コンボ演出','comboFx'],['FAST/LATE表示','flDisp'],['軽量描画(解像度を下げる)','lite'],['FPS表示','fps'],['操作音','uiSe'],['SE','se'],['同時押しライン','simul'],['キー表示','keys'],['スコア送信','sendScore']];
+// 設定画面の並び: ノーツ速度 / タイミング調整 / スコア表示 / スコア表示方式 / オート / 等速 / 同時押しライン / ミラー / コンボ演出 / FAST・LATE / フリック指離し / フレームレート / 軽量描画 / FPS表示 / ノーツSE / プレイヤー名 / ユーザーデータ
+const TOGS=[['スコア表示','showScore'],['@sm'],['オート','auto'],['等速','constSpeed'],['同時押しライン','simul'],['ミラー譜面','mirror'],['コンボ演出','comboFx'],['FAST/LATE表示','flDisp'],['フリックを指離しで判定','relFlick'],['@fc'],['軽量描画(解像度を下げる)','lite'],['FPS表示','fps']];
+const DEVTOGS=[['楽曲ごとの音量を自動調整','autoVol'],['スコア送信','sendScore'],['キー表示','keys']]; // 開発者モードのときだけ出す
 const rnd=v=>+(+v).toFixed(2);
 function showSet(){
   const keep=ov.className==='set'?ov.scrollTop:0;
   ov.style.display='flex';ov.className='set';
-  const tg0=TOGS.map(([n,k])=>`<div class="tgi"><div class="lab"><span><b>${n}</b></span></div><div class="rdg"><button class="rdb ${CFG[k]?'sel':''}" data-k="${k}" data-v="1">on<i></i></button><button class="rdb ${CFG[k]?'':'sel'}" data-k="${k}" data-v="0"><i></i>off</button></div></div>`).join('');
-  const tg=tg0+`<div class="tgi"><div class="lab"><span><b>スコア表示方式</b></span></div><div class="rdg"><button class="rdb ${CFG.scoreMode==='sub'?'':'sel'}" data-sm="add"><i></i>加算</button><button class="rdb ${CFG.scoreMode==='sub'?'sel':''}" data-sm="sub"><i></i>減算</button></div></div>`+`<div class="tgi"><div class="lab"><span><b>フレームレート</b></span></div><div class="rdg"><button class="rdb ${CFG.fpsCap===60?'sel':''}" data-fc="60">60fps<i></i></button><button class="rdb ${CFG.fpsCap===60?'':'sel'}" data-fc="120"><i></i>120fps</button></div></div>`;
+  const tgb=(n,k)=>`<div class="tgi"><div class="lab"><span><b>${n}</b></span></div><div class="rdg"><button class="rdb ${CFG[k]?'sel':''}" data-k="${k}" data-v="1">on<i></i></button><button class="rdb ${CFG[k]?'':'sel'}" data-k="${k}" data-v="0"><i></i>off</button></div></div>`;
+  const smb=`<div class="tgi"><div class="lab"><span><b>スコア表示方式</b></span></div><div class="rdg"><button class="rdb ${CFG.scoreMode==='sub'?'':'sel'}" data-sm="add"><i></i>加算</button><button class="rdb ${CFG.scoreMode==='sub'?'sel':''}" data-sm="sub"><i></i>減算</button></div></div>`;
+  const fcb=`<div class="tgi"><div class="lab"><span><b>フレームレート</b></span></div><div class="rdg"><button class="rdb ${CFG.fpsCap===60?'sel':''}" data-fc="60">60fps<i></i></button><button class="rdb ${CFG.fpsCap===60?'':'sel'}" data-fc="120"><i></i>120fps</button></div></div>`;
+  const tg=TOGS.map(([n,k])=>n==='@sm'?smb:n==='@fc'?fcb:tgb(n,k)).join('');
+  const dtg=DEV?`<div class="lab" style="margin-top:18px"><span><b>【開発者】</b></span></div><div class="tgrid" style="margin-top:6px">`+DEVTOGS.map(([n,k])=>tgb(n,k)).join('')+'</div>':'';
   const rows=SETS.map((s,i)=>`<div class="lab"><span><b>${s.n}</b></span></div><div class="ctl">`
     +[...s.st].map(v=>`<button data-i="${i}" data-d="${-v}">-${v}</button>`).join('')
     +`<span class="val">${rnd(s.get())}</span>`
     +[...s.st].reverse().map(v=>`<button data-i="${i}" data-d="${v}">+${v}</button>`).join('')
     +`<button data-i="${i}" data-r="1" style="color:#c0206a">RESET</button></div>`).join('');
-  ov.innerHTML='<div class="frame"></div><button class="bk" id="bk">'+IC("back")+'</button><div class="spw" id="spw"><div class="spc">速度確認</div><canvas id="spv"></canvas></div><div class="tgrid">'+tg+'</div>'+rows+'<div class="row" style="margin-top:12px"><button class="sm on" id="calb" style="font-size:16px;padding:8px 22px">音に合わせてタイミング調整 →</button></div><div class="row" style="margin-top:16px"><button class="sm on" id="seb" style="font-size:16px;padding:8px 22px">ノーツSEの詳細設定 →</button></div>'+psec()+usec()+dsec()+(OLD_DEV_TOOLS?'<div class="row" style="margin-top:12px"><button class="sm on" id="wj" style="font-size:16px;padding:8px 22px">判定幅の設定(ms) →【開発者】</button></div><div class="row" style="margin-top:12px;margin-bottom:30px"><button class="sm on" id="scj" style="font-size:16px;padding:8px 22px">スコア配分の設定 →【開発者】</button></div>':'<div style="height:30px"></div>');
+  ov.innerHTML='<div class="frame"></div><button class="bk" id="bk">'+IC("back")+'</button><div class="spw" id="spw"><div class="spc">速度確認</div><canvas id="spv"></canvas></div>'+rows+'<div class="row" style="margin-top:12px"><button class="sm on" id="calb" style="font-size:16px;padding:8px 22px">音に合わせてタイミング調整 →</button></div><div class="tgrid" style="margin-top:18px">'+tg+'</div><div class="row" style="margin-top:16px"><button class="sm on" id="seb" style="font-size:16px;padding:8px 22px">ノーツSE・音量の設定 →</button></div>'+psec()+usec()+dtg+(DEV?dsec():'')+(OLD_DEV_TOOLS?'<div class="row" style="margin-top:12px"><button class="sm on" id="wj" style="font-size:16px;padding:8px 22px">判定幅の設定(ms) →【開発者】</button></div><div class="row" style="margin-top:12px;margin-bottom:30px"><button class="sm on" id="scj" style="font-size:16px;padding:8px 22px">スコア配分の設定 →【開発者】</button></div>':'<div style="height:30px"></div>');
   ov.scrollTop=keep;
   $('bk').onclick=()=>setBack();$('seb').onclick=()=>showSE('set');$('calb').onclick=showCal;spvStart();if(OLD_DEV_TOOLS){$('wj').onclick=showWin;$('scj').onclick=showScoreCfg}
-  bindData();
+  if(DEV)bindData();
   bindUd();
   if(BT&&BT.inSet)btSetBar();
   {const pn=$('pname');if(pn)pn.onchange=()=>{PL.name=pn.value.trim().slice(0,16);pn.value=PL.name;savePL()}
@@ -1731,22 +1737,26 @@ function showSE(from){ // from: 'set'=設定画面から / それ以外=選曲�
   let h='<div class="frame"></div><button class="bk" id="bk">'+IC("back")+'</button><div style="height:40px"></div>'
    +(seMsg?`<p style="color:#d00;font-weight:700;max-width:420px">${esc(seMsg)}</p>`:'')
    +`<div class="lab"><span>ノーツSE</span></div><button class="tg" id="seon">${CFG.se?'☑ ON':'☐ OFF'}</button>`
-   +`<div class="lab"><span>全体の音量</span></div><div class="ctl"><input type="range" class="rg" id="sev" min="0" max="100" step="1" value="${CFG.seVol}"><span class="val sv" id="sevv">${CFG.seVol}</span></div>`;
+   +`<div class="lab"><span>曲の音量</span></div><div class="ctl"><input type="range" class="rg" id="bgv" min="0" max="100" step="1" value="${CFG.bgmVol}"><span class="val sv" id="bgvv">${CFG.bgmVol}</span></div>`
+   +`<div class="lab"><span>操作音</span></div><button class="tg" id="uiseon">${CFG.uiSe?'☑ ON':'☐ OFF'}</button>`
+   +`<div class="lab"><span>SEの音量(全体)</span></div><div class="ctl"><input type="range" class="rg" id="sev" min="0" max="100" step="1" value="${CFG.seVol}"><span class="val sv" id="sevv">${CFG.seVol}</span></div>`;
   for(const [k,n] of SEK){
-    const c=CFG.seCfg[k],has=OLD_DEV_TOOLS&&!!SEBUF[k],em=!!SEEMB[k],tone=c.tone==='custom'&&!has?seDef(k):c.tone==='embed'&&!em?'beep':c.tone;
+    const c=CFG.seCfg[k],has=DEV&&!!SEBUF[k],em=!!SEEMB[k],tone=c.tone==='custom'&&!has?seDef(k):c.tone==='embed'&&!em?'beep':c.tone;
     const opts=SETONE.map(([v,l])=>`<option value="${v}"${tone===v?' selected':''}>${l}</option>`).join('')
       +(em?`<option value="embed"${tone==='embed'?' selected':''}>★ ${esc((SE_EMBED[k]&&SE_EMBED[k].name)||'内蔵音声')}</option>`:'')
       +(has?`<option value="custom"${tone==='custom'?' selected':''}>♪ ${esc(c.name||'読み込んだ音声')}</option>`:'');
     h+=`<div class="sec"><div class="lab"><span>${n}</span></div>`
      +`<div class="ctl"><select data-t="${k}">${opts}</select><button class="sm" data-p="${k}">▶ 試聴</button></div>`
      +`<div class="ctl"><span style="font-size:14px">音量</span><input type="range" class="rg" data-v="${k}" min="0" max="100" step="1" value="${c.vol}"><span class="val sv" id="vv_${k}">${c.vol}</span></div>`
-     +(OLD_DEV_TOOLS?`<div class="ctl"><button class="sm" data-f="${k}">【開発者】音声ファイルを読み込む</button>${has?`<button class="sm" data-x="${k}">読込音声を削除</button>`:''}</div>`:'')+'</div>';
+     +(DEV?`<div class="ctl"><button class="sm" data-f="${k}">【開発者】音声ファイルを読み込む</button>${has?`<button class="sm" data-x="${k}">読込音声を削除</button>`:''}</div>`:'')+'</div>';
   }
   h+='<div class="row" style="margin:10px 0 30px"><button class="sm" id="serst">すべて初期値に戻す</button></div><input type="file" id="sef" accept="audio/*" hidden>'
-   +(OLD_DEV_TOOLS?'<div class="row" style="margin:0 0 6px"><button class="sm on" id="seex">【開発者】埋め込み用に書き出し</button></div><textarea id="setx" rows="5" readonly style="width:min(88vw,420px);font-size:11px;margin-bottom:30px" placeholder="押すと const SE_EMBED=... が出力されます(コピーされます)。HTML内の const SE_EMBED={}; と差し替えてください"></textarea>':'');
+   +(DEV?'<div class="row" style="margin:0 0 6px"><button class="sm on" id="seex">【開発者】埋め込み用に書き出し</button></div><textarea id="setx" rows="5" readonly style="width:min(88vw,420px);font-size:11px;margin-bottom:30px" placeholder="押すと const SE_EMBED=... が出力されます(コピーされます)。HTML内の const SE_EMBED={}; と差し替えてください"></textarea>':'');
   ov.innerHTML=h;
   $('bk').onclick=back;
   $('seon').onclick=()=>{CFG.se=!CFG.se;savePrefs();rer()};
+  $('uiseon').onclick=()=>{CFG.uiSe=!CFG.uiSe;savePrefs();rer()};
+  $('bgv').oninput=e=>{CFG.bgmVol=+e.target.value;$('bgvv').textContent=CFG.bgmVol;savePrefs()};
   $('sev').oninput=e=>{CFG.seVol=+e.target.value;$('sevv').textContent=CFG.seVol;savePrefs()};
   $('sev').onchange=()=>seTest('tap');
   ov.querySelectorAll('[data-t]').forEach(el=>el.onchange=()=>{CFG.seCfg[el.dataset.t].tone=el.value;savePrefs();seTest(el.dataset.t)});
@@ -1756,7 +1766,7 @@ function showSE(from){ // from: 'set'=設定画面から / それ以外=選曲�
   ov.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{fk=b.dataset.f;fi.click()});
   ov.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{clearSEFile(b.dataset.x);seMsg='';rer()});
   fi.onchange=async()=>{const f=fi.files[0];if(!f)return;try{await setSEFile(fk,f);seMsg='';seTest(fk)}catch(e){seMsg=e.message||'音声を読み込めません'}rer()};
-  if(OLD_DEV_TOOLS)$('seex').onclick=async()=>{
+  if(DEV)$('seex').onclick=async()=>{
     const o={};let n=0;
     for(const [k] of SEK){if(SERAW[k]&&!(CRITK.includes(k)&&SERAW[k]===SERAW.crit)){o[k]={name:SERAW[k].name,data:b64(SERAW[k].data)};n++}else if(SE_EMBED[k])o[k]=SE_EMBED[k]}
     const t='const SE_EMBED='+JSON.stringify(o)+';',tx=$('setx');tx.value=n||Object.keys(o).length?t+'\n// '+Math.round(t.length/1024)+'KB':'(読み込んだ音声がありません)';tx.select();
@@ -2323,6 +2333,7 @@ function dataStatus(){
 function renderUpd(){setTimeout(ttFit,0);
   const ds=$('dsst');if(ds)ds.textContent=dataStatus();
   const e=$('upd');if(!e)return;
+  if(!DEV){e.innerHTML='';return} // 一般は、PLAYを押したときに確認する(playGate)
   let h='';
   if(UPD.busy)h=`<span>ダウンロード中 ${esc(UPD.prog)}</span>`;
   else if(UPD.pending.length){
@@ -2335,6 +2346,32 @@ function renderUpd(){setTimeout(ttFit,0);
 const psec=()=>`<div class="lab" style="margin-top:18px"><span><b>プレイヤー名(スコア記録用)</b></span></div><div class="wr"><input id="pname" type="text" maxlength="16" value="${esc(PL.name)}" placeholder="未入力なら「名無し」" style="width:min(70vw,300px);text-align:left"></div><div class="row" style="margin-top:6px"><button class="sm" id="pping">スコア送信先を確認</button></div><p id="ppst" style="font-size:13px;margin:4px 0;max-width:420px;line-height:1.5"></p>`;
 const dsec=()=>`<div class="lab" style="margin-top:18px"><span><b>ダウンロードデータ</b></span></div><p id="dsst" style="font-size:13px;margin:4px 0;max-width:420px;line-height:1.5">${esc(dataStatus())}</p><div class="row">${UPD.pending.length&&!UPD.busy?`<button class="sm on" id="ddl">ダウンロード(${UPD.pending.length}曲)</button>`:''}<button class="sm" id="dchk">更新を確認</button><button class="sm" id="ddel">保存データを削除</button></div>`
   +(DEV?`<div class="wr" style="margin-top:6px"><b style="min-width:auto">データURL</b><input id="durl" type="text" value="${esc(dataUrl())}" placeholder="公開したCSVのURL" style="width:min(62vw,280px);text-align:left"></div>`:'');
+// ===== PLAYを押したとき: オンラインなら追加データを確認し、あれば「追加データがあります」を出す =====
+let gateBusy=false;
+async function playGate(next){
+  if(gateBusy)return;gateBusy=true;
+  try{
+    if(navigator.onLine!==false&&dataUrl()&&!UPD.busy&&Date.now()-UPD.checked>20000){
+      const b=$('go');const t0=b&&b.textContent;if(b){b.textContent='確認中…';b.disabled=true}
+      await Promise.race([checkUpdates(false),new Promise(r=>setTimeout(r,5000))]);
+      if(b&&b.isConnected){b.textContent=t0;b.disabled=false}
+    }
+  }catch(e){}
+  gateBusy=false;
+  if(!UPD.pending.length||UPD.busy)return next();
+  const nn=UPD.pending.filter(q=>!STORE.some(r=>r.id===q.id)).length,nu=UPD.pending.length-nn,txt=[nn?'新規'+nn+'曲':'',nu?'更新'+nu+'曲':''].filter(Boolean).join('・');
+  const d=document.createElement('div');d.className='dlg';
+  d.innerHTML=`<div class="dlc"><b>追加データがあります</b><p>${txt}</p><p id="dlgS"></p><div class="row"><button class="sm on" id="dlgY">ダウンロード</button><button class="sm" id="dlgN">あとで</button></div></div>`;
+  document.body.appendChild(d);
+  $('dlgN').onclick=()=>{d.remove();next()};
+  $('dlgY').onclick=async()=>{
+    const y=$('dlgY'),n=$('dlgN');y.disabled=n.disabled=true;
+    const iv=setInterval(()=>{const e=$('dlgS');if(e)e.textContent='ダウンロード中 '+(UPD.prog||'')},250);
+    try{await downloadPending()}catch(e){}
+    clearInterval(iv);
+    if(UPD.err||UPD.pending.length){const e=$('dlgS');if(e)e.textContent=UPD.err||'一部をダウンロードできませんでした';y.disabled=n.disabled=false;y.textContent='再試行';return}
+    d.remove();next()};
+}
 function bindData(){
   const re=()=>showSet();
   $('dchk').onclick=async()=>{await checkUpdates(true);re()};
@@ -2376,7 +2413,7 @@ const isUlt=d=>d==='ultimate'; // アルティメイトのレベルはローマ�
 const lvInt=(v,d)=>v?(isUlt(d)&&v>=1&&v<4000?toRoman(Math.floor(v)):(v>=10&&!isUlt(d)&&v-Math.floor(v)>=.5-1e-9?Math.floor(v)+'+':Math.floor(v))):'-',lvDec=(v,d)=>v&&!isUlt(d)?v.toFixed(1):'';
 const lvTxt=(v,d)=>{const t=lvInt(v,d),n=String(t).length,k=/\+$/.test(t)?.82:n<=2?1:n===3?.8:n===4?.66:.52; // ローマ数字は長いとき縮小して円に収める
   return k<1?`<span style="display:inline-block;transform:scale(${k});white-space:nowrap">${t}</span>`:t};
-const hasChart=(s,d)=>s.custom||(s.impl!==false&&s.lv[d]>0); // その難易度の譜面があるか(譜面定数0=実装待ちは無し扱い)
+const hasChart=(s,d)=>!s?false:s.custom||(s.impl!==false&&s.lv[d]>0); // その難易度の譜面があるか(譜面定数0=実装待ちは無し扱い)
 function sortCmp(a,b){
   if(a.custom||b.custom)return a.custom?-1:1; // カスタム譜面は常に先頭
   const ix=s=>SONGS.indexOf(s),da=pickDiff(a,SS.diff),db=pickDiff(b,SS.diff);let r=0;
