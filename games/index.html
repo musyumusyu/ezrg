@@ -330,9 +330,9 @@ function txReapply(){ // シート更新後: 画面に出ている文字を元�
   const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let n;
   while(n=w.nextNode()){const rc=TXREC.get(n);if(rc&&n.nodeValue===rc.out){const o=tx(rc.orig);if(o!==rc.out){n.nodeValue=o;TXREC.set(n,{orig:rc.orig,out:o})}}else txNode(n)}}
 txBuild();
-{let q=[],tm=0;
- const mo=new MutationObserver(ms=>{if(!(DEV||TXON))return;for(const m of ms){if(m.type==='characterData')q.push(m.target);else for(const a of m.addedNodes)q.push(a)}
-  if(!tm)tm=setTimeout(()=>{tm=0;const l=q;q=[];for(const n of l)if(n.isConnected)txNode(n)},0)});
+{
+ const mo=new MutationObserver(ms=>{if(!(DEV||TXON))return;const q=[];for(const m of ms){if(m.type==='characterData')q.push(m.target);else for(const a of m.addedNodes)q.push(a)}
+  for(const n of q)if(n.isConnected)txNode(n)}); // 同期(マイクロタスク)で置換=描画前に終わるのでちらつかない
  const go=()=>{mo.observe(document.documentElement,{childList:true,subtree:true,characterData:true});txReapply()};
  if(document.body)go();else addEventListener('DOMContentLoaded',go)}
 
