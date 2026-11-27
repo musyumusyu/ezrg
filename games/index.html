@@ -52,6 +52,7 @@ button{font:inherit;cursor:pointer}
 #rt{left:6px;background:#ff55ff;color:#3322ff}#hm{right:6px;background:#66ffcc;color:#2255ff}
 /* 設定 */
 .lab{margin:6px 0 2px}.lab span{display:inline-block;padding:2px 16px;border-radius:99px;background:#8ffcff;font-size:17px;font-weight:700}
+.lw{position:relative;display:inline-block}.rst{position:absolute;left:100%;top:50%;transform:translateY(-50%);margin-left:10px;padding:3px 9px;border:2px solid #fff;border-radius:10px;background:linear-gradient(#fff,#cfe6ff);box-shadow:0 2px 0 rgba(0,0,0,.2);color:#c0206a;font-size:12px;font-weight:700;white-space:nowrap}
 .ctl{display:flex;gap:5px;align-items:center;justify-content:center;flex-wrap:wrap}
 .ctl button{min-width:42px;padding:6px 4px;border:2px solid #fff;border-radius:10px;background:linear-gradient(#fff,#cfe6ff);box-shadow:0 2px 0 rgba(0,0,0,.2);color:#14166e;font-size:14px;font-weight:700}
 .ctl .val{min-width:62px;padding:8px 6px;border-radius:6px;background:#ff8c1a;color:#fff;font-size:20px}
@@ -299,6 +300,42 @@ const WD={"tap":{"perfect":[50,50],"great":[80,80],"good":[105,105],"bad":[125,1
 // 判定幅(win.*)・スコア配分(score.*)・ノーツSE(se.*)・見た目(style.*)。更新確認のたびに取得し、この端末に保存する(オフラインでも前回の値で動く)
 const SCK='amatSheetCfg';
 let SHC={};try{SHC=JSON.parse(localStorage.getItem(SCK)||'{}')||{}}catch(e){SHC={}}
+
+// ===== 表示文字の差し替え: シートのsettingsに「text.元の文字」= 新しい文字 と書くと、画面の文字(HTML・canvas両方)を置き換える =====
+// 例) key: text.PLAY / value: スタート ・・・ 文字の一部だけでも置き換わる(長い文字から先に処理)。空欄なら元のまま。
+const TXSEEN=new Set(),TXC=new Map();let TXL=[],TXON=false;
+const TXRE=/[A-Za-zぁ-んァ-ヶ一-鿿]/;
+function txBuild(){TXL=Object.entries((SHC&&SHC.text)||{}).filter(([a,b])=>a&&typeof b==='string').sort((x,y)=>y[0].length-x[0].length);TXC.clear();TXON=TXL.length>0}
+function tx(str){ // 置き換え(結果はキャッシュ)
+  if(typeof str!=='string')return str;
+  if(DEV&&str.length<80){const t=str.trim();if(t&&TXRE.test(t))TXSEEN.add(t)}
+  if(!TXON)return str;
+  let r=TXC.get(str);if(r!==undefined)return r;
+  r=str;for(const [a,b] of TXL)if(r.includes(a))r=r.split(a).join(b);
+  if(TXC.size>3000)TXC.clear();TXC.set(str,r);return r}
+{const P=CanvasRenderingContext2D.prototype,f=P.fillText,k=P.strokeText,m=P.measureText;
+ P.fillText=function(t,...a){return f.call(this,tx(t),...a)};P.strokeText=function(t,...a){return k.call(this,tx(t),...a)};P.measureText=function(t){return m.call(this,tx(t))}}
+const TXREC=new WeakMap();
+function txNode(n){
+  if(n.nodeType===3){
+    const pe=n.parentNode;if(!pe||/^(SCRIPT|STYLE|TEXTAREA|INPUT)$/.test(pe.nodeName))return;
+    const rc=TXREC.get(n);if(rc&&n.nodeValue===rc.out)return;
+    const orig=n.nodeValue,out=tx(orig);TXREC.set(n,{orig,out});if(out!==orig)n.nodeValue=out;
+  }else if(n.nodeType===1){
+    if(/^(SCRIPT|STYLE|TEXTAREA)$/.test(n.nodeName))return;
+    for(const at of ['title','placeholder']){const v=n.getAttribute&&n.getAttribute(at);if(v){const o=tx(v);if(o!==v)n.setAttribute(at,o)}}
+    for(const c of n.childNodes)txNode(c)}}
+function txReapply(){ // シート更新後: 画面に出ている文字を元から作り直す
+  txBuild();if(!(DEV||TXON))return;
+  const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let n;
+  while(n=w.nextNode()){const rc=TXREC.get(n);if(rc&&n.nodeValue===rc.out){const o=tx(rc.orig);if(o!==rc.out){n.nodeValue=o;TXREC.set(n,{orig:rc.orig,out:o})}}else txNode(n)}}
+txBuild();
+{let q=[],tm=0;
+ const mo=new MutationObserver(ms=>{if(!(DEV||TXON))return;for(const m of ms){if(m.type==='characterData')q.push(m.target);else for(const a of m.addedNodes)q.push(a)}
+  if(!tm)tm=setTimeout(()=>{tm=0;const l=q;q=[];for(const n of l)if(n.isConnected)txNode(n)},0)});
+ const go=()=>{mo.observe(document.documentElement,{childList:true,subtree:true,characterData:true});txReapply()};
+ if(document.body)go();else addEventListener('DOMContentLoaded',go)}
+
 const OLD_DEV_TOOLS=false; // 判定幅/スコア配分/SE音声の開発者用編集画面は、設定シートへ移行したため非表示
 // ===== 設定（あとで調整する値）=====
 const CFG={
@@ -1035,17 +1072,18 @@ function showSet(){
   const smb=`<div class="tgi"><div class="lab"><span><b>スコア表示方式</b></span></div><div class="rdg"><button class="rdb ${CFG.scoreMode==='sub'?'':'sel'}" data-sm="add"><i></i>加算</button><button class="rdb ${CFG.scoreMode==='sub'?'sel':''}" data-sm="sub"><i></i>減算</button></div></div>`;
   const fcb=`<div class="tgi"><div class="lab"><span><b>フレームレート</b></span></div><div class="rdg"><button class="rdb ${CFG.fpsCap===60?'sel':''}" data-fc="60">60fps<i></i></button><button class="rdb ${CFG.fpsCap===60?'':'sel'}" data-fc="120"><i></i>120fps</button></div></div>`;
   const tg=TOGS.map(([n,k])=>n==='@sm'?smb:n==='@fc'?fcb:tgb(n,k)).join('');
-  const dtg=DEV?`<div class="lab" style="margin-top:18px"><span><b>【開発者】</b></span></div><div class="tgrid" style="margin-top:6px">`+DEVTOGS.map(([n,k])=>tgb(n,k)).join('')+'</div>':'';
-  const rows=SETS.map((s,i)=>`<div class="lab"><span><b>${s.n}</b></span></div><div class="ctl">`
+  const dtg=DEV?`<div class="lab" style="margin-top:18px"><span><b>【開発者】</b></span></div><div class="tgrid" style="margin-top:6px">`+DEVTOGS.map(([n,k])=>tgb(n,k)).join('')+'</div><div class="row" style="margin-top:10px"><button class="sm on" id="txex">【開発者】表示文字の一覧を出力</button></div><textarea id="txta" rows="4" readonly style="width:min(88vw,420px);font-size:11px;margin-top:6px" placeholder="押すと、これまでに画面に出た文字が text.○○ の形で出ます(コピーされます)。シートのsettingsのkey列に貼り、value列に新しい文字を書くと置き換わります"></textarea>':'';
+  const rows=SETS.map((s,i)=>`<div class="lab"><div class="lw"><span><b>${s.n}</b></span><button class="rst" data-i="${i}" data-r="1">RESET</button></div></div><div class="ctl">`
     +[...s.st].map(v=>`<button data-i="${i}" data-d="${-v}">-${v}</button>`).join('')
     +`<span class="val">${rnd(s.get())}</span>`
     +[...s.st].reverse().map(v=>`<button data-i="${i}" data-d="${v}">+${v}</button>`).join('')
-    +`<button data-i="${i}" data-r="1" style="color:#c0206a">RESET</button></div>`).join('');
+    +`</div>`).join('');
   ov.innerHTML='<div class="frame"></div><button class="bk" id="bk">'+IC("back")+'</button><div class="spw" id="spw"><div class="spc">速度確認</div><canvas id="spv"></canvas></div>'+rows+'<div class="row" style="margin-top:12px"><button class="sm on" id="calb" style="font-size:16px;padding:8px 22px">音に合わせてタイミング調整 →</button></div><div class="tgrid" style="margin-top:18px">'+tg+'</div><div class="row" style="margin-top:16px"><button class="sm on" id="seb" style="font-size:16px;padding:8px 22px">ノーツSE・音量の設定 →</button></div>'+psec()+usec()+dtg+(DEV?dsec():'')+(OLD_DEV_TOOLS?'<div class="row" style="margin-top:12px"><button class="sm on" id="wj" style="font-size:16px;padding:8px 22px">判定幅の設定(ms) →【開発者】</button></div><div class="row" style="margin-top:12px;margin-bottom:30px"><button class="sm on" id="scj" style="font-size:16px;padding:8px 22px">スコア配分の設定 →【開発者】</button></div>':'<div style="height:30px"></div>');
   ov.scrollTop=keep;
   $('bk').onclick=()=>setBack();$('seb').onclick=()=>showSE('set');$('calb').onclick=showCal;spvStart();if(OLD_DEV_TOOLS){$('wj').onclick=showWin;$('scj').onclick=showScoreCfg}
   if(DEV)bindData();
   bindUd();
+  {const b=$('txex');if(b)b.onclick=()=>{const t=[...TXSEEN].sort().map(x=>'text.'+x).join('\n'),a=$('txta');a.value=t||'(まだ文字が記録されていません)';a.select();try{navigator.clipboard.writeText(t).catch(()=>{})}catch(e){}}}
   if(BT&&BT.inSet)btSetBar();
   {const pn=$('pname');if(pn)pn.onchange=()=>{PL.name=pn.value.trim().slice(0,16);pn.value=PL.name;savePL()}
    const pb=$('pping');if(pb)pb.onclick=async()=>{const o=$('ppst');o.textContent='確認中…';const m=await pingSave();const o2=$('ppst');if(o2)o2.textContent=m}}
@@ -1735,12 +1773,12 @@ function showSE(from){ // from: 'set'=設定画面から / それ以外=選曲�
   const back=()=>from==='set'?showSet():setBack();
   const rer=()=>{const k=ov.scrollTop;showSE(from);ov.scrollTop=k};
   const tgb=(n,id,on)=>`<div class="tgi"><div class="lab"><span><b>${n}</b></span></div><div class="rdg"><button class="rdb ${on?'sel':''}" data-tg="${id}" data-v="1">on<i></i></button><button class="rdb ${on?'':'sel'}" data-tg="${id}" data-v="0"><i></i>off</button></div></div>`;
-  const stp=(n,id,v)=>`<div class="lab"><span><b>${n}</b></span></div><div class="ctl">`+[-10,-5,-1].map(d=>`<button data-sid="${id}" data-d="${d}">${d}</button>`).join('')+`<span class="val" id="sv_${id}">${v}</span>`+[1,5,10].map(d=>`<button data-sid="${id}" data-d="${d}">+${d}</button>`).join('')+`<button data-sid="${id}" data-r="1" style="color:#c0206a">RESET</button></div>`;
+  const stp=(n,id,v)=>`<div class="lab"><div class="lw"><span><b>${n}</b></span><button class="rst" data-sid="${id}" data-r="1">RESET</button></div></div><div class="ctl">`+[-10,-5,-1].map(d=>`<button data-sid="${id}" data-d="${d}">${d}</button>`).join('')+`<span class="val" id="sv_${id}">${v}</span>`+[1,5,10].map(d=>`<button data-sid="${id}" data-d="${d}">+${d}</button>`).join('')+`</div>`;
   let h='<div class="frame"></div><button class="bk" id="bk">'+IC("back")+'</button><div style="height:40px"></div>'
    +(seMsg?`<p style="color:#d00;font-weight:700;max-width:420px">${esc(seMsg)}</p>`:'')
    +'<div class="tgrid" style="margin-top:12px">'+tgb('ノーツSE','se',CFG.se)+tgb('操作音','ui',CFG.uiSe)+'</div>'
    +stp('曲の音量','bgm',CFG.bgmVol)+stp('SEの音量(全体)','sev',CFG.seVol);
-  for(const [k,n] of SEK){
+  if(DEV)for(const [k,n] of SEK){ // ノーツ種別ごとのSE設定は開発者モードのみ
     const c=CFG.seCfg[k],has=DEV&&!!SEBUF[k],em=!!SEEMB[k],tone=c.tone==='custom'&&!has?seDef(k):c.tone==='embed'&&!em?'beep':c.tone;
     const opts=SETONE.map(([v,l])=>`<option value="${v}"${tone===v?' selected':''}>${l}</option>`).join('')
       +(em?`<option value="embed"${tone==='embed'?' selected':''}>★ ${esc((SE_EMBED[k]&&SE_EMBED[k].name)||'内蔵音声')}</option>`:'')
@@ -1750,7 +1788,7 @@ function showSE(from){ // from: 'set'=設定画面から / それ以外=選曲�
      +stp('音量','k_'+k,c.vol)
      +(DEV?`<div class="ctl"><button class="sm" data-f="${k}">【開発者】音声ファイルを読み込む</button>${has?`<button class="sm" data-x="${k}">読込音声を削除</button>`:''}</div>`:'')+'</div>';
   }
-  h+='<div class="row" style="margin:10px 0 30px"><button class="sm" id="serst">すべて初期値に戻す</button></div><input type="file" id="sef" accept="audio/*" hidden>'
+  h+=(DEV?'<div class="row" style="margin:10px 0 30px"><button class="sm" id="serst">すべて初期値に戻す</button></div>':'<div style="height:30px"></div>')+'<input type="file" id="sef" accept="audio/*" hidden>'
    +(DEV?'<div class="row" style="margin:0 0 6px"><button class="sm on" id="seex">【開発者】埋め込み用に書き出し</button></div><textarea id="setx" rows="5" readonly style="width:min(88vw,420px);font-size:11px;margin-bottom:30px" placeholder="押すと const SE_EMBED=... が出力されます(コピーされます)。HTML内の const SE_EMBED={}; と差し替えてください"></textarea>':'');
   ov.innerHTML=h;
   $('bk').onclick=back;
@@ -1775,7 +1813,7 @@ function showSE(from){ // from: 'set'=設定画面から / それ以外=選曲�
     const t='const SE_EMBED='+JSON.stringify(o)+';',tx=$('setx');tx.value=n||Object.keys(o).length?t+'\n// '+Math.round(t.length/1024)+'KB':'(読み込んだ音声がありません)';tx.select();
     try{await navigator.clipboard.writeText(t)}catch(e){}
   };
-  $('serst').onclick=()=>{CFG.seVol=80;CFG.seCfg=null;CFG.seSig='';normSE();for(const [k] of SEK){delete SEBUF[k];delete SERAW[k]}applySheetSE(true);seMsg='';savePrefs();rer()};
+  if($('serst'))$('serst').onclick=()=>{CFG.seVol=80;CFG.seCfg=null;CFG.seSig='';normSE();for(const [k] of SEK){delete SEBUF[k];delete SERAW[k]}applySheetSE(true);seMsg='';savePrefs();rer()};
 }
 
 // ===== 全画面 =====
@@ -2074,7 +2112,7 @@ function parseSettings(text){
   if(hi<0)return null;
   const hd=rows[hi].map(nh),ik=hd.indexOf('key'),iv=hd.indexOf('value'),i2=hd.indexOf('value2');
   if(iv<0)return null;
-  const o={win:{},score:{w:{},acc:{}},se:{kinds:{}},style:{},save:null,rules:'',blank:[],warn:[],battle:{},n:{win:0,score:0,se:0,style:0}};
+  const o={win:{},score:{w:{},acc:{}},se:{kinds:{}},style:{},save:null,rules:'',blank:[],warn:[],battle:{},text:{},n:{win:0,score:0,se:0,style:0,text:0}};
   const p0Blank=k=>{const m=k.match(/^style\.(\w+)$/);return !!(m&&typeof ST0[m[1]]==='string')}; // 色の行が空 = 文字の値が消えた疑い
   const num=s=>parseFloat(String(s).normalize('NFKC').replace(/,/g,'')),seK=SEK.map(x=>x[0]),skip=(k,why)=>o.warn.push(`${k}: ${why}`);
   for(const r of rows.slice(hi+1)){
@@ -2082,6 +2120,7 @@ function parseSettings(text){
     const v=String(r[iv]??'').trim(),v2=i2>=0?String(r[i2]??'').trim():'';
     if(v===''){if(p0Blank(key))o.blank.push(key);continue}
     const p=key.split('.');
+    if(key.startsWith('text.')){o.text[key.slice(5)]=String(r[iv]??'');o.n.text++;continue}
     if(p[0]==='win'&&p.length===3){
       if(!(WD[p[1]]&&WD[p[1]][p[2]])){skip(key,'未知のキー');continue}
       const a=num(v),b=v2===''?a:num(v2);
@@ -2170,9 +2209,9 @@ async function syncSettings(songUrl){
     }catch(e){why.push(`${tn}: 通信できません(${(e&&e.message)||'エラー'})`)}
   }
   if(!o){UPD.cfg=!cands.length?'':(SHC.n?'設定シートを取得できませんでした(前回の値を使用) ':'設定シート未検出 → ')+why.slice(0,2).join(' / ');return}
-  SHC={win:o.win,score:o.score,se:o.se,style:o.style,battle:o.battle,save:o.save,rules:o.rules,n:o.n};
+  SHC={win:o.win,score:o.score,se:o.se,style:o.style,battle:o.battle,save:o.save,rules:o.rules,text:o.text,n:o.n};
   try{localStorage.setItem(SCK,JSON.stringify(SHC))}catch(e){}
-  normWins();buildWC();normScore();ST={...ST0,...SHC.style};
+  normWins();buildWC();normScore();ST={...ST0,...SHC.style};txReapply();
   const ok=await syncSheetSE(true);applySheetSE(ok);
   flushScores();
   UPD.cfg=`設定シート(${tabName}): 判定${o.n.win}・スコア${o.n.score}・SE${o.n.se}・見た目${o.n.style}項目`+(o.save?'・スコア保存先あり':'')+(ok?'':' ⚠SE音声の一部を取得できません')+(o.warn.length?` ⚠${o.warn.length}件: ${o.warn.slice(0,3).join(' / ')}`:'');
