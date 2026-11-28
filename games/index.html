@@ -308,7 +308,7 @@ const TXRE=/[A-Za-zぁ-んァ-ヶ一-鿿]/;
 function txBuild(){TXL=Object.entries((SHC&&SHC.text)||{}).filter(([a,b])=>a&&typeof b==='string').sort((x,y)=>y[0].length-x[0].length);TXC.clear();TXON=TXL.length>0}
 function tx(str){ // 置き換え(結果はキャッシュ)
   if(typeof str!=='string')return str;
-  if(DEV&&str.length<80){const t=str.trim();if(t&&TXRE.test(t))TXSEEN.add(t)}
+  if(DEV&&str.length<400){const t=str.trim();if(t&&TXRE.test(t))TXSEEN.add(t)}
   if(!TXON)return str;
   let r=TXC.get(str);if(r!==undefined)return r;
   r=str;for(const [a,b] of TXL)if(r.includes(a))r=r.split(a).join(b);
@@ -748,8 +748,10 @@ function nearest(l,types,flag){ // そのレーンを覆うノーツのうち、
   }
   return best&&{n:best,d:bd,sd:T()-best.t};
 }
-function press(l){ // タップ・ロング始点
-  const r=nearest(l,['tap','long','slide'],true);if(!r)return;
+function press(l,alt){ // タップ・ロング始点。altは境目寄りを押した時の隣のレーン(どちらのレーンのノーツも取れる)。採用したレーンを返す
+  let r=nearest(l,['tap','long','slide'],true);
+  if(alt!==undefined){const r2=nearest(alt,['tap','long','slide'],true);if(r2&&(!r||r2.d<r.d-.015)){r=r2;l=alt}}
+  if(!r)return;
   // この押下が、同じレーンのフリック/トレースのためのもの(時間的にそちらが近い)なら、タップを吸わない
   const t=T();
   for(const n of notes){
@@ -761,6 +763,7 @@ function press(l){ // タップ・ロング始点
   if(j==='miss'&&r.sd<0)return; // 判定範囲より早い入力は無視(ノーツを消費してミスにしない)
   r.n.head=true;if(r.n.type==='tap')r.n.done=true;
   judge(j,hcOf(r.n),r.sd,catN(r.n));if(j!=='miss')se(r.n);
+  return l;
 }
 function scrub(l,id){ // フリック（擦り）
   const r=nearest(l,['flick'],false);if(!r)return;
@@ -852,14 +855,17 @@ function geom(w){
 }
 // 押した位置→レーン。隙間は左右どちらか近いレーンに入る(レーン+左右半分の隙間が1マス)
 const laneAt=e=>{const G=geom(cv.clientWidth);return Math.min(L-1,Math.max(0,Math.floor((e.clientX-cv.getBoundingClientRect().left-G.ox)/G.lp)))};
+let ALT; // 押した位置が境目寄りなら隣のレーン(押した瞬間の判定でだけ使う)
+const altAt=e=>{const G=geom(cv.clientWidth),u=(e.clientX-cv.getBoundingClientRect().left-G.ox)/G.lp,l=Math.floor(u),f=u-l,m=.25;
+  if(f<m&&l-1>=0&&l-1<L)return l-1;if(f>1-m&&l+1<L&&l>=0)return l+1;return undefined};
 function setP(id,l){
   const o=ptr.get(id);if(o===l)return;
   if(o!==undefined)held[o]--;
   if(l===undefined){ptr.delete(id);return}
   ptr.set(id,l);held[l]++;
-  if(o===undefined)press(l);
+  if(o===undefined){const a=ALT;ALT=undefined;const c=press(l,a);if(c!==undefined&&c!==l){held[l]--;held[c]++;ptr.set(id,c)}}
 }
-cv.addEventListener('pointerdown',e=>{if(!run||autoRun)return;try{cv.setPointerCapture(e.pointerId)}catch(x){}pp.set(e.pointerId,[e.clientX,e.clientY]);setP(e.pointerId,laneAt(e))});
+cv.addEventListener('pointerdown',e=>{if(!run||autoRun)return;try{cv.setPointerCapture(e.pointerId)}catch(x){}pp.set(e.pointerId,[e.clientX,e.clientY]);ALT=altAt(e);setP(e.pointerId,laneAt(e))});
 cv.addEventListener('pointermove',e=>{
   if(!run||!ptr.has(e.pointerId))return;
   const l=laneAt(e);setP(e.pointerId,l);
@@ -1141,6 +1147,7 @@ function calClick(at,accent){const c=getCtx(),o=c.createOscillator(),gn=c.create
 function calTap(e){
   if(!CAL.run||(e&&e.target&&e.target.closest&&e.target.closest('button')))return;
   if(e&&e.type==='keydown'){if(e.repeat)return;if(e.code!=='Space'&&e.code!=='Enter')return;e.preventDefault()}
+  try{se({crit:false},'tap')}catch(_){} // ノーツSE(設定でオフなら鳴らない)
   const tt=getCtx().currentTime,k=Math.round((tt-CAL.t0)/CAL.iv);
   if(k<CAL.skip||k>=CAL.n||CAL.used.has(k))return;
   const d=tt-(CAL.t0+k*CAL.iv);if(Math.abs(d)>.28)return; // 大きく外れたタップは無視
@@ -1148,6 +1155,7 @@ function calTap(e){
 }
 function stopCal(){CAL.run=false;if(CAL.raf)cancelAnimationFrame(CAL.raf);CAL.raf=0;removeEventListener('pointerdown',calTap);removeEventListener('keydown',calTap)}
 function calLoop(){
+  CAL.raf=0;
   const cvp=document.getElementById('calc');
   if(!cvp||!cvp.isConnected||ov.className!=='set'){stopCal();return}
   const c=getCtx(),now=c.currentTime,items=[];let fl=0;
